@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ТопДент — стоматология в Кемерово · ул. Институтская, 34</title>
+<meta name="description" content="Стоматология ТопДент в Рудничном районе: лечение без боли, цена фиксируется до начала работ, гарантия до 5 лет. Онлайн-запись за 30 секунд.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="topdent.css">
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ТОНКАЯ ШАПКА -->
+<header id="topbar">
+  <div class="container topbar-inner">
+    <a href="#top" class="brand">ТопДент<span>®</span></a>
+    <div class="topbar-mid">
+      <span>ул. Институтская, 34</span><i>·</i>
+      <span>Пн–Сб 9:00–20:00</span><i>·</i>
+      <span>Рудничный район</span>
+    </div>
+    <div class="topbar-right">
+      <a class="topbar-phone" href="tel:+73842000000">+7 (3842) 00-00-00</a>
+      <a class="btn-pill btn-pill-sm" href="#book">Записаться</a>
+    </div>
+    <button id="burger" class="burger" aria-label="Меню" aria-expanded="false"><span></span><span></span></button>
+  </div>
+</header>
+
+<div id="mobileMenu" class="mobile-menu">
+  <nav class="mobile-nav">
+    <a class="mobile-link" href="#prices">Услуги и цены</a>
+    <a class="mobile-link" href="#process">Как лечим</a>
+    <a class="mobile-link" href="#faq">Вопросы</a>
+    <a class="mobile-link mobile-cta" href="#book">Записаться онлайн</a>
+    <div class="mobile-meta">ул. Институтская, 34 · Пн–Сб 9:00–20:00</div>
+  </nav>
+</div>
+
+<main id="top">
+
+  <!-- ОТКРЫВАЮЩИЙ ЭКРАН: редакционное утверждение + линия улыбки + живые окна -->
+  <section class="opening">
+    <svg class="opening-deco" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-1.6 0-2.4.9-3.6.9S6.6 3 5.5 3C3.8 3 2.5 4.7 2.5 6.9c0 1.4.4 2.5.9 3.7.6 1.7 1.1 4.2 1.7 6.4.4 1.4 2.2 1.5 2.7.2.6-1.7 1.1-4 2.4-4h1.6c1.3 0 1.8 2.3 2.4 4 .5 1.3 2.3 1.2 2.7-.2.6-2.2 1.1-4.7 1.7-6.4.5-1.2.9-2.3.9-3.7 0-2.2-1.3-3.9-3-3.9-1.1 0-1.9.9-3.1.9S13.6 3 12 3z" fill="none" stroke="currentColor" stroke-width=".7"/></svg>
+    <div class="container">
+      <p class="overline" data-reveal><span class="tick"></span>Стоматология · Кемерово · Рудничный район</p>
+      <h1 class="opening-title" data-reveal style="--d:.08s">
+        Улыбка, которую<br><em>не стыдно</em> показать
+      </h1>
+      <svg class="smile-draw" viewBox="0 0 640 120" aria-hidden="true">
+        <path class="smile-path" d="M30 28 Q320 138 610 28" fill="none" stroke-linecap="round"/>
+        <circle class="smile-dot" cx="610" cy="28" r="6"/>
+      </svg>
+      <div class="opening-row" data-reveal style="--d:.16s">
+        <p class="opening-sub">Лечим без боли. Цену называем <strong>до начала работ</strong> и не меняем её в процессе. Гарантия — до 5 лет.</p>
+        <div class="opening-ctas">
+          <a class="btn-pill" href="#book">Записаться онлайн</a>
+          <a class="link-line" href="#prices">Смотреть цены</a>
+        </div>
+      </div>
+      <div class="slots-strip" data-reveal style="--d:.24s">
+        <span class="slots-label"><span class="dot-live"></span>Сегодня свободны</span>
+        <div class="slots" id="heroSlots">
+          <button class="slot-chip" data-time="11:30">11:30</button>
+          <button class="slot-chip" data-time="13:00">13:00</button>
+          <button class="slot-chip" data-time="16:40">16:40</button>
+          <button class="slot-chip" data-time="18:00">18:00</button>
+        </div>
+        <span class="slots-hint">выберите время — подставим в заявку</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ИНФОРМАЦИОННАЯ ЛЕНТА -->
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <div class="ticker-group"><span>Институтская, 34</span><i>✦</i><span>Пн–Сб 9:00–20:00</span><i>✦</i><span>Рассрочка 0%</span><i>✦</i><span>Лечение во сне</span><i>✦</i><span>Гарантия до 5 лет</span><i>✦</i><span>Снимок по показаниям — бесплатно</span><i>✦</i></div>
+      <div class="ticker-group"><span>Институтская, 34</span><i>✦</i><span>Пн–Сб 9:00–20:00</span><i>✦</i><span>Рассрочка 0%</span><i>✦</i><span>Лечение во сне</span><i>✦</i><span>Гарантия до 5 лет</span><i>✦</i><span>Снимок по показаниям — бесплатно</span><i>✦</i></div>
+    </div>
+  </div>
+
+  <!-- ЦИФРЫ -->
+  <section class="figures">
+    <div class="container figures-row">
+      <div class="figure" data-reveal><span class="figure-num"><span data-count="12" data-suffix="+">0</span></span><span class="figure-cap">лет практики</span></div>
+      <div class="figure" data-reveal style="--d:.06s"><span class="figure-num"><span data-count="8500" data-suffix="+">0</span></span><span class="figure-cap">вылеченных улыбок</span></div>
+      <div class="figure" data-reveal style="--d:.12s"><span class="figure-num"><span data-count="5" data-prefix="до ">0</span> лет</span><span class="figure-cap">гарантии по договору</span></div>
+      <div class="figure" data-reveal style="--d:.18s"><span class="figure-num"><span data-count="9" data-prefix="4.">0</span></span><span class="figure-cap">средняя оценка пациентов</span></div>
+    </div>
+  </section>
+
+  <!-- ПРАЙС КАК МЕНЮ -->
+  <section id="prices" class="menu">
+    <div class="container">
+      <div class="menu-head">
+        <div>
+          <p class="overline" data-reveal><span class="tick"></span>Прайс</p>
+          <h2 class="display" data-reveal>Услуги и цены</h2>
+        </div>
+        <p class="menu-note" data-reveal>Цена в плане лечения — финальная.<br>«Доплат по факту» не существует.</p>
+      </div>
+
+      <ol class="menu-list">
+        <li class="menu-row" data-reveal>
+          <span class="menu-num">01</span>
+          <div class="menu-body"><h3>Лечение кариеса</h3><p>Анестезия, чистка, пломба с полировкой — всё в одной цене.</p></div>
+          <span class="menu-price">от 3 500 ₽</span>
+          <span class="menu-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="menu-row" data-reveal style="--d:.05s">
+          <span class="menu-num">02</span>
+          <div class="menu-body"><h3>Профессиональная чистка</h3><p>Ультразвук, Air Flow, полировка и фторирование за один визит.</p></div>
+          <span class="menu-price">от 4 000 ₽</span>
+          <span class="menu-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="menu-row" data-reveal style="--d:.1s">
+          <span class="menu-num">03</span>
+          <div class="menu-body"><h3>Имплантация под ключ</h3><p>Имплант, формирователь и коронка. Рассрочка 0% на 12 месяцев.</p></div>
+          <span class="menu-price">от 35 000 ₽</span>
+          <span class="menu-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="menu-row" data-reveal style="--d:.15s">
+          <span class="menu-num">04</span>
+          <div class="menu-body"><h3>Виниры</h3><p>Керамика с цифровым дизайном улыбки — примерка до установки.</p></div>
+          <span class="menu-price">от 18 000 ₽</span>
+          <span class="menu-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="menu-row" data-reveal style="--d:.2s">
+          <span class="menu-num">05</span>
+          <div class="menu-body"><h3>Отбеливание</h3><p>До 8 тонов за один визит, с реминерализацией после.</p></div>
+          <span class="menu-price">от 12 000 ₽</span>
+          <span class="menu-arrow" aria-hidden="true">→</span>
+        </li>
+        <li class="menu-row" data-reveal style="--d:.25s">
+          <span class="menu-num">06</span>
+          <div class="menu-body"><h3>Брекеты и элайнеры</h3><p>Цена за весь курс, ведение до результата.</p></div>
+          <span class="menu-price">от 90 000 ₽</span>
+          <span class="menu-arrow" aria-hidden="true">→</span>
+        </li>
+      </ol>
+      <p class="menu-foot" data-reveal>Точную смету называем после бесплатного осмотра и фиксируем в договоре.</p>
+    </div>
+  </section>
+
+  <!-- ГЛАВНОЕ ПРАВИЛО: огромное утверждение -->
+  <section class="statement">
+    <div class="container">
+      <p class="overline overline-light" data-reveal><span class="tick"></span>Главное правило</p>
+      <h2 class="statement-title" data-reveal>Цена не изменится<span class="statement-dot">.</span><span class="underline-draw" aria-hidden="true"></span></h2>
+      <p class="statement-sub" data-reveal>Смету фиксируем в плане лечения до первого сверления. Если в процессе что-то пойдёт не так — это наша ответственность, а не ваш счёт.</p>
+      <div class="statement-row">
+        <div class="sguar" data-reveal><h4>Без боли</h4><p>Аппликационный гель и современные анестетики. Для тревожных пациентов — лечение во сне.</p></div>
+        <div class="sguar" data-reveal style="--d:.08s"><h4>Гарантия до 5 лет</h4><p>На пломбы, коронки и импланты. Прописана в договоре, а не на словах.</p></div>
+        <div class="sguar" data-reveal style="--d:.16s"><h4>Рассрочка 0%</h4><p>На 4–12 месяцев без банка. Лечение начинается сразу, платите частями.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- КАК ЛЕЧИМ: горизонтальная лента -->
+  <section id="process" class="steps">
+    <div class="container">
+      <div class="steps-head">
+        <div>
+          <p class="overline" data-reveal><span class="tick"></span>Как лечим</p>
+          <h2 class="display" data-reveal>Четыре шага<br>к здоровой улыбке</h2>
+        </div>
+        <span class="steps-hint" data-reveal>листайте →</span>
+      </div>
+    </div>
+    <div class="steps-scroller">
+      <div class="container steps-track">
+        <article class="step" data-reveal>
+          <span class="step-num">01</span>
+          <h3>Осмотр и диагностика</h3>
+          <p>30 минут, снимок по показаниям. Честно говорим, что можно не лечить прямо сейчас.</p>
+        </article>
+        <article class="step" data-reveal style="--d:.06s">
+          <span class="step-num">02</span>
+          <h3>План лечения с ценой</h3>
+          <p>Фиксируем смету в договоре. Два варианта — «оптимально» и «максимум» — выбираете вы.</p>
+        </article>
+        <article class="step" data-reveal style="--d:.12s">
+          <span class="step-num">03</span>
+          <h3>Лечение без боли</h3>
+          <p>Современная анестезия, контроль на каждом этапе. Больно не будет — проверяем.</p>
+        </article>
+        <article class="step" data-reveal style="--d:.18s">
+          <span class="step-num">04</span>
+          <h3>Гарантийное наблюдение</h3>
+          <p>Бесплатные осмотры по графику и гарантия до 5 лет, закреплённая в договоре.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ВОПРОСЫ: две колонки -->
+  <section id="faq" class="faq">
+    <div class="container faq-grid">
+      <div class="faq-left">
+        <p class="overline" data-reveal><span class="tick"></span>Вопросы</p>
+        <h2 class="display" data-reveal>Спрашивают перед первым визитом</h2>
+        <p class="faq-note" data-reveal>Не нашли ответ — позвоните, расскажем по-человечески, без медицинских терминов.</p>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item" data-reveal>
+          <button class="faq-q" aria-expanded="false"><span>Это правда не больно?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a"><div><p>Да. Укол не чувствуется благодаря аппликационному гелю, а для сильной тревожности есть лечение во сне под контролем анестезиолога.</p></div></div>
+        </div>
+        <div class="faq-item" data-reveal style="--d:.05s">
+          <button class="faq-q" aria-expanded="false"><span>Сколько будет стоить лечение?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a"><div><p>Точную цену называем после бесплатного осмотра и фиксируем в плане лечения. Она не изменится в процессе. Ориентиры — в разделе «Услуги и цены».</p></div></div>
+        </div>
+        <div class="faq-item" data-reveal style="--d:.1s">
+          <button class="faq-q" aria-expanded="false"><span>Можно ли в рассрочку?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a"><div><p>Да, 0% на 4–12 месяцев без участия банка. Первый взнос — от 30%, лечение начинается сразу.</p></div></div>
+        </div>
+        <div class="faq-item" data-reveal style="--d:.15s">
+          <button class="faq-q" aria-expanded="false"><span>Что входит в бесплатную консультацию?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a"><div><p>Осмотр, диагностика по показаниям, план лечения с фиксированной сметой и ответы на вопросы. Около 30 минут, ни к чему не обязывает.</p></div></div>
+        </div>
+        <div class="faq-item" data-reveal style="--d:.2s">
+          <button class="faq-q" aria-expanded="false"><span>Где вы находитесь?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a"><div><p>Кемерово, ул. Институтская, 34 — Рудничный район. Записаться можно онлайн, по телефону или в мессенджерах.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЗАПИСЬ -->
+  <section id="book" class="booking">
+    <div class="container book-grid">
+      <div class="book-left">
+        <p class="overline" data-reveal><span class="tick"></span>Запись</p>
+        <h2 class="display" data-reveal>Запишитесь<br>за <em>30 секунд</em></h2>
+        <p class="book-note" data-reveal>Оставьте контакт — перезвоним в течение 10 минут, подтвердим время и ответим на вопросы.</p>
+        <div class="book-contacts">
+          <a class="bcontact" href="tel:+73842000000" data-reveal><span class="bc-label">Телефон</span><span class="bc-value">+7 (3842) 00-00-00</span></a>
+          <a class="bcontact" href="https://t.me/" target="_blank" rel="noopener" data-reveal style="--d:.06s"><span class="bc-label">Telegram · WhatsApp</span><span class="bc-value">@topdent42</span></a>
+          <div class="bcontact" data-reveal style="--d:.12s"><span class="bc-label">Адрес</span><span class="bc-value">ул. Институтская, 34</span></div>
+          <div class="bcontact" data-reveal style="--d:.18s"><span class="bc-label">Режим работы</span><span class="bc-value">Пн–Сб 9:00–20:00</span></div>
+        </div>
+      </div>
+      <form id="bookForm" class="book-form" data-reveal>
+        <div class="form-group">
+          <label for="f-name">Имя</label>
+          <input id="f-name" name="name" type="text" placeholder="Как к вам обращаться" required>
+        </div>
+        <div class="form-group">
+          <label for="f-phone">Телефон</label>
+          <input id="f-phone" name="phone" type="tel" placeholder="+7 ___ ___-__-__" required>
+        </div>
+        <div class="form-group">
+          <label for="f-msg">Что беспокоит / выбранное время</label>
+          <textarea id="f-msg" name="message" rows="4" placeholder="Например: болит зуб при жевании, хочу на приём после 17:00"></textarea>
+        </div>
+        <button type="submit" class="btn-pill btn-pill-full form-submit">Записаться на приём</button>
+        <p class="form-note">Перезвоним в течение 10 минут в рабочее время. Без спама.</p>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<!-- ПОДВАЛ -->
+<footer id="footer">
+  <div class="container">
+    <div class="footer-word" aria-hidden="true">ТопДент</div>
+    <div class="footer-grid">
+      <div class="footer-col">
+        <span class="footer-cap">Стоматология</span>
+        <span>Кемерово, ул. Институтская, 34</span>
+        <span>Пн–Сб 9:00–20:00, Вс — выходной</span>
+      </div>
+      <div class="footer-col">
+        <span class="footer-cap">Разделы</span>
+        <a href="#prices">Услуги и цены</a>
+        <a href="#process">Как лечим</a>
+        <a href="#faq">Вопросы</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-cap">Связь</span>
+        <a href="tel:+73842000000">+7 (3842) 00-00-00</a>
+        <a href="https://t.me/" target="_blank" rel="noopener">@topdent42</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year">2026</span> ТопДент · Кемерово</span>
+      <span class="footer-demo">Демо-проект студии NOIR · цены и контакты — для примера</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ПЛАВАЮЩАЯ ЗАПИСЬ -->
+<a href="#book" class="float-cta" id="floatCta">
+  <span class="dot-live"></span>Записаться · ближайшее окно 16:40
+</a>
+
+<script src="topdent.js"></script>
+</body>
+</html>
