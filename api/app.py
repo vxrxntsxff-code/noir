@@ -1,5 +1,5 @@
 import os, json, html, urllib.request, urllib.parse
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
@@ -36,7 +36,6 @@ def kb_inline(buttons):
 
 
 def kb_reply(rows, placeholder="", one_time=False):
-    """rows = [[text, text], [text, text, text]] — список рядов"""
     if rows and isinstance(rows[0], str):
         rows = [[b] for b in rows]
     return {
@@ -45,6 +44,10 @@ def kb_reply(rows, placeholder="", one_time=False):
         "one_time_keyboard": one_time,
         "input_field_placeholder": placeholder,
     }
+
+
+def now_msk():
+    return datetime.now(timezone(timedelta(hours=3)))
 
 
 def contract_url(params):
@@ -65,6 +68,7 @@ def send_lead(text, buttons=None):
 
 # ── Константы ───────────────────────────────────────────
 SITE_URL_PROD = "https://noir-rosy.vercel.app"
+PRICE_ACTUAL = "29 000"
 
 MAIN_KB = kb_reply(
     [["Оценить проект", "Подобрать решение", "Получить разбор"],
@@ -72,9 +76,10 @@ MAIN_KB = kb_reply(
     "Выберите действие"
 )
 CANCEL_KB = kb_reply(["Отмена"], "Ваш ответ")
+SKIP_KB = kb_reply(["Пропустить", "Отмена"])
 
-# ── Приветствие (вариант A по умолчанию) ────────────────
-WELCOME_A = (
+# ── Приветствие ─────────────────────────────────────────
+WELCOME = (
     "<b>NOIR LAB</b>\n\n"
     "Это не чат поддержки.\n"
     "Это вход в проект цифровой студии.\n\n"
@@ -83,19 +88,16 @@ WELCOME_A = (
     "Начнём с цели."
 )
 
-WELCOME_C = (
-    "<b>NOIR LAB</b>\n\n"
-    "Набор на август открыт.\n"
-    "Свободны 2 слота.\n\n"
-    "Мы работаем не со всеми —\n"
-    "и это нормально для обеих сторон.\n\n"
-    "Куда вас направить."
-)
+# ── Локализация ─────────────────────────────────────────
+GOAL_RU = {"leads": "Заявки и продажи", "trust": "Доверие и имидж",
+           "time": "Экономия времени", "all": "Всё вместе"}
+SITE_RU = {"no": "Нет", "bad": "Есть, но не работает", "redesign": "Есть, нужен редизайн"}
+DL_RU = {"2w": "В течение 2 недель", "month": "Месяц", "none": "Без спешки"}
 
 # ── Экраны квалификации ─────────────────────────────────
 SCREEN_GOAL = (
     "<b>ЦЕЛЬ · 01</b>\n"
-    "шаг 01 / 05\n\n"
+    "шаг 01 / 06\n\n"
     "Зачем вам проект — одной строкой."
 )
 GOAL_KB = kb_inline([
@@ -106,10 +108,16 @@ GOAL_KB = kb_inline([
 ])
 
 SCREEN_NICHE = (
-    "<b>КВАЛИФИКАЦИЯ · 02</b>\n"
-    "шаг 02 / 05\n\n"
-    "Чем занимаетесь — двумя словами.\n"
-    "(ниша, город)"
+    "<b>НИША · 02</b>\n"
+    "шаг 02 / 06\n\n"
+    "Чем занимаетесь — одной строкой.\n"
+    "(например: стоматология, салон красоты, ресторан)"
+)
+
+SCREEN_CITY = (
+    "<b>ГОРОД · 03</b>\n"
+    "шаг 03 / 06\n\n"
+    "Где работаете?"
 )
 
 SITE_KB = kb_inline([
@@ -119,8 +127,8 @@ SITE_KB = kb_inline([
 ])
 
 SCREEN_DEADLINE = (
-    "<b>СРОК · 03</b>\n"
-    "шаг 03 / 05\n\n"
+    "<b>СРОК · 04</b>\n"
+    "шаг 04 / 06\n\n"
     "Когда нужен запуск."
 )
 DEADLINE_KB = kb_inline([
@@ -129,63 +137,43 @@ DEADLINE_KB = kb_inline([
     [{"text": "Без спешки", "callback_data": "dl:none"}],
 ])
 
-SCREEN_DONE = (
-    "<b>✓ Заявка в студии.</b>\n\n"
-    "Ваш договор уже собран —\n"
-    "данные подставлены, можно открыть и распечатать:\n"
-    "{url}\n\n"
-    "Ответим в течение 15 минут в рабочее время."
+SCREEN_TASK = (
+    "<b>ЗАДАЧА · 05</b>\n"
+    "шаг 05 / 06\n\n"
+    "Кратко опишите, что нужно сделать.\n"
+    "(лендинг с записью, бот для приёма заявок,\n"
+    "сайт-визитка с каталогом и т.д.)"
 )
-DONE_KB = kb_inline([
-    [{"text": "Написать в Telegram", "url": "https://t.me/noir_lab42"}],
-    [{"text": "Позвонить", "url": "tel:+79515922618"}],
-    [{"text": "В главное меню", "callback_data": "menu"}],
-])
-
-# ── Вилки бюджета ───────────────────────────────────────
-BUDGET = {
-    "start":    {"label": "Старт",    "range": "29 000 – 39 000 ₽",
-                 "includes": "лендинг + оплата + метрика + заявки в TG",
-                 "deadline": "2–3 нед"},
-    "business": {"label": "Бизнес",   "range": "59 000 – 79 000 ₽",
-                 "includes": "+ бот + CRM, ни одна заявка не теряется",
-                 "deadline": "3–4 нед"},
-    "premium":  {"label": "Премиум",  "range": "112 000 – 149 000 ₽",
-                 "includes": "+ AI-ассистент + полная автоматизация",
-                 "deadline": "от месяца"},
-}
 
 
 def budget_screen(level):
-    b = BUDGET[level]
+    labels = {"start": "Старт", "business": "Бизнес", "premium": "Премиум"}
     return (
-        f"<b>УРОВЕНЬ ПРОЕКТА · 04</b>\n"
-        f"шаг 04 / 05\n\n"
-        f"По вашим ответам — уровень «{b['label']}».\n\n"
-        f"Ориентир по бюджету: {b['range']}\n"
-        f"Нижняя граница — первым трём клиентам,\n"
-        f"верхняя — обычный прайс после набора.\n\n"
-        f"Что входит: {b['includes']}.\n"
-        f"Срок: {b['deadline']}."
+        f"<b>УРОВЕНЬ · 05</b>\n\n"
+        f"По вашим ответам — уровень «{labels[level]}».\n\n"
+        f"Актуальная цена: {PRICE_ACTUAL} ₽\n"
+        f"(первым 3 клиентам, обычный прайс выше)\n\n"
+        f"Срок: {DL_RU.get(_state.get('deadline', ''), '—')}.\n\n"
+        f"Всё включено: договор, чек НПД, поддержка 2 месяца."
     )
 
 
-BUDGET_KB_MENU = kb_inline([
+BUDGET_KB = kb_inline([
     [{"text": "Это мой уровень", "callback_data": "budget:ok"},
      {"text": "Показать другие", "callback_data": "budget:show"}],
     [{"text": "Нужен созвон", "callback_data": "budget:call"}],
 ])
 
 BUDGET_KB_LEVELS = kb_inline([
-    [{"text": "Старт — 29–39K", "callback_data": "budget:start"},
-     {"text": "Бизнес — 59–79K", "callback_data": "budget:business"}],
-    [{"text": "Премиум — 112–149K", "callback_data": "budget:premium"}],
+    [{"text": "Старт — 29K", "callback_data": "budget:start"},
+     {"text": "Бизнес — 59K", "callback_data": "budget:business"}],
+    [{"text": "Премиум — 112K", "callback_data": "budget:premium"}],
     [{"text": "Нужен созвон", "callback_data": "budget:call"}],
 ])
 
 SCREEN_DEMO = (
-    "<b>ДОКАЗАТЕЛЬСТВО · 05</b>\n"
-    "шаг 05 / 05\n\n"
+    "<b>ДОКАЗАТЕЛЬСТВО · 06</b>\n"
+    "шаг 06 / 06\n\n"
     "Не обещаем — показываем.\n"
     "Один проект, чтобы понять уровень."
 )
@@ -208,68 +196,34 @@ FILTER_KB = kb_inline([
     [{"text": "В главное меню", "callback_data": "menu"}],
 ])
 
-SCREEN_AUDIT_HEADER = "<b>РАЗБОР · {niche}</b>"
-
-EVAL_HEADER = "<b>ОЦЕНКА ПРОЕКТА</b>"
-EVAL_BODY = (
-    "Принято. Живой разбор пришлёт человек —\n"
-    "обычно в течение 15 минут в рабочее время.\n\n"
-    "А пока — три вещи, которые чаще всего\n"
-    "мешают сайту продавать:\n"
-    "— нет одного главного действия на экране;\n"
-    "— цена и срок спрятаны или не зафиксированы;\n"
-    "— заявка живёт в мессенджере, а не в CRM.\n\n"
-    "Если хоть одно про вас — мы это чиним."
-)
-
-SOLUTION_HEADER = "<b>ПОДБОР РЕШЕНИЯ</b>"
-SOLUTION_BODY = "Что болит сильнее всего — одной строкой."
-SOLUTION_KB = kb_inline([
-    [{"text": "Нет заявок", "callback_data": "sol:leads"},
-     {"text": "Тону в рутине", "callback_data": "sol:routine"}],
-    [{"text": "Нет системы", "callback_data": "sol:nosys"},
-     {"text": "Всё сразу", "callback_data": "sol:all"}],
-])
-
-ANTIPRESS = (
-    "Можно не оставлять заявку.\n"
-    "Можно просто открыть один проект\n"
-    "и решить самим."
-)
-ANTIPRESS_KB = kb_inline([
-    [{"text": "Открыть работы", "url": f"{SITE_URL_PROD}/cases.html"}],
+DONE_KB = kb_inline([
     [{"text": "Написать в Telegram", "url": "https://t.me/noir_lab42"}],
+    [{"text": "Позвонить", "url": "tel:+79515922618"}],
+    [{"text": "В главное меню", "callback_data": "menu"}],
 ])
 
 
 # ── Скоринг ─────────────────────────────────────────────
 def score(data):
+    dl = data.get("deadline", "")
     goal = data.get("goal", "")
     site = data.get("site", "")
-    niche = data.get("niche", "").lower()
-    dl = data.get("deadline", "")
-
-    premium_niche = any(w in niche for w in [
-        "стоматолог", "клиник", "опт", " HoReCa", "ресторан", "отель", "салон", " beauty"
-    ])
 
     # Фильтр: личное / некоммерческое
     if goal in ("personal", "hobby"):
         return "filter"
 
-    # Премиум
-    if goal == "all" or (goal == "trust" and premium_niche):
-        return "premium"
-    if site == "bad" and goal == "leads":
-        return "business"
-    if dl == "2w" and goal == "all":
-        return "call"
-
-    # Старт
-    if goal == "time" and site == "no":
+    # Прямое соответствие: срок → уровень
+    if dl == "2w":
         return "start"
+    if dl == "month":
+        return "business"
+    if dl == "none":
+        # Без спешки — премиум, но если цель простая — бизнес
+        if goal == "time" and site == "no":
+            return "business"
+        return "premium"
 
-    # Бизнес по умолчанию
     return "business"
 
 
@@ -292,7 +246,7 @@ def score_audit(niche, site, goal):
 # ── Хендлеры ────────────────────────────────────────────
 def handle_start(chat_id):
     _state.pop(chat_id, None)
-    send(chat_id, WELCOME_A, reply_markup=MAIN_KB)
+    send(chat_id, WELCOME, reply_markup=MAIN_KB)
 
 
 def handle_menu(chat_id):
@@ -307,16 +261,24 @@ def handle_text(chat_id, text):
         if text == "Оценить проект":
             _state[chat_id] = {"step": "eval_material"}
             send(chat_id,
-                 f"{EVAL_HEADER}\n\n"
+                 "<b>ОЦЕНКА ПРОЕКТА</b>\n\n"
                  "Пришлите ссылку, скрин или опишите проект — одним сообщением.",
                  reply_markup=CANCEL_KB)
         elif text == "Подобрать решение":
             _state[chat_id] = {"step": "sol_pain"}
-            send(chat_id, f"{SOLUTION_HEADER}\n\n{SOLUTION_BODY}", reply_markup=SOLUTION_KB)
+            send(chat_id,
+                 "<b>ПОДБОР РЕШЕНИЯ</b>\n\n"
+                 "Что болит сильнее всего — одной строкой.",
+                 reply_markup=kb_inline([
+                     [{"text": "Нет заявок", "callback_data": "sol:leads"},
+                      {"text": "Тону в рутине", "callback_data": "sol:routine"}],
+                     [{"text": "Нет системы", "callback_data": "sol:nosys"},
+                      {"text": "Всё сразу", "callback_data": "sol:all"}],
+                 ]))
         elif text == "Получить разбор":
             _state[chat_id] = {"step": "audit_niche"}
             send(chat_id,
-                 "<b>РАЗБОР</b>\n\nЧем занимаетесь — двумя словами. (ниша, город)",
+                 "<b>РАЗБОР</b>\n\nЧем занимаетесь — одной строкой.",
                  reply_markup=CANCEL_KB)
         elif text == "Открыть работы":
             kb = kb_inline([
@@ -333,7 +295,7 @@ def handle_text(chat_id, text):
 
     step = st["step"]
 
-    # A: Оценить проект — принимаем любой текст
+    # A: Оценить проект
     if step == "eval_material":
         _state.pop(chat_id, None)
         send_lead(
@@ -342,7 +304,7 @@ def handle_text(chat_id, text):
             [[{"text": "Ответить клиенту", "url": f"https://t.me/{chat_id}"}]]
         )
         send(chat_id,
-             f"{EVAL_HEADER}\n\n"
+             "<b>ОЦЕНКА ПРОЕКТА</b>\n\n"
              "Принято. Живой разбор пришлёт человек —\n"
              "обычно в течение 15 минут в рабочее время.\n\n"
              "А пока — три вещи, которые чаще всего\n"
@@ -352,7 +314,7 @@ def handle_text(chat_id, text):
              "— заявка живёт в мессенджере, а не в CRM.\n\n"
              "Если хоть одно про вас — мы это чиним.",
              reply_markup=kb_inline([
-                 [{"text": "Оставить заявку на разбор", "callback_data": "flow:start"}],
+                 [{"text": "Оставить заявку", "callback_data": "flow:start"}],
                  [{"text": "В главное меню", "callback_data": "menu"}],
              ]))
         return
@@ -370,80 +332,53 @@ def handle_text(chat_id, text):
              ]))
         return
 
-    # B: Подобрать решение — ответ на "что болит"
-    if step == "sol_pain":
-        sol_type = ""
-        t = text.lower()
-        if any(w in t for w in ["заявк", "продаж", "клиент"]):
-            sol_type = "leads"
-        elif any(w in t for w in ["рутин", "время", "задач"]):
-            sol_type = "routine"
-        elif any(w in t for w in ["систем", "crm", "учёт"]):
-            sol_type = "nosys"
-        else:
-            sol_type = "all"
-
-        level = score_solution(sol_type)
-        _state.pop(chat_id, None)
-
-        if level == "premium":
-            send(chat_id,
-                 "Тогда вам — система целиком, а не латание дыр.\n\n"
-                 "Уровень «Премиум»: 112 000–149 000 ₽\n"
-                 "AI-ассистент + бот + CRM + оплата + всё под ключ.",
-                 reply_markup=kb_inline([
-                     [{"text": "Это мой уровень", "callback_data": "flow:name"}],
-                     [{"text": "Нужен созвон", "callback_data": "flow:call"}],
-                     [{"text": "Показать другие уровни", "callback_data": "budget:show"}],
-                 ]))
-        else:
-            b = BUDGET[level]
-            send(chat_id,
-                 f"Тогда вам — система целиком, а не латание дыр.\n\n"
-                 f"Уровень «{b['label']}»: {b['range']}\n"
-                 f"Что входит: {b['includes']}.",
-                 reply_markup=kb_inline([
-                     [{"text": "Это мой уровень", "callback_data": "flow:name"}],
-                     [{"text": "Нужен созвон", "callback_data": "flow:call"}],
-                     [{"text": "Показать другие уровни", "callback_data": "budget:show"}],
-                 ]))
-        return
-
-    # Квалификация: ввод ниши
+    # Квалификация: ниша
     if step == "niche":
         st["data"]["niche"] = text
+        st["step"] = "city"
+        send(chat_id, SCREEN_CITY, reply_markup=CANCEL_KB)
+        return
+
+    # Квалификация: город
+    if step == "city":
+        st["data"]["city"] = text
         st["step"] = "site_ask"
         send(chat_id, "Сайт уже есть?", reply_markup=SITE_KB)
         return
 
-    # Квалификация: ввод имени
+    # Квалификация: задача
+    if step == "task":
+        st["data"]["task"] = text
+        st["step"] = "name"
+        send(chat_id,
+             "<b>КОНТАКТЫ · 06</b>\n\n"
+             "Как к вам обращаться? (ФИО)",
+             reply_markup=CANCEL_KB)
+        return
+
+    # Квалификация: ФИО
     if step == "name":
         st["data"]["name"] = text
-        st["step"] = "contact"
-        send(chat_id, "Телефон или Telegram для связи?", reply_markup=CANCEL_KB)
+        st["step"] = "phone"
+        send(chat_id, "Телефон для связи:", reply_markup=CANCEL_KB)
         return
 
-    # Квалификация: ввод контакта
-    if step == "contact":
-        st["data"]["contact"] = text
-        st["step"] = "ref"
+    # Квалификация: телефон
+    if step == "phone":
+        st["data"]["phone"] = text
+        st["step"] = "telegram"
         send(chat_id,
-             "Ссылка на сайт / соцсети (или Пропустить):",
-             reply_markup=kb_reply(["Пропустить", "Отмена"]))
+             "Telegram для связи (или Пропустить):",
+             reply_markup=SKIP_KB)
         return
 
-    # Квалификация: ссылка / бриф
-    if step == "ref":
-        ref = "" if text == "Пропустить" else text
-        st["data"]["ref"] = ref
+    # Квалификация: telegram
+    if step == "telegram":
+        if text != "Пропустить":
+            st["data"]["telegram"] = text
+        else:
+            st["data"]["telegram"] = ""
         _finish_qualification(chat_id, st["data"])
-        return
-
-    # Квалификация: текст ниши (через inline кнопку сайта)
-    if step == "niche_text":
-        st["data"]["niche"] = text
-        st["step"] = "site_ask"
-        send(chat_id, "Сайт уже есть?", reply_markup=SITE_KB)
         return
 
     send(chat_id, "Отправьте /start чтобы начать.")
@@ -452,7 +387,6 @@ def handle_text(chat_id, text):
 def handle_callback(chat_id, data):
     st = _state.get(chat_id)
 
-    # Навигация
     if data == "menu":
         handle_menu(chat_id)
         return
@@ -460,20 +394,6 @@ def handle_callback(chat_id, data):
     if data == "flow:start":
         _state[chat_id] = {"step": "goal", "data": {}}
         send(chat_id, SCREEN_GOAL, reply_markup=GOAL_KB)
-        return
-
-    if data == "flow:name":
-        _state[chat_id] = {"step": "name", "data": st["data"] if st else {}}
-        send(chat_id, "Как к вам обращаться?", reply_markup=CANCEL_KB)
-        return
-
-    if data == "flow:call":
-        _state.pop(chat_id, None)
-        send(chat_id,
-             "Хорошо, запишем на созвон.\n"
-             "Как к вам обращаться?",
-             reply_markup=CANCEL_KB)
-        _state[chat_id] = {"step": "name", "data": {"need_call": True}}
         return
 
     # Цель
@@ -505,10 +425,10 @@ def handle_callback(chat_id, data):
             level = score_audit(niche, site, goal)
             _state.pop(chat_id, None)
 
-            b = BUDGET[level]
+            labels = {"start": "Старт", "business": "Бизнес", "premium": "Премиум"}
             niche_safe = html.escape(niche)
             send(chat_id,
-                 f"{SCREEN_AUDIT_HEADER.format(niche=niche_safe)}\n\n"
+                 f"<b>РАЗБОР · {niche_safe}</b>\n\n"
                  f"Что хорошо:\nниша с повторными клиентами — автоматизация\n"
                  f"окупается быстрее всего.\n\n"
                  f"Что слабо:\n"
@@ -517,7 +437,7 @@ def handle_callback(chat_id, data):
                  f"Что исправить:\n"
                  f"онлайн-запись + напоминания + CRM в одном контуре.\n\n"
                  f"Следующий шаг:\n"
-                 f"уровень «{b['label']}», ориентир {b['range']}.\n"
+                 f"уровень «{labels[level]}», цена {PRICE_ACTUAL} ₽.\n"
                  f"Показать, как это выглядит вживую?",
                  reply_markup=kb_inline([
                      [{"text": "Показать демо", "url": f"{SITE_URL_PROD}/topdent.html"}],
@@ -538,42 +458,27 @@ def handle_callback(chat_id, data):
                 send(chat_id, SCREEN_FILTER, reply_markup=FILTER_KB)
                 return
 
-            if level == "call":
-                _state.pop(chat_id, None)
-                send(chat_id,
-                     "Честно: за 2 недели комплекс не собрать.\n"
-                     "Нужен созвон, чтобы понять приоритеты.",
-                     reply_markup=kb_inline([
-                         [{"text": "Записаться на созвон", "callback_data": "flow:call"}],
-                         [{"text": "В главное меню", "callback_data": "menu"}],
-                     ]))
-                return
-
             st["step"] = "budget_show"
-            send(chat_id, budget_screen(level), reply_markup=BUDGET_KB_MENU)
+            send(chat_id, budget_screen(level), reply_markup=BUDGET_KB)
         return
 
     # Бюджет
     if data == "budget:ok":
         if st:
-            st["step"] = "demo"
-        send(chat_id, SCREEN_DEMO, reply_markup=DEMO_KB)
+            st["step"] = "task"
+        send(chat_id, SCREEN_TASK, reply_markup=CANCEL_KB)
         return
 
     if data == "budget:show":
-        if st:
-            st["step"] = "budget_pick"
-        send(chat_id,
-             "Все уровни с вилками budgets:",
-             reply_markup=BUDGET_KB_LEVELS)
+        send(chat_id, "Все уровни:", reply_markup=BUDGET_KB_LEVELS)
         return
 
     if data.startswith("budget:") and data[7:] in ("start", "business", "premium"):
         level = data[7:]
         if st:
             st["data"]["level"] = level
-            st["step"] = "demo"
-        send(chat_id, budget_screen(level), reply_markup=DEMO_KB)
+            st["step"] = "task"
+        send(chat_id, SCREEN_TASK, reply_markup=CANCEL_KB)
         return
 
     if data == "budget:call":
@@ -584,19 +489,33 @@ def handle_callback(chat_id, data):
         _state[chat_id] = {"step": "name", "data": {"need_call": True}}
         return
 
-    # Демо →下一步 к контакту
-    if data == "demo:next":
-        if st:
-            st["step"] = "name"
-        send(chat_id, "ПОСЛЕДНИЙ ШАГ\n\nКак к вам обращаться.", reply_markup=CANCEL_KB)
-        return
-
+    # Демо → заявка
     if data == "demo:apply":
         if st:
             st["step"] = "name"
         else:
             _state[chat_id] = {"step": "name", "data": {}}
-        send(chat_id, "Как к вам обращаться?", reply_markup=CANCEL_KB)
+        send(chat_id,
+             "<b>КОНТАКТЫ</b>\n\nКак к вам обращаться? (ФИО)",
+             reply_markup=CANCEL_KB)
+        return
+
+    # Подобрать решение
+    if data.startswith("sol:"):
+        sol_type = data[4:]
+        level = score_solution(sol_type)
+        _state.pop(chat_id, None)
+
+        labels = {"start": "Старт", "business": "Бизнес", "premium": "Премиум"}
+        send(chat_id,
+             f"Тогда вам — система целиком, а не латание дыр.\n\n"
+             f"Уровень «{labels[level]}»: {PRICE_ACTUAL} ₽\n"
+             f"Всё включено: договор, чек НПД, поддержка 2 месяца.",
+             reply_markup=kb_inline([
+                 [{"text": "Это мой уровень", "callback_data": "flow:start"}],
+                 [{"text": "Нужен созвон", "callback_data": "budget:call"}],
+                 [{"text": "Показать другие уровни", "callback_data": "budget:show"}],
+             ]))
         return
 
     # Фильтр
@@ -615,56 +534,59 @@ def handle_callback(chat_id, data):
 
     if data == "filter:force":
         _state[chat_id] = {"step": "name", "data": {}}
-        send(chat_id, "Как к вам обращаться?", reply_markup=CANCEL_KB)
-        return
-
-    # Отмена
-    if data == "cancel":
-        handle_menu(chat_id)
-        return
-
-    # Пакет (обратная совместимость)
-    if data.startswith("pkg:"):
-        pkg, price = data[4:].split("|", 1)
-        _state[chat_id] = {"step": "name", "data": {"package": pkg, "price": price}}
-        send(chat_id, f"Выбран пакет «{pkg}». Как к вам обращаться?", reply_markup=CANCEL_KB)
+        send(chat_id, "Как к вам обращаться? (ФИО)", reply_markup=CANCEL_KB)
         return
 
 
 def _finish_qualification(chat_id, data):
     name = html.escape(data.get("name", ""))
-    contact = html.escape(data.get("contact", ""))
+    phone = html.escape(data.get("phone", ""))
+    telegram = html.escape(data.get("telegram", ""))
     niche = html.escape(data.get("niche", ""))
-    goal = html.escape(data.get("goal", ""))
-    site = html.escape(data.get("site", ""))
-    dl = html.escape(data.get("deadline", ""))
-    ref = html.escape(data.get("ref", ""))
+    city = html.escape(data.get("city", ""))
+    goal = GOAL_RU.get(data.get("goal", ""), data.get("goal", ""))
+    site = SITE_RU.get(data.get("site", ""), data.get("site", ""))
+    dl = DL_RU.get(data.get("deadline", ""), data.get("deadline", ""))
+    task = html.escape(data.get("task", ""))
     level = data.get("level", score(data))
-    now = datetime.now().strftime("%d.%m.%Y %H:%M")
+    dt = now_msk()
+    date_str = dt.strftime("%d.%m.%Y")
+    time_str = dt.strftime("%H:%M")
+    num = dt.strftime("%Y-%m-001")
 
-    b = BUDGET.get(level, BUDGET["business"])
+    labels = {"start": "Старт", "business": "Бизнес", "premium": "Премиум"}
+    label = labels.get(level, "Бизнес")
+
     url = contract_url({
         "name": data.get("name", ""),
-        "phone": data.get("contact", ""),
-        "task": f"Заявка из бота · {b['label']} · {niche}",
-        "price": b["range"],
+        "phone": data.get("phone", ""),
+        "task": data.get("task", ""),
+        "price": "29000",
+        "date": date_str,
+        "num": num,
     })
 
     # Лид в группу
     lead = (
-        f"<b>НОВАЯ ЗАЯВКА · уровень «{b['label']}»</b>\n\n"
-        f"Имя: {name}\n"
+        f"<b>НОВАЯ ЗАЯВКА · {label}</b>\n\n"
+        f"ФИО: {name}\n"
+        f"Телефон: {phone}\n"
+        f"Telegram: {telegram or '—'}\n"
         f"Ниша: {niche}\n"
+        f"Город: {city}\n"
         f"Цель: {goal}\n"
         f"Сайт: {site}\n"
         f"Срок: {dl}\n"
-        f"Контакт: {contact}\n"
-        f"Ориентир: {b['range']}\n"
-        f"{now}"
+        f"Задача: {task}\n\n"
+        f"Цена: {PRICE_ACTUAL} ₽\n"
+        f"{date_str} · {time_str} МСК"
     )
     lead_kb = [[{"text": "Договор клиента", "url": url}]]
-    if data.get("contact", "").startswith("@"):
-        lead_kb.append([{"text": "Написать в TG", "url": f"https://t.me/{data['contact'].lstrip('@')}"}])
+    if data.get("telegram"):
+        tg_nick = data["telegram"].lstrip("@")
+        lead_kb.append([{"text": "Написать в TG", "url": f"https://t.me/{tg_nick}"}])
+    elif data.get("phone"):
+        lead_kb.append([{"text": "Позвонить", "url": f"tel:{data['phone']}"}])
     send_lead(lead, lead_kb)
 
     # Ответ клиенту
@@ -683,14 +605,25 @@ def handle_form(payload):
     phone = html.escape(payload.get("phone", "---"))
     message = html.escape(payload.get("message", "---"))
     source = payload.get("source", "")
+    dt = now_msk()
+    date_str = dt.strftime("%d.%m.%Y")
     url = contract_url({
         "name": payload.get("name", ""),
         "phone": payload.get("phone", ""),
         "task": payload.get("message", ""),
+        "price": "29000",
+        "date": date_str,
+        "num": dt.strftime("%Y-%m-001"),
     })
-    lead = f"<b>Заявка с сайта</b>\n\nИмя: {name}\nТелефон: {phone}\nСообщение: {message}"
+    lead = (
+        f"<b>ЗАЯВКА С САЙТА</b>\n\n"
+        f"ФИО: {name}\n"
+        f"Телефон: {phone}\n"
+        f"Сообщение: {message}"
+    )
     if source:
         lead += f"\nИсточник: {source}"
+    lead += f"\n\nЦена: {PRICE_ACTUAL} ₽\n{date_str}"
     send_lead(lead, [[{"text": "Договор", "url": url}]])
     return {"ok": True, "contract_url": url}
 
