@@ -105,7 +105,7 @@ def handle_form(payload):
     return {"ok": True, "contract_url": url}
 
 
-def handler(request):
+def app(request):
     if request.method == "GET":
         return {"statusCode": 200, "body": "NOIR bot — ok"}
 
