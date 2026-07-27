@@ -1,11 +1,11 @@
 import json, os, urllib.request, urllib.parse
+from http.server import BaseHTTPRequestHandler
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 OWNER_ID = int(os.environ.get("OWNER_ID", "0"))
 LEADS_CHAT_ID = os.environ.get("LEADS_CHAT_ID", "")
 SITE_URL = os.environ.get("SITE_URL", "https://noir42.ru")
 
-# ponytail: in-memory state, resets on cold start — good enough for MVP
 _state = {}
 
 
@@ -17,8 +17,8 @@ def tg(method, data=None):
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             return json.loads(resp.read())
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
+    except Exception:
+        return {"ok": False}
 
 
 def send(chat_id, text, reply_markup=None):
@@ -59,10 +59,8 @@ def handle_text(chat_id, text):
     if not st:
         send(chat_id, "Отправьте /start чтобы начать.")
         return
-
     step = st["step"]
     data = st["data"]
-
     if step == "wait_name":
         data["name"] = text
         st["step"] = "wait_phone"
@@ -80,7 +78,7 @@ def handle_text(chat_id, text):
             [{"text": "На сайт", "url": SITE_URL}],
         ]}
         send(chat_id, "Готово! Договор:", reply_markup=kb)
-        notify_owner(f"📋 Заявка\nИмя: {data['name']}\nКонтакт: {data['phone']}\nЗадача: {data['task']}\nДоговор: {url}")
+        notify_owner(f"Заявка\nИмя: {data['name']}\nКонтакт: {data['phone']}\nЗадача: {data['task']}\nДоговор: {url}")
 
 
 def handle_callback(chat_id, data):
@@ -101,15 +99,11 @@ def handle_form(payload):
     message = payload.get("message", "—")
     url = contract_url({"name": name, "phone": phone, "task": message})
     if LEADS_CHAT_ID:
-        send(LEADS_CHAT_ID, f"🌐 Заявка с сайта\nИмя: {name}\nТелефон: {phone}\nСообщение: {message}\nДоговор: {url}")
+        send(LEADS_CHAT_ID, f"Заявка с сайта\nИмя: {name}\nТелефон: {phone}\nСообщение: {message}\nДоговор: {url}")
     return {"ok": True, "contract_url": url}
 
 
-def app(request):
-    if request.method == "GET":
-        return {"statusCode": 200, "body": "NOIR bot — ok"}
-
-    body = json.loads(request.body)
+def process_update(body):
     msg = body.get("message") or body.get("callback_query")
     if not msg:
         return {"statusCode": 200, "body": "ok"}
@@ -134,3 +128,24 @@ def app(request):
             handle_text(chat_id, text)
 
     return {"statusCode": 200, "body": "ok"}
+
+
+class handler(BaseHTTPRequestHandler):
+    def _send(self, status, body):
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body.encode() if isinstance(body, str) else body)
+
+    def do_GET(self):
+        self._send(200, json.dumps({"status": "ok", "bot": "NOIR"}))
+
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            body = json.loads(raw)
+            result = process_update(body)
+            self._send(result["statusCode"], result.get("body", "ok"))
+        except Exception as e:
+            self._send(500, json.dumps({"error": str(e)}))
