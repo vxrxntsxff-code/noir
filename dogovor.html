@@ -83,6 +83,9 @@
       <h3>Заказчик</h3>
       <span class="fill fill-wide" id="client-name-2" contenteditable="true"></span>
       Телефон: <span class="fill" id="client-phone-2" contenteditable="true">+7 900 123-45-67</span><br>
+      Telegram: <span class="fill" id="client-tg" contenteditable="true"></span><br>
+      Email: <span class="fill" id="client-email" contenteditable="true"></span><br>
+      Город: <span class="fill" id="client-city" contenteditable="true"></span>
       <div class="sign-line">подпись / расшифровка</div>
     </div>
   </div>
@@ -92,7 +95,7 @@
 <script>
 (function () {
   // Предзаполнение из параметров ссылки:
-  // dogovor.html?name=Иван&phone=+7999...&task=Лендинг&price=29 000&date=...&num=2026-08
+  // dogovor.html?name=...&phone=...&task=...&price=...&date=...&num=...&tg=...&email=...&city=...
   const p = new URLSearchParams(window.location.search);
   const map = {
     'client-name': p.get('name'),
@@ -102,7 +105,10 @@
     'client-task': p.get('task'),
     'deal-price': p.get('price'),
     'deal-date': p.get('date'),
-    'deal-num': p.get('num')
+    'deal-num': p.get('num'),
+    'client-tg': p.get('tg'),
+    'client-email': p.get('email'),
+    'client-city': p.get('city'),
   };
   for (const [id, val] of Object.entries(map)) {
     const el = document.getElementById(id);
