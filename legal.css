@@ -23,13 +23,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.doc,
-.doc-sheet {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
+/* ponytail: removed translateZ(0) + backface-visibility — caused white screen in Safari */
 
 .doc { max-width: 820px; margin: 0 auto; padding: 48px 28px 80px; }
 

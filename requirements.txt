@@ -1,1 +1,1 @@
-# Vercel Python — stdlib only, no external deps
+aiogram>=3.4.0
