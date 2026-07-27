@@ -35,9 +35,12 @@ def kb_inline(buttons):
     return {"inline_keyboard": buttons}
 
 
-def kb_reply(buttons, placeholder="", one_time=False):
+def kb_reply(rows, placeholder="", one_time=False):
+    """rows = [[text, text], [text, text, text]] — список рядов"""
+    if rows and isinstance(rows[0], str):
+        rows = [[b] for b in rows]
     return {
-        "keyboard": [[{"text": b}] for b in buttons],
+        "keyboard": [[{"text": t} for t in row] for row in rows],
         "resize_keyboard": True,
         "one_time_keyboard": one_time,
         "input_field_placeholder": placeholder,
@@ -64,7 +67,8 @@ def send_lead(text, buttons=None):
 SITE_URL_PROD = "https://noir-rosy.vercel.app"
 
 MAIN_KB = kb_reply(
-    ["Оценить проект", "Подобрать решение", "Получить разбор", "Открыть работы", "Оставить заявку"],
+    [["Оценить проект", "Подобрать решение", "Получить разбор"],
+     ["Открыть работы", "Оставить заявку"]],
     "Выберите действие"
 )
 CANCEL_KB = kb_reply(["Отмена"], "Ваш ответ")
@@ -120,8 +124,8 @@ SCREEN_DEADLINE = (
     "Когда нужен запуск."
 )
 DEADLINE_KB = kb_inline([
-    [{"text": "В течение 2 недель", "callback_data": "dl:2w"}],
-    [{"text": "Месяц", "callback_data": "dl:month"}],
+    [{"text": "В течение 2 недель", "callback_data": "dl:2w"},
+     {"text": "Месяц", "callback_data": "dl:month"}],
     [{"text": "Без спешки", "callback_data": "dl:none"}],
 ])
 
@@ -167,15 +171,15 @@ def budget_screen(level):
 
 
 BUDGET_KB_MENU = kb_inline([
-    [{"text": "Это мой уровень", "callback_data": "budget:ok"}],
-    [{"text": "Показать другие уровни", "callback_data": "budget:show"}],
+    [{"text": "Это мой уровень", "callback_data": "budget:ok"},
+     {"text": "Показать другие", "callback_data": "budget:show"}],
     [{"text": "Нужен созвон", "callback_data": "budget:call"}],
 ])
 
 BUDGET_KB_LEVELS = kb_inline([
-    [{"text": f"Старт — 29 000–39 000 ₽", "callback_data": "budget:start"}],
-    [{"text": f"Бизнес — 59 000–79 000 ₽", "callback_data": "budget:business"}],
-    [{"text": f"Премиум — 112 000–149 000 ₽", "callback_data": "budget:premium"}],
+    [{"text": "Старт — 29–39K", "callback_data": "budget:start"},
+     {"text": "Бизнес — 59–79K", "callback_data": "budget:business"}],
+    [{"text": "Премиум — 112–149K", "callback_data": "budget:premium"}],
     [{"text": "Нужен созвон", "callback_data": "budget:call"}],
 ])
 
@@ -188,7 +192,7 @@ SCREEN_DEMO = (
 DEMO_KB = kb_inline([
     [{"text": "Стоматология · запись", "url": f"{SITE_URL_PROD}/topdent.html"}],
     [{"text": "Все работы", "url": f"{SITE_URL_PROD}/cases.html"}],
-    [{"text": "Главный сайт", "url": f"{SITE_URL_PROD}/index.html"}],
+    [{"text": "Оставить заявку", "callback_data": "demo:apply"}],
 ])
 
 SCREEN_FILTER = (
@@ -585,6 +589,14 @@ def handle_callback(chat_id, data):
         if st:
             st["step"] = "name"
         send(chat_id, "ПОСЛЕДНИЙ ШАГ\n\nКак к вам обращаться.", reply_markup=CANCEL_KB)
+        return
+
+    if data == "demo:apply":
+        if st:
+            st["step"] = "name"
+        else:
+            _state[chat_id] = {"step": "name", "data": {}}
+        send(chat_id, "Как к вам обращаться?", reply_markup=CANCEL_KB)
         return
 
     # Фильтр
