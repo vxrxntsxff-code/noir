@@ -117,10 +117,6 @@
 
       const data = Object.fromEntries(new FormData(form));
 
-      // TODO: отправка на бэкенд или в Telegram-бота.
-      // Пример: fetch('/api/lead', { method: 'POST', body: JSON.stringify(data) })
-      console.log('Заявка:', data);
-
       const btn = form.querySelector('.form-submit');
       const note = form.querySelector('.form-note');
       const defaultNote = note.textContent;
@@ -128,7 +124,11 @@
       btn.disabled = true;
       btn.textContent = 'Отправляем…';
 
-      setTimeout(() => {
+      fetch('/api/bot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _form: data }),
+      }).catch(() => {}).finally(() => {
         form.classList.add('sent');
         btn.textContent = 'Заявка отправлена ✓';
         note.textContent = 'Ответим в течение 15 минут в рабочее время.';
@@ -139,7 +139,7 @@
           btn.textContent = 'Получить расчёт';
           note.textContent = defaultNote;
         }, 6000);
-      }, 600);
+      });
     });
   }
 

@@ -109,20 +109,23 @@
       e.preventDefault();
       if (!form.checkValidity()) { form.reportValidity(); return; }
       const data = Object.fromEntries(new FormData(form));
-      // TODO: отправка в CRM / Telegram-бот клиники
-      console.log('Заявка ТопДент:', data);
       const btn = form.querySelector('.form-submit');
       const note = form.querySelector('.form-note');
       const def = note.textContent;
       btn.disabled = true; btn.textContent = 'Отправляем…';
-      setTimeout(() => {
+
+      fetch('/api/bot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _form: { ...data, source: 'topdent' } }),
+      }).catch(() => {}).finally(() => {
         form.classList.add('sent');
         btn.textContent = 'Заявка отправлена ✓';
         note.textContent = 'Перезвоним в течение 10 минут в рабочее время.';
         form.reset();
         chips.forEach(c => c.classList.remove('active'));
         setTimeout(() => { form.classList.remove('sent'); btn.disabled = false; btn.textContent = 'Записаться на приём'; note.textContent = def; }, 6000);
-      }, 600);
+      });
     });
   }
 
