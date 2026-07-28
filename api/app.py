@@ -314,7 +314,7 @@ def handle_text(chat_id, text):
         send_lead(
             f"РАЗБОР · ожидает человека\n\n"
             f"Материал от клиента:\n{text[:500]}",
-            [[{"text": "Ответить клиенту", "url": f"https://t.me/{chat_id}"}]]
+            [[{"text": "Ответить клиенту", "url": f"tg://user?id={chat_id}"}]]
         )
         send(chat_id,
              "ОЦЕНКА ПРОЕКТА\n\n"
