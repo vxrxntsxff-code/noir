@@ -61,8 +61,12 @@ def send_lead(text, buttons=None):
     if markup:
         msg["reply_markup"] = json.dumps(markup)
     result = tg("sendMessage", msg)
-    if not result.get("ok") and OWNER_ID:
-        tg("sendMessage", {"chat_id": OWNER_ID, "text": f"⚠ send_lead failed:\n{text[:200]}"})
+    if not result.get("ok"):
+        detail = result.get("description", "unknown")
+        err = f"⚠ send_lead FAIL → chat {LEADS_CHAT_ID}: {detail}\n{text[:200]}"
+        if OWNER_ID:
+            tg("sendMessage", {"chat_id": OWNER_ID, "text": err})
+    return result
 
 
 # ── Константы ───────────────────────────────────────────
@@ -244,7 +248,6 @@ FILTER_KB = kb_inline([
 
 DONE_KB = kb_inline([
     [{"text": "Написать в Telegram", "url": "https://t.me/noir_lab42"}],
-    [{"text": "Позвонить", "url": "tel:+79515922618"}],
     [{"text": "В главное меню", "callback_data": "menu"}],
 ])
 
@@ -426,13 +429,16 @@ def handle_text(chat_id, text):
                  "✓ Заявка принята.\n\n"
                  "Что-то пошло не так при сборе договора,\n"
                  "но мы получили ваши данные.\n"
-                 "Ответим в течение 15 минут.",
-                 reply_markup=DONE_KB)
-            send_lead(
+                 "Ответим в течение 15 минут.\n\n"
+                 f"Связаться: https://t.me/noir_lab42")
+            err_text = (
                 f"ОШИБКА · квалификация\n\n"
                 f"Ошибка: {e}\n"
                 f"Данные: {json.dumps(st.get('data', {}), ensure_ascii=False)}"
             )
+            result = tg("sendMessage", {"chat_id": LEADS_CHAT_ID, "text": err_text})
+            if not result.get("ok") and OWNER_ID:
+                tg("sendMessage", {"chat_id": OWNER_ID, "text": err_text})
         return
 
     # Отдельная услуга: название
@@ -782,6 +788,25 @@ class handler(BaseHTTPRequestHandler):
                     handle_start(chat_id, username)
                 elif text == "/menu":
                     handle_menu(chat_id)
+                elif text == "/diag":
+                    token_ok = bool(BOT_TOKEN and len(BOT_TOKEN) > 40)
+                    me = tg("getMe") if token_ok else {"ok": False}
+                    bot_name = me.get("result", {}).get("username", "?") if me.get("ok") else "FAIL"
+                    test_lead = tg("sendMessage", {
+                        "chat_id": LEADS_CHAT_ID,
+                        "text": f"DIAG · test ping\nchat_id={LEADS_CHAT_ID}"
+                    })
+                    lead_ok = test_lead.get("ok", False)
+                    lead_err = test_lead.get("description", "") if not lead_ok else ""
+                    diag = (
+                        f"BOT TOKEN: {'ok' if token_ok else 'MISSING/BAD'}\n"
+                        f"BOT: @{bot_name}\n"
+                        f"OWNER_ID: {OWNER_ID}\n"
+                        f"LEADS_CHAT_ID: {LEADS_CHAT_ID}\n"
+                        f"GROUP DELIVERY: {'ok' if lead_ok else 'FAIL — ' + lead_err}\n"
+                        f"SITE_URL: {SITE_URL}"
+                    )
+                    send(chat_id, diag)
                 else:
                     handle_text(chat_id, text)
 
