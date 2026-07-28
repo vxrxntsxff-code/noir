@@ -511,8 +511,8 @@ def handle_callback(chat_id, data):
         level = st["data"].get("level", "business") if st else "business"
         if st:
             st["data"]["level"] = level
-            st["step"] = "goal"
-        send(chat_id, SCREEN_GOAL, reply_markup=GOAL_KB)
+            st["step"] = "name"
+        send(chat_id, SCREEN_CONTACTS, reply_markup=CANCEL_KB)
         return
 
     if data == "budget:show":
