@@ -431,6 +431,21 @@ def handle_text(chat_id, text):
 
     if step == "phone":
         st["data"]["phone"] = text
+        if st["data"].get("need_call"):
+            _state.pop(chat_id, None)
+            send(chat_id,
+                 "✓ Записали.\n\n"
+                 "Вам позвонят в ближайшее время\n"
+                 "с этого номера: +7 951 592-26-18\n\n"
+                 "Если срочно — напишите в Telegram:",
+                 reply_markup=DONE_KB)
+            send_lead(
+                f"СОЗВОН · запрос\n\n"
+                f"ФИО: {html.escape(st['data'].get('name', ''))}\n"
+                f"Телефон: {html.escape(text)}\n"
+                f"Уровень: {LABELS.get(st['data'].get('level', ''), '—')}"
+            )
+            return
         st["step"] = "telegram"
         send(chat_id, "Telegram для связи (или Пропустить):", reply_markup=SKIP_KB)
         return
@@ -581,9 +596,10 @@ def handle_callback(chat_id, data):
         return
 
     if data == "budget:call":
+        level = st["data"].get("level", "") if st else ""
         _state.pop(chat_id, None)
         send(chat_id, "Хорошо, запишем на созвон.\nКак к вам обращаться?", reply_markup=CANCEL_KB)
-        _state[chat_id] = {"step": "name", "data": {"need_call": True}}
+        _state[chat_id] = {"step": "name", "data": {"need_call": True, "level": level}}
         return
 
     # Демо → заявка
