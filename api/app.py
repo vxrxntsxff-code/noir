@@ -673,9 +673,8 @@ def _finish_qualification(chat_id, data):
         lead_kb.append([{"text": "Написать в TG", "url": f"https://t.me/{data['telegram'].lstrip('@')}"}])
     elif data.get("phone"):
         lead_kb.append([{"text": "Позвонить", "url": f"tel:{data['phone']}"}])
-    send_lead(lead, lead_kb)
 
-    # Ответ клиенту
+    # Ответ клиенту — ПЕРВЫМ, чтобы Vercel не обрезал
     _state.pop(chat_id, None)
     send(chat_id,
          f"✓ Заявка в студии.\n\n"
@@ -683,6 +682,9 @@ def _finish_qualification(chat_id, data):
          f"данные подставлены, можно открыть и распечатать:\n{url}\n\n"
          f"Ответим в течение 15 минут в рабочее время.",
          reply_markup=DONE_KB)
+
+    # Лид в группу — после, таймаут не блокирует клиента
+    send_lead(lead, lead_kb)
 
 
 # ── Форма с сайта ───────────────────────────────────────
