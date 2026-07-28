@@ -163,13 +163,37 @@ SCREEN_CONTACTS = (
 )
 
 
+def pkg_desc(level):
+    descs = {
+        "start": (
+            "Лендинг до 5 экранов · мобильная адаптация\n"
+            "Форма заявки · SEO-базовая настройка\n"
+            "Договор · чек НПД"
+        ),
+        "business": (
+            "Лендинг до 8 экранов / сайт до 5 страниц\n"
+            "Кастомный дизайн · интеграция с CRM\n"
+            "SEO-оптимизация · аналитика (Метрика)\n"
+            "Поддержка 1 месяц · договор · чек НПД"
+        ),
+        "premium": (
+            "Сайт до 10+ страниц / интернет-магазин\n"
+            "Полный UX/UI · CRM + платёжные системы\n"
+            "AI-ассистент · Telegram-бот\n"
+            "A/B тесты · поддержка 2 месяца\n"
+            "Приоритет · договор · чек НПД"
+        ),
+    }
+    return descs.get(level, descs["business"])
+
+
 def budget_screen(level):
     return (
         f"<b>УРОВЕНЬ · 05</b>\n\n"
         f"По вашим ответам — уровень «{LABELS[level]}».\n\n"
         f"Цена: {PRICES[level]} ₽\n"
         f"(первым 3 клиентам, обычный прайс выше)\n\n"
-        f"Всё включено: договор, чек НПД, поддержка 2 месяца."
+        f"{pkg_desc(level)}"
     )
 
 
@@ -272,40 +296,50 @@ def handle_menu(chat_id):
 def handle_text(chat_id, text):
     st = _state.get(chat_id)
 
+    # Главное меню — работает всегда, даже со stale state
+    if text in ("Оценить проект", "Подобрать решение", "Получить разбор",
+                "Открыть работы", "Оставить заявку"):
+        _state.pop(chat_id, None)
+
+    if text == "Оценить проект":
+        _state[chat_id] = {"step": "eval_material"}
+        send(chat_id,
+             "ОЦЕНКА ПРОЕКТА\n\n"
+             "Пришлите ссылку, скрин или опишите проект — одним сообщением.",
+             reply_markup=CANCEL_KB)
+        return
+    if text == "Подобрать решение":
+        _state[chat_id] = {"step": "sol_pain"}
+        send(chat_id,
+             "ПОДБОР РЕШЕНИЯ\n\n"
+             "Что болит сильнее всего — одной строкой.",
+             reply_markup=kb_inline([
+                 [{"text": "Нет заявок", "callback_data": "sol:leads"},
+                  {"text": "Тону в рутине", "callback_data": "sol:routine"}],
+                 [{"text": "Нет системы", "callback_data": "sol:nosys"},
+                  {"text": "Всё сразу", "callback_data": "sol:all"}],
+             ]))
+        return
+    if text == "Получить разбор":
+        _state[chat_id] = {"step": "audit_niche"}
+        send(chat_id,
+             "РАЗБОР\n\nЧем занимаетесь — одной строкой.",
+             reply_markup=CANCEL_KB)
+        return
+    if text == "Открыть работы":
+        kb = kb_inline([
+            [{"text": "Стоматология · запись", "url": f"{SITE_URL_PROD}/topdent.html"}],
+            [{"text": "Все работы", "url": f"{SITE_URL_PROD}/cases.html"}],
+        ])
+        send(chat_id, "Наши работы — каждый проект рабочий:", reply_markup=kb)
+        return
+    if text == "Оставить заявку":
+        _state[chat_id] = {"step": "goal", "data": {}}
+        send(chat_id, SCREEN_GOAL, reply_markup=GOAL_KB)
+        return
+
     if not st:
-        if text == "Оценить проект":
-            _state[chat_id] = {"step": "eval_material"}
-            send(chat_id,
-                 "ОЦЕНКА ПРОЕКТА\n\n"
-                 "Пришлите ссылку, скрин или опишите проект — одним сообщением.",
-                 reply_markup=CANCEL_KB)
-        elif text == "Подобрать решение":
-            _state[chat_id] = {"step": "sol_pain"}
-            send(chat_id,
-                 "ПОДБОР РЕШЕНИЯ\n\n"
-                 "Что болит сильнее всего — одной строкой.",
-                 reply_markup=kb_inline([
-                     [{"text": "Нет заявок", "callback_data": "sol:leads"},
-                      {"text": "Тону в рутине", "callback_data": "sol:routine"}],
-                     [{"text": "Нет системы", "callback_data": "sol:nosys"},
-                      {"text": "Всё сразу", "callback_data": "sol:all"}],
-                 ]))
-        elif text == "Получить разбор":
-            _state[chat_id] = {"step": "audit_niche"}
-            send(chat_id,
-                 "РАЗБОР\n\nЧем занимаетесь — одной строкой.",
-                 reply_markup=CANCEL_KB)
-        elif text == "Открыть работы":
-            kb = kb_inline([
-                [{"text": "Стоматология · запись", "url": f"{SITE_URL_PROD}/topdent.html"}],
-                [{"text": "Все работы", "url": f"{SITE_URL_PROD}/cases.html"}],
-            ])
-            send(chat_id, "Наши работы — каждый проект рабочий:", reply_markup=kb)
-        elif text == "Оставить заявку":
-            _state[chat_id] = {"step": "goal", "data": {}}
-            send(chat_id, SCREEN_GOAL, reply_markup=GOAL_KB)
-        else:
-            send(chat_id, "Отправьте /start чтобы начать.")
+        send(chat_id, "Отправьте /start чтобы начать.")
         return
 
     step = st["step"]
@@ -512,8 +546,8 @@ def handle_callback(chat_id, data):
         _state.pop(chat_id, None)
         send(chat_id,
              f"Тогда вам — система целиком, а не латание дыр.\n\n"
-             f"Уровень «{LABELS[level]}»: {PRICES[level]} ₽\n"
-             f"Всё включено: договор, чек НПД, поддержка 2 месяца.",
+             f"Уровень «{LABELS[level]}»: {PRICES[level]} ₽\n\n"
+             f"{pkg_desc(level)}",
              reply_markup=kb_inline([
                  [{"text": "Это мой уровень", "callback_data": "flow:start"}],
                  [{"text": "Нужен созвон", "callback_data": "budget:call"}],
