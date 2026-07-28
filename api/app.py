@@ -758,15 +758,15 @@ def _finish_qualification(chat_id, data):
 # ── Форма с сайта ───────────────────────────────────────
 def handle_form(payload):
     name = html.escape(payload.get("name", "---"))
-    phone = html.escape(payload.get("phone", "---"))
-    message = html.escape(payload.get("message", "---"))
+    phone = html.escape(payload.get("phone") or payload.get("contact") or "---")
+    message = html.escape(payload.get("message") or payload.get("task") or "---")
     source = payload.get("source", "")
     dt = now_msk()
     date_str = dt.strftime("%d.%m.%Y")
     url = contract_url({
         "name": payload.get("name", ""),
-        "phone": payload.get("phone", ""),
-        "task": payload.get("message", ""),
+        "phone": payload.get("phone") or payload.get("contact", ""),
+        "task": payload.get("message") or payload.get("task", ""),
         "price": "29000",
         "date": date_str,
         "num": dt.strftime("%Y-%m-001"),
