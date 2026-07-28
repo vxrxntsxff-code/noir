@@ -692,10 +692,18 @@ class handler(BaseHTTPRequestHandler):
             if "callback_query" in body:
                 cb = body["callback_query"]
                 chat_id = cb["message"]["chat"]["id"]
+                chat_type = cb["message"]["chat"].get("type", "private")
+                if chat_type != "private":
+                    self._send(200, "ok")
+                    return
                 handle_callback(chat_id, cb["data"])
                 tg("answerCallbackQuery", {"callback_query_id": cb["id"]})
             else:
                 chat_id = msg["chat"]["id"]
+                chat_type = msg["chat"].get("type", "private")
+                if chat_type != "private":
+                    self._send(200, "ok")
+                    return
                 text = msg.get("text", "")
                 if text == "/start":
                     handle_start(chat_id)
