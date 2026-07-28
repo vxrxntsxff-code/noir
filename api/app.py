@@ -792,6 +792,9 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body.encode() if isinstance(body, str) else body)
 
+    def do_GET(self):
+        self._send(200, json.dumps({"status": "ok", "bot": "NOIR LAB"}))
+
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         raw = self.rfile.read(length) if length else b"{}"
