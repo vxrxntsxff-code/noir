@@ -507,9 +507,15 @@ def handle_callback(chat_id, data):
 
     # Бюджет
     if data == "budget:ok":
-        if st:
-            st["step"] = "task"
-        send(chat_id, SCREEN_TASK, reply_markup=CANCEL_KB)
+        level = st["data"].get("level", "business") if st else "business"
+        send(chat_id,
+             f"Уровень «{LABELS[level]}»: {PRICES[level]} ₽\n\n"
+             f"{pkg_desc(level)}",
+             reply_markup=kb_inline([
+                 [{"text": "Это мой уровень", "callback_data": f"budget:confirm:{level}"}],
+                 [{"text": "Нужен созвон", "callback_data": "budget:call"}],
+                 [{"text": "Показать другие уровни", "callback_data": "budget:show"}],
+             ]))
         return
 
     if data == "budget:show":
@@ -518,10 +524,22 @@ def handle_callback(chat_id, data):
 
     if data.startswith("budget:") and data[7:] in ("start", "business", "premium"):
         level = data[7:]
-        if st:
-            st["data"]["level"] = level
-            st["step"] = "task"
-        send(chat_id, SCREEN_TASK, reply_markup=CANCEL_KB)
+        _state.pop(chat_id, None)
+        send(chat_id,
+             f"Тогда вам — система целиком, а не латание дыр.\n\n"
+             f"Уровень «{LABELS[level]}»: {PRICES[level]} ₽\n\n"
+             f"{pkg_desc(level)}",
+             reply_markup=kb_inline([
+                 [{"text": "Это мой уровень", "callback_data": f"budget:confirm:{level}"}],
+                 [{"text": "Нужен созвон", "callback_data": "budget:call"}],
+                 [{"text": "Показать другие уровни", "callback_data": "budget:show"}],
+             ]))
+        return
+
+    if data.startswith("budget:confirm:"):
+        level = data[15:]
+        _state[chat_id] = {"step": "goal", "data": {"level": level}}
+        send(chat_id, SCREEN_GOAL, reply_markup=GOAL_KB)
         return
 
     if data == "budget:call":
@@ -549,7 +567,7 @@ def handle_callback(chat_id, data):
              f"Уровень «{LABELS[level]}»: {PRICES[level]} ₽\n\n"
              f"{pkg_desc(level)}",
              reply_markup=kb_inline([
-                 [{"text": "Это мой уровень", "callback_data": "flow:start"}],
+                 [{"text": "Это мой уровень", "callback_data": f"budget:confirm:{level}"}],
                  [{"text": "Нужен созвон", "callback_data": "budget:call"}],
                  [{"text": "Показать другие уровни", "callback_data": "budget:show"}],
              ]))
