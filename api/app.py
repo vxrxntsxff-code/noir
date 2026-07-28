@@ -258,8 +258,9 @@ def score_audit(niche, site, goal):
 
 
 # ── Хендлеры ────────────────────────────────────────────
-def handle_start(chat_id):
+def handle_start(chat_id, username=""):
     _state.pop(chat_id, None)
+    _state[chat_id] = {"step": None, "data": {}, "username": username}
     send(chat_id, WELCOME, reply_markup=MAIN_KB)
 
 
@@ -308,13 +309,15 @@ def handle_text(chat_id, text):
         return
 
     step = st["step"]
+    username = st.get("username", "")
 
     if step == "eval_material":
         _state.pop(chat_id, None)
+        client_link = f"https://t.me/{username}" if username else f"tg://user?id={chat_id}"
         send_lead(
             f"РАЗБОР · ожидает человека\n\n"
             f"Материал от клиента:\n{text[:500]}",
-            [[{"text": "Ответить клиенту", "url": f"tg://user?id={chat_id}"}]]
+            [[{"text": "Ответить клиенту", "url": client_link}]]
         )
         send(chat_id,
              "ОЦЕНКА ПРОЕКТА\n\n"
@@ -705,8 +708,9 @@ class handler(BaseHTTPRequestHandler):
                     self._send(200, "ok")
                     return
                 text = msg.get("text", "")
+                username = msg.get("from", {}).get("username", "")
                 if text == "/start":
-                    handle_start(chat_id)
+                    handle_start(chat_id, username)
                 elif text == "/menu":
                     handle_menu(chat_id)
                 else:
