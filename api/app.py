@@ -501,6 +501,7 @@ def handle_callback(chat_id, data):
                 _state.pop(chat_id, None)
                 send(chat_id, SCREEN_FILTER, reply_markup=FILTER_KB)
                 return
+            st["data"]["level"] = level
             st["step"] = "budget_show"
             send(chat_id, budget_screen(level), reply_markup=BUDGET_KB)
         return
