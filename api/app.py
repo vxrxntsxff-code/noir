@@ -60,10 +60,9 @@ def send_lead(text, buttons=None):
     msg = {"chat_id": LEADS_CHAT_ID, "text": text}
     if markup:
         msg["reply_markup"] = json.dumps(markup)
-    try:
-        tg("sendMessage", msg)
-    except Exception:
-        pass
+    result = tg("sendMessage", msg)
+    if not result.get("ok") and OWNER_ID:
+        tg("sendMessage", {"chat_id": OWNER_ID, "text": f"⚠ send_lead failed:\n{text[:200]}"})
 
 
 # ── Константы ───────────────────────────────────────────
@@ -419,7 +418,21 @@ def handle_text(chat_id, text):
 
     if step == "email":
         st["data"]["email"] = "" if text == "Пропустить" else text
-        _finish_qualification(chat_id, st["data"])
+        try:
+            _finish_qualification(chat_id, st["data"])
+        except Exception as e:
+            _state.pop(chat_id, None)
+            send(chat_id,
+                 "✓ Заявка принята.\n\n"
+                 "Что-то пошло не так при сборе договора,\n"
+                 "но мы получили ваши данные.\n"
+                 "Ответим в течение 15 минут.",
+                 reply_markup=DONE_KB)
+            send_lead(
+                f"ОШИБКА · квалификация\n\n"
+                f"Ошибка: {e}\n"
+                f"Данные: {json.dumps(st.get('data', {}), ensure_ascii=False)}"
+            )
         return
 
     # Отдельная услуга: название
@@ -613,17 +626,22 @@ def handle_callback(chat_id, data):
 
 
 def _finish_qualification(chat_id, data):
-    name = html.escape(data.get("name", ""))
-    phone = html.escape(data.get("phone", ""))
-    telegram = html.escape(data.get("telegram", ""))
-    email = html.escape(data.get("email", ""))
-    niche = html.escape(data.get("niche", ""))
-    city = html.escape(data.get("city", ""))
+    if not data.get("name"):
+        send(chat_id, "Не хватает имени. Начнём сначала?", reply_markup=MAIN_KB)
+        _state.pop(chat_id, None)
+        return
+
+    name = html.escape(str(data.get("name", "")))
+    phone = html.escape(str(data.get("phone", "")))
+    telegram = html.escape(str(data.get("telegram", "")))
+    email = html.escape(str(data.get("email", "")))
+    niche = html.escape(str(data.get("niche", "")))
+    city = html.escape(str(data.get("city", "")))
     goal = GOAL_RU.get(data.get("goal", ""), data.get("goal", ""))
     site = SITE_RU.get(data.get("site", ""), data.get("site", ""))
     dl = DL_RU.get(data.get("deadline", ""), data.get("deadline", ""))
     task_raw = data.get("task", "")
-    level = data.get("level", score(data))
+    level = data.get("level") or score(data) or "business"
     service = data.get("service", "")
     svc_price = data.get("service_price", "")
 
