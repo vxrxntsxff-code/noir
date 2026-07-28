@@ -509,14 +509,10 @@ def handle_callback(chat_id, data):
     # Бюджет
     if data == "budget:ok":
         level = st["data"].get("level", "business") if st else "business"
-        send(chat_id,
-             f"Уровень «{LABELS[level]}»: {PRICES[level]} ₽\n\n"
-             f"{pkg_desc(level)}",
-             reply_markup=kb_inline([
-                 [{"text": "Это мой уровень", "callback_data": f"budget:confirm:{level}"}],
-                 [{"text": "Нужен созвон", "callback_data": "budget:call"}],
-                 [{"text": "Показать другие уровни", "callback_data": "budget:show"}],
-             ]))
+        if st:
+            st["data"]["level"] = level
+            st["step"] = "goal"
+        send(chat_id, SCREEN_GOAL, reply_markup=GOAL_KB)
         return
 
     if data == "budget:show":
