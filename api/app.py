@@ -1949,6 +1949,7 @@ class handler(BaseHTTPRequestHandler):
                 return
 
             msg = body.get("message") or body.get("callback_query")
+            print(f"INCOMING: {json.dumps(body)[:300]}")
             if not msg:
                 self._send(200, "ok")
                 return
