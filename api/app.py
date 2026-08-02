@@ -367,7 +367,7 @@ def kb_lead(user_data):
 
 # ── Telegram API ─────────────────────────────────────────
 def tg(method, data=None):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
+    url = f"https://t.me/botapi/bot{BOT_TOKEN}/{method}"
     payload = json.dumps(data or {}).encode()
     req = urllib.request.Request(url, data=payload)
     req.add_header("Content-Type", "application/json")
@@ -792,7 +792,7 @@ def _do_admin_callback(chat_id, data, parts):
         body.write(content)
         body.write(b"\r\n")
         body.write(f"--{boundary}--\r\n".encode())
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
+        url = f"https://t.me/botapi/bot{BOT_TOKEN}/sendDocument"
         req = urllib.request.Request(url, data=body.getvalue(), method="POST")
         req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
         with urllib.request.urlopen(req, timeout=15) as resp:
