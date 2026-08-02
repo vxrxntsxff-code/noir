@@ -18,7 +18,9 @@
     { "source": "/invoice", "destination": "/invoice.html" },
     { "source": "/dogovor", "destination": "/dogovor.html" },
     { "source": "/tech", "destination": "/tech.html" },
-    { "source": "/support", "destination": "/support.html" },
+    { "source": "/support", "destination": "/support.html" }
+  ],
+  "redirects": [
     { "source": "/pay", "destination": "https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022", "permanent": false }
   ],
   "headers": [
