@@ -1,4 +1,4 @@
-User-agent: *
+﻿User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /dashboard
@@ -8,4 +8,5 @@ Disallow: /invoice
 Disallow: /support
 Disallow: /proposal
 
-Sitemap: https://noir-rosy.vercel.app/sitemap.xml
+Sitemap: https://www.noiros.ru/sitemap.xml
+
