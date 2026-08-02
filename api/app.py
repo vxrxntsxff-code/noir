@@ -327,8 +327,14 @@ def kb_skip():
 
 def kb_pay_start():
     return kb_inline([
-        [{"text": "Оплатить через Т-Банк", "url": PAYMENT_LINK or "https://t.me/noir_lab42"}],
-        [{"text": "QR-код", "url": PAYMENT_QR or PAYMENT_LINK or "https://t.me/noir_lab42"}],
+        [{"text": "Через Т-Банк", "url": PAYMENT_LINK or "https://t.me/noir_lab42"}],
+        [{"text": "Показать QR", "callback_data": "pay:qr"},
+         {"text": "Главное меню", "callback_data": "menu"}],
+    ])
+
+
+def kb_pay_back():
+    return kb_inline([
         [{"text": "Главное меню", "callback_data": "menu"}],
     ])
 
@@ -1393,11 +1399,35 @@ def handle_callback(chat_id, data):
 
     # ── Payment ──
     if data == "pay:start":
-        send(chat_id, T["payment_q"], reply_markup=kb_pay_start())
+        username = st.get("username", "")
+        order_info = ""
+        if username and sheets_find_client:
+            client = sheets_find_client(username)
+            if client and sheets_get_projects:
+                projects = sheets_get_projects(client["name"])
+                if projects:
+                    o = projects[0]
+                    order_info = f"\n\nВаш заказ: {o.get('name', o.get('package', '—'))}\nПакет: {o.get('package', '—')}\nСумма: {o.get('price', '—')} ₽\nОплачено: {o.get('paid', '0')} ₽\nОстаток: {o.get('remaining', '—')} ₽"
+        msg = "Оплата через Т-Банк или QR-код.\nСсылка: " + (PAYMENT_LINK or "https://t.me/noir_lab42") + order_info
+        send(chat_id, msg, reply_markup=kb_pay_start())
+        return
+
+    if data == "pay:qr":
+        # Generate QR image from payment link
+        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={urllib.parse.quote(PAYMENT_LINK or '')}"
+        caption = "Оплата через QR-код\n\nСсылка: " + (PAYMENT_LINK or "https://t.me/noir_lab42")
+        send(chat_id, caption, reply_markup=kb_pay_back())
+        # Send QR as photo
+        if PAYMENT_LINK:
+            tg("sendPhoto", {
+                "chat_id": chat_id,
+                "photo": qr_url,
+                "caption": "Отсканируйте QR-код для оплаты",
+            })
         return
 
     if data == "pay:back":
-        send(chat_id, T["payment_q"], reply_markup=kb_main())
+        send(chat_id, T["payment_q"], reply_markup=kb_pay_start())
         return
 
     # ── Qualification flow ──

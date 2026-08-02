@@ -112,6 +112,56 @@
 
   /* ── Форма заявки ──────────────────────── */
   const form = document.getElementById('contactForm');
+  const payModal = document.getElementById('payModal');
+  const modalChoose = document.getElementById('modal-choose');
+  const modalPayForm = document.getElementById('modal-pay-form');
+  const modalQr = document.getElementById('modal-qr');
+
+  function showModal() {
+    if (payModal) payModal.style.display = 'flex';
+  }
+  function closePayModal() {
+    if (payModal) payModal.style.display = 'none';
+    showStep(modalChoose);
+  }
+  function showStep(step) {
+    [modalChoose, modalPayForm, modalQr].forEach(s => s && s.classList.remove('active'));
+    if (step) step.classList.add('active');
+  }
+  function showPayForm() {
+    showStep(modalPayForm);
+  }
+  function showQr() {
+    const nameEl = document.getElementById('pay-name');
+    const phoneEl = document.getElementById('pay-phone');
+    const tgEl = document.getElementById('pay-tg');
+    const emailEl = document.getElementById('pay-email');
+
+    if (!nameEl.value || !phoneEl.value || !tgEl.value || !emailEl.value) {
+      alert('Заполните все поля');
+      return;
+    }
+
+    showStep(modalQr);
+
+    const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(paymentLink);
+
+    const payLink = document.getElementById('modal-pay-link');
+    if (payLink) payLink.href = paymentLink;
+
+    const qrImg = document.getElementById('qr-code');
+    if (qrImg) qrImg.src = qrUrl;
+  }
+  function markPaid() {
+    alert('Спасибо! Мы свяжемся с вами для подтверждения оплаты.');
+    closePayModal();
+  }
+  window.closePayModal = closePayModal;
+  window.showPayForm = showPayForm;
+  window.showQr = showQr;
+  window.markPaid = markPaid;
+
   if (form) {
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -139,25 +189,21 @@
         btn.textContent = 'Заявка отправлена';
         note.textContent = 'Ответим в течение 15 минут в рабочее время.';
 
-        if (result.payment_url) {
-          const payBtn = document.createElement('button');
-          payBtn.type = 'button';
-          payBtn.className = 'form-pay';
-          payBtn.textContent = 'Оплатить онлайн';
-          payBtn.onclick = () => window.open(result.payment_url, '_blank');
-          const noteEl = form.querySelector('.form-note');
-          noteEl.parentNode.insertBefore(payBtn, noteEl.nextSibling);
-        }
+        // Pre-fill payment form
+        const nameInput = document.getElementById('pay-name');
+        if (nameInput) nameInput.value = data.name || '';
+        const phoneInput = document.getElementById('pay-phone');
+        if (phoneInput) phoneInput.value = data.contact || '';
 
-        form.reset();
+        // Show modal with "Оплатить / Связаться"
+        setTimeout(() => showModal(), 300);
+
         setTimeout(() => {
           form.classList.remove('sent');
           btn.disabled = false;
           btn.textContent = 'Запустить NOIR OS';
           note.textContent = defaultNote;
-          const payBtn = form.querySelector('.form-pay');
-          if (payBtn) payBtn.remove();
-        }, 6000);
+        }, 8000);
       }).catch(() => {
         btn.disabled = false;
         btn.textContent = 'Запустить NOIR OS';

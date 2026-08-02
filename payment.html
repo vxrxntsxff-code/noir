@@ -213,7 +213,7 @@
      if (paidBtn) {
        paidBtn.addEventListener('click', () => {
          show('view-loading');
-fetch('/api/payment_confirm', {
+         fetch('/api/payment_confirm', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({action: 'payment_confirm', order_id: order}),

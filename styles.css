@@ -718,6 +718,45 @@ main, #footer { position: relative; z-index: 1; }
 }
 .form-pay:hover { background: #d4b87a; }
 
+/* ── Модальное окно ── */
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+.modal-close:hover { color: var(--text); }
+.modal-step { display: none; }
+.modal-step:first-child { display: block; }
+.modal-step.active { display: block; }
+
 /* ═══════════════════════════════════════════
    ПЕЧАТЬ
 ═══════════════════════════════════════════ */

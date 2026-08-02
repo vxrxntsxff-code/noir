@@ -631,11 +631,64 @@
         <p class="form-note">Контакты никому не передаём. Никакого спама — только по делу.</p>
       </form>
     </div>
-  </section>
-
+    </section>
 </main>
 
-<!-- ПОДВАЛ -->
+<!-- Модальное окно оплаты -->
+<div id="payModal" class="modal" style="display:none">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closePayModal()">×</button>
+
+    <!-- Step 1: Choose -->
+    <div id="modal-choose" class="modal-step">
+      <h3>Заявка принята</h3>
+      <p style="margin-bottom:24px">Выберите, как продолжить:</p>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="showPayForm()">Оплатить онлайн</button>
+      <button class="btn btn-ghost" style="width:100%" onclick="closePayModal()">Связаться с исполнителем</button>
+    </div>
+
+    <!-- Step 2: Payment form -->
+    <div id="modal-pay-form" class="modal-step" style="display:none">
+      <h3>Оплата</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Предоплата 50% — 14 500 ₽</p>
+
+      <div class="form-group">
+        <label for="pay-name">ФИО</label>
+        <input id="pay-name" type="text" placeholder="Введите ФИО" required>
+      </div>
+      <div class="form-group">
+        <label for="pay-phone">Телефон</label>
+        <input id="pay-phone" type="tel" placeholder="+7 ___ ___-__-__" required>
+      </div>
+      <div class="form-group">
+        <label for="pay-tg">Telegram</label>
+        <input id="pay-tg" type="text" placeholder="@nickname" required>
+      </div>
+      <div class="form-group">
+        <label for="pay-email">Email</label>
+        <input id="pay-email" type="email" placeholder="name@domain.com" required>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="showQr()">Оплатить</button>
+    </div>
+
+    <!-- Step 3: QR Code -->
+    <div id="modal-qr" class="modal-step" style="display:none">
+      <h3>Оплата через QR</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Отсканируйте QR-код или перейдите по ссылке</p>
+
+      <div style="text-align:center;margin:24px 0">
+        <img id="qr-code" src="" alt="QR Code" style="width:200px;height:200px;border-radius:20px;background:#fff;padding:8px">
+      </div>
+
+      <a id="modal-pay-link" href="#" class="btn btn-primary" style="width:100%;margin-bottom:12px" target="_blank">Открыть Т-Банк</a>
+      <button class="btn btn-success" style="width:100%;margin-bottom:12px" onclick="markPaid()">Я оплатил</button>
+      <button class="btn btn-ghost" style="width:100%" onclick="closePayModal()">Назад</button>
+    </div>
+  </div>
+</div>
+
+<!-- Подвал -->
 <footer id="footer">
   <div class="container footer-grid">
     <div>
