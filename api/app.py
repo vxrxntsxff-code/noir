@@ -1806,26 +1806,19 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
-        print(f"DO_POST: content_length={length} path={self.path}", flush=True)
+        print(f"DO_POST: len={length} path={self.path}", flush=True)
         if length > 1048576:
-            self._send(413, json.dumps({"error": "Payload too large"}))
+            self._send(413, json.dumps({"error": "too large"}))
             return
         
-        # Read body from multiple possible sources for Vercel compatibility
-        raw = b""
+        raw = self.rfile.read(length) if length else b"{}"
+        print(f"RAW_BODY: {repr(raw[:500])}", flush=True)
+        
         try:
-            raw = self.rfile.read(length) if length else b"{}"
+            body = json.loads(raw)
         except Exception as e:
-            print(f"DO_POST rfile: {e}", flush=True)
-        
-        print(f"DO_POST_BODY: {repr(raw[:500])}", flush=True)
-        
-        # Try to parse
-        try:
-            body = json.loads(raw) if raw and len(raw) > 0 else {}
-        except json.JSONDecodeError as e:
-            print(f"DO_POST JSON ERROR: {e}", flush=True)
-            self._send(500, json.dumps({"error": f"JSON parse failed: {str(e)[:100]} on body={repr(raw[:200])}"}))
+            print(f"PARSE_FAIL: {e} body={repr(raw[:200])}", flush=True)
+            self._send(500, json.dumps({"error": str(e)[:100], "raw": repr(raw[:100])}))
             return
 
             if body.get("_form"):
