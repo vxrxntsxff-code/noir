@@ -373,9 +373,12 @@ def tg(method, data=None):
     req.add_header("Content-Type", "application/json")
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
-            return json.loads(resp.read())
+            result = json.loads(resp.read())
+            if not result.get("ok"):
+                log.error("tg.%s non-ok: %s", method, result)
+            return result
     except Exception as e:
-        log.error("tg.%s failed: %s", method, e)
+        log.error("tg.%s FAILED — %s", method, str(e)[:300])
         return {"ok": False}
 
 
@@ -939,7 +942,11 @@ def handle_start(chat_id, username=""):
         username = get_username(chat_id)
     state_del(chat_id)
     state_set(chat_id, {"step": None, "data": {}, "username": username})
-    send(chat_id, T["welcome"], reply_markup=kb_main())
+    result = send(chat_id, T["welcome"], reply_markup=kb_main())
+    if not result.get("ok"):
+        log.error("handle_start send FAILED: %s", result)
+    else:
+        log.info("handle_start sent OK to chat=%s", chat_id)
     log.info("start user=%s chat=%s", username, chat_id)
 
 
