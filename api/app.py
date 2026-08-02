@@ -1811,26 +1811,22 @@ class handler(BaseHTTPRequestHandler):
             self._send(413, json.dumps({"error": "Payload too large"}))
             return
         
-        # Vercel serverless Python: rfile may be empty, try multiple sources
+        # Read body from multiple possible sources for Vercel compatibility
         raw = b""
         try:
             raw = self.rfile.read(length) if length else b"{}"
         except Exception as e:
-            print(f"DO_POST rfile error: {e}", flush=True)
+            print(f"DO_POST rfile: {e}", flush=True)
         
-        if not raw or raw == b"":
-            # Fallback: try reading from stdin or environment
-            import sys
-            try:
-                raw = sys.stdin.read()
-                if raw:
-                    raw = raw.encode()
-            except Exception:
-                pass
+        print(f"DO_POST_BODY: {repr(raw[:500])}", flush=True)
         
-        print(f"DO_POST_RAW: {repr(raw[:200])}", flush=True)
+        # Try to parse
         try:
-            body = json.loads(raw) if raw and raw != b"" else {}
+            body = json.loads(raw) if raw and len(raw) > 0 else {}
+        except json.JSONDecodeError as e:
+            print(f"DO_POST JSON ERROR: {e}", flush=True)
+            self._send(500, json.dumps({"error": f"JSON parse failed: {str(e)[:100]} on body={repr(raw[:200])}"}))
+            return
 
             if body.get("_form"):
                 result = handle_form(body["_form"])
