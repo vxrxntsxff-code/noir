@@ -110,7 +110,16 @@
     sections.forEach(s => sio.observe(s));
   }
 
-  /* ── Форма заявки ──────────────────────── */
+  /* ── Автозаполнение услуги в форму ── */
+  document.querySelectorAll('.service-row[data-service]').forEach(link => {
+    link.addEventListener('click', () => {
+      const service = link.getAttribute('data-service');
+      const taskEl = document.getElementById('f-task');
+      if (taskEl) {
+        taskEl.value = service;
+      }
+    });
+  });
   const form = document.getElementById('contactForm');
   const payModal = document.getElementById('payModal');
   const modalChoose = document.getElementById('modal-choose');
@@ -118,15 +127,26 @@
   const modalQr = document.getElementById('modal-qr');
 
   function showModal() {
-    if (payModal) payModal.style.display = 'flex';
+    if (payModal) {
+      payModal.style.display = 'flex';
+      showStep(modalChoose);
+    }
   }
   function closePayModal() {
     if (payModal) payModal.style.display = 'none';
     showStep(modalChoose);
   }
   function showStep(step) {
-    [modalChoose, modalPayForm, modalQr].forEach(s => s && s.classList.remove('active'));
-    if (step) step.classList.add('active');
+    [modalChoose, modalPayForm, modalQr].forEach(s => {
+      if (s) {
+        s.classList.remove('active');
+        s.style.removeProperty('display');
+      }
+    });
+    if (step) {
+      step.classList.add('active');
+      step.style.display = 'block';
+    }
   }
   function showPayForm() {
     showStep(modalPayForm);
@@ -189,7 +209,7 @@
         btn.textContent = 'Заявка отправлена';
         note.textContent = 'Ответим в течение 15 минут в рабочее время.';
 
-        // Pre-fill payment form
+        // Pre-fill payment form with client data
         const nameInput = document.getElementById('pay-name');
         if (nameInput) nameInput.value = data.name || '';
         const phoneInput = document.getElementById('pay-phone');
