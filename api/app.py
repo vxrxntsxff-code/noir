@@ -1947,148 +1947,147 @@ class handler(BaseHTTPRequestHandler):
                 self._send(500, json.dumps({"error": str(e)[:200]}))
                 return
 
-            if body.get("_form"):
-                result = handle_form(body["_form"])
-                self._send(200, json.dumps(result))
-                return
+        if body.get("_form"):
+            result = handle_form(body["_form"])
+            self._send(200, json.dumps(result))
+            return
 
-            if body.get("test_tg"):
-                me = tg("getMe")
-                self._send(200, json.dumps({"tg_ok": me.get("ok", False), "tg_result": me}))
-                return
+        if body.get("test_tg"):
+            me = tg("getMe")
+            self._send(200, json.dumps({"tg_ok": me.get("ok", False), "tg_result": me}))
+            return
 
-            # Google Sheets webhook
-            if body.get("sheet"):
-                sheet = body.get("sheet", "")
-                row = body.get("row", 0)
-                col = body.get("col", 0)
-                value = body.get("value", "")
-                log.info("sheets_webhook sheet=%s row=%s col=%s val=%s", sheet, row, col, value)
-                _handle_sheets_webhook(sheet, row, col, value)
+        # Google Sheets webhook
+        if body.get("sheet"):
+            sheet = body.get("sheet", "")
+            row = body.get("row", 0)
+            col = body.get("col", 0)
+            value = body.get("value", "")
+            log.info("sheets_webhook sheet=%s row=%s col=%s val=%s", sheet, row, col, value)
+            _handle_sheets_webhook(sheet, row, col, value)
+            self._send(200, json.dumps({"ok": True}))
+            return
+
+        if body.get("action") == "payment_confirm":
+            order_id = body.get("order_id", "")
+            if order_id:
+                client_data = {
+                    "name": body.get("name", ""),
+                    "phone": body.get("phone", ""),
+                    "telegram": body.get("telegram", ""),
+                    "email": body.get("email", ""),
+                    "price": body.get("price", ""),
+                    "status": "pending",
+                    "order_id": order_id,
+                }
+                _redis("SET", f"noir:pay:{order_id}",
+                       json.dumps(client_data),
+                       "EX", "604800")
+                existing = _redis("GET", f"noir:order:{order_id}")
+                if existing:
+                    order = json.loads(existing)
+                    order.update({"paid": client_data["price"], "status": "pending"})
+                    _redis("SET", f"noir:order:{order_id}",
+                           json.dumps(order), "EX", "604800")
+                if OWNER_ID:
+                    msg = (
+                        "✅ Клиент подтвердил оплату\n\n"
+                        f"Заказ: {order_id}\n"
+                        f"ФИО: {client_data['name']}\n"
+                        f"Телефон: {client_data['phone']}\n"
+                        f"Telegram: {client_data['telegram']}\n"
+                        f"Email: {client_data['email']}\n"
+                        f"Сумма: {client_data['price']}"
+                    )
+                    tg("sendMessage", {"chat_id": OWNER_ID, "text": msg})
+                    tg("sendMessage", {"chat_id": LEADS_CHAT_ID, "text": msg})
                 self._send(200, json.dumps({"ok": True}))
+            else:
+                self._send(400, json.dumps({"error": "missing order_id"}))
+            return
+
+        # T-Bank payment callback
+        if body.get("TerminalKey") or body.get("PaymentId"):
+            order_id = body.get("OrderId", "")
+            status = body.get("Status", "")
+            if order_id:
+                payment_status = "paid" if status == "CONFIRMED" else "failed"
+                _redis("SET", f"noir:pay:{order_id}",
+                       json.dumps({"status": payment_status, "order_id": order_id}),
+                       "EX", "604800")
+                if payment_status == "paid" and OWNER_ID:
+                    tg("sendMessage", {"chat_id": OWNER_ID,
+                        "text": f"Оплата подтверждена Т-Банк\nЗаказ: {order_id}"})
+            self._send(200, json.dumps({"ok": True}))
+            return
+
+        if body.get("action") == "dashboard_login":
+            login = body.get("login", "").strip()
+            if not login:
+                self._send(200, json.dumps({"ok": False}))
                 return
+            import secrets
+            token = secrets.token_urlsafe(16)
+            client_data = None
+            projects = []
+            if sheets_find_client:
+                client_data = sheets_find_client(login)
+                if client_data and sheets_get_projects:
+                    projects = sheets_get_projects(client_data["name"])
+            if client_data:
+                proj = projects[0] if projects else {}
+                client_name = client_data["name"]
+                project_name = proj.get("name", "Проект")
+                package = proj.get("package", "")
+                stage = proj.get("stage", "brief")
+                progress = proj.get("progress", 0)
+                price = proj.get("price", "")
+                paid = proj.get("paid", "0")
+                remaining = proj.get("remaining", "")
+                data = {
+                    "stage": stage,
+                    "progress": progress,
+                    "project_name": project_name,
+                    "package": package,
+                    "price": price,
+                    "paid": paid,
+                    "remaining": remaining,
+                }
+                dashboard_data = {
+                    "client_name": client_name,
+                    "project_name": project_name,
+                    "package": package,
+                    "stage": stage,
+                    "progress": progress,
+                    "price": f"{price} ₽" if price else "—",
+                    "paid": f"{paid} ₽" if paid and paid != "0" else "0 ₽",
+                    "remaining": f"{remaining} ₽" if remaining else "—",
+                    "docs": [{"name": "Договор", "url": "/dogovor.html"}],
+                    "payments": [],
+                    "updates": [],
+                }
+            else:
+                log.warning("DASHBOARD no client_data for login=%s", login)
+                dashboard_data = {
+                    "client_name": login,
+                    "project_name": "Проект",
+                    "package": "",
+                    "stage": "brief",
+                    "progress": 0,
+                    "price": "—",
+                    "paid": "0 ₽",
+                    "remaining": "—",
+                    "docs": [],
+                    "payments": [],
+                    "updates": [],
+                }
+            _redis("SET", f"noir:dash:{token}",
+                   json.dumps(dashboard_data), "EX", "2592000")
+            self._send(200, json.dumps({"ok": True, "token": token, **dashboard_data}))
+            return
 
-            if body.get("action") == "payment_confirm":
-                order_id = body.get("order_id", "")
-                if order_id:
-                    client_data = {
-                        "name": body.get("name", ""),
-                        "phone": body.get("phone", ""),
-                        "telegram": body.get("telegram", ""),
-                        "email": body.get("email", ""),
-                        "price": body.get("price", ""),
-                        "status": "pending",
-                        "order_id": order_id,
-                    }
-                    _redis("SET", f"noir:pay:{order_id}",
-                           json.dumps(client_data),
-                           "EX", "604800")
-                    # Store in order record too
-                    existing = _redis("GET", f"noir:order:{order_id}")
-                    if existing:
-                        order = json.loads(existing)
-                        order.update({"paid": client_data["price"], "status": "pending"})
-                        _redis("SET", f"noir:order:{order_id}",
-                               json.dumps(order), "EX", "604800")
-                    if OWNER_ID:
-                        msg = (
-                            "✅ Клиент подтвердил оплату\n\n"
-                            f"Заказ: {order_id}\n"
-                            f"ФИО: {client_data['name']}\n"
-                            f"Телефон: {client_data['phone']}\n"
-                            f"Telegram: {client_data['telegram']}\n"
-                            f"Email: {client_data['email']}\n"
-                            f"Сумма: {client_data['price']}"
-                        )
-                        tg("sendMessage", {"chat_id": OWNER_ID, "text": msg})
-                        # Also send to group chat
-                        tg("sendMessage", {"chat_id": -1004435537674, "text": msg})
-                    self._send(200, json.dumps({"ok": True}))
-                else:
-                    self._send(400, json.dumps({"error": "missing order_id"}))
-                return
-
-            # T-Bank payment callback
-            if body.get("TerminalKey") or body.get("PaymentId"):
-                order_id = body.get("OrderId", "")
-                status = body.get("Status", "")
-                if order_id:
-                    payment_status = "paid" if status == "CONFIRMED" else "failed"
-                    _redis("SET", f"noir:pay:{order_id}",
-                           json.dumps({"status": payment_status, "order_id": order_id}),
-                           "EX", "604800")
-                    if payment_status == "paid" and OWNER_ID:
-                        tg("sendMessage", {"chat_id": OWNER_ID,
-                            "text": f"Оплата подтверждена Т-Банк\nЗаказ: {order_id}"})
-                self._send(200, json.dumps({"ok": True}))
-                return
-
-            if body.get("action") == "dashboard_login":
-                login = body.get("login", "").strip()
-                if not login:
-                    self._send(200, json.dumps({"ok": False}))
-                    return
-                import secrets
-                token = secrets.token_urlsafe(16)
-
-                # Try to find client in Google Sheets
-                client_data = None
-                projects = []
-                if sheets_find_client:
-                    client_data = sheets_find_client(login)
-                    if client_data and sheets_get_projects:
-                        projects = sheets_get_projects(client_data["name"])
-
-                if client_data:
-                    proj = projects[0] if projects else {}
-                    log.info("DASHBOARD_LOGIN client='%s' projects=%d proj_name='%s' progress=%s",
-                             client_data["name"], len(projects), proj.get("name",""), proj.get("progress",""))
-                    project_name = proj.get("name", "Проект")
-                    package = proj.get("package", "")
-                    stage = proj.get("stage", "brief")
-                    progress = proj.get("progress", 0)
-                    price = proj.get("price", "")
-                    paid = proj.get("paid", "0")
-                    remaining = proj.get("remaining", "")
-
-                    dashboard_data = {
-                        "client_name": client_data["name"],
-                        "project_name": project_name,
-                        "package": package,
-                        "stage": stage,
-                        "progress": progress,
-                        "price": f"{price} ₽" if price else "—",
-                        "paid": f"{paid} ₽" if paid and paid != "0" else "0 ₽",
-                        "remaining": f"{remaining} ₽" if remaining else "—",
-                        "docs": [
-                            {"name": "Договор", "url": "/dogovor.html"},
-                        ],
-                        "payments": [],
-                        "updates": [],
-                    }
-                else:
-                    # Fallback — no Sheets data
-                    dashboard_data = {
-                        "client_name": login,
-                        "project_name": "Проект",
-                        "package": "",
-                        "stage": "brief",
-                        "progress": 0,
-                        "price": "—",
-                        "paid": "0 ₽",
-                        "remaining": "—",
-                        "docs": [],
-                        "payments": [],
-                        "updates": [],
-                    }
-
-                _redis("SET", f"noir:dash:{token}",
-                       json.dumps(dashboard_data), "EX", "2592000")
-                self._send(200, json.dumps({"ok": True, "token": token, **dashboard_data}))
-                return
-
+        try:
             msg = body.get("message") or body.get("callback_query")
-            print(f"INCOMING: {json.dumps(body)[:300]}")
             if not msg:
                 self._send(200, "ok")
                 return
@@ -2123,9 +2122,9 @@ class handler(BaseHTTPRequestHandler):
                         send(chat_id, T["state_lost"])
                     else:
                         _handle_text(chat_id, text, st, username)
-                self._send(200, "ok")
+            self._send(200, "ok")
         except Exception as e:
-            log.error("handler error: %s\n%s", e, traceback.format_exc())
+            log.error("telegram_handler error: %s\n%s", e, traceback.format_exc())
             self._send(500, json.dumps({"error": str(e)[:500]}))
 
 
