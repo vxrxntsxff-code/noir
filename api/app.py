@@ -366,20 +366,26 @@ def kb_lead(user_data):
 
 
 # ── Telegram API ─────────────────────────────────────────
+TELEGRAM_ENDPOINTS = [
+    "https://api.telegram.org/bot",
+    "https://t.me/botapi/bot",
+]
 def tg(method, data=None):
-    url = f"https://t.me/botapi/bot{BOT_TOKEN}/{method}"
     payload = json.dumps(data or {}).encode()
-    req = urllib.request.Request(url, data=payload)
-    req.add_header("Content-Type", "application/json")
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            result = json.loads(resp.read())
-            if not result.get("ok"):
-                log.error("tg.%s non-ok: %s", method, result)
-            return result
-    except Exception as e:
-        log.error("tg.%s FAILED — %s", method, str(e)[:300])
-        return {"ok": False}
+    for base_url in TELEGRAM_ENDPOINTS:
+        url = f"{base_url}{BOT_TOKEN}/{method}"
+        req = urllib.request.Request(url, data=payload)
+        req.add_header("Content-Type", "application/json")
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read())
+                if result.get("ok"):
+                    return result
+                log.warning("tg.%s via %s: %s", method, base_url, result.get("description", ""))
+        except Exception as e:
+            log.warning("tg.%s via %s failed: %s", method, base_url, str(e)[:200])
+            continue
+    return {"ok": False}
 
 
 def get_username(chat_id):
@@ -792,7 +798,7 @@ def _do_admin_callback(chat_id, data, parts):
         body.write(content)
         body.write(b"\r\n")
         body.write(f"--{boundary}--\r\n".encode())
-        url = f"https://t.me/botapi/bot{BOT_TOKEN}/sendDocument"
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
         req = urllib.request.Request(url, data=body.getvalue(), method="POST")
         req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
         with urllib.request.urlopen(req, timeout=15) as resp:
