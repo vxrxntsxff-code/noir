@@ -1806,16 +1806,31 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
-        print(f"DO_POST: content_length={length} path={self.path}")
-        print(f"DO_POST_HEADERS: {dict(self.headers)}")
+        print(f"DO_POST: content_length={length} path={self.path}", flush=True)
         if length > 1048576:
             self._send(413, json.dumps({"error": "Payload too large"}))
             return
-        raw = self.rfile.read(length) if length else b"{}"
-        print(f"DO_POST_RAW: {repr(raw)}")
-        print(f"DO_POST_RAW_TYPE: {type(raw)}")
+        
+        # Vercel serverless Python: rfile may be empty, try multiple sources
+        raw = b""
         try:
-            body = json.loads(raw)
+            raw = self.rfile.read(length) if length else b"{}"
+        except Exception as e:
+            print(f"DO_POST rfile error: {e}", flush=True)
+        
+        if not raw or raw == b"":
+            # Fallback: try reading from stdin or environment
+            import sys
+            try:
+                raw = sys.stdin.read()
+                if raw:
+                    raw = raw.encode()
+            except Exception:
+                pass
+        
+        print(f"DO_POST_RAW: {repr(raw[:200])}", flush=True)
+        try:
+            body = json.loads(raw) if raw and raw != b"" else {}
 
             if body.get("_form"):
                 result = handle_form(body["_form"])
