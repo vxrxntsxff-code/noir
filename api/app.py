@@ -1817,7 +1817,7 @@ def _finish_qualification(chat_id, data):
                 type="Аванс",
                 status="Ожидает",
                 method="Перевод",
-                purpose=f"Предоплата {LABELS.get(level, 'Бизнес')}",
+                purpose="Предоплата",
             )
 
 
