@@ -1548,7 +1548,8 @@ def handle_callback(chat_id, data):
                 if projects:
                     o = projects[0]
                     order_info = f"\\n\\nВаш заказ: {o.get('name', o.get('package', '—'))}\\nПакет: {o.get('package', '—')}\\nСумма: {o.get('price', '—')} ₽\\nОплачено: {o.get('paid', '0')} ₽\\nОстаток: {o.get('remaining', '—')} ₽"
-          # Styled QR with brand colors (dark bg, gold foreground, rounded corners)
+        # Short display link — actual URL in buttons
+        pay_short = f"{SITE_URL}/pay" if PAYMENT_LINK else "https://t.me/noir_lab42"
         qr_url = (
             f"https://api.qrserver.com/v1/create-qr-code/"
             f"?size=432x432&data={urllib.parse.quote(PAYMENT_LINK or '')}"
@@ -1556,9 +1557,9 @@ def handle_callback(chat_id, data):
         )
         qr_img = qr_url
         caption = (
-            "NOIR OS\n"
-            "Оплата через Т-Банк или QR\n"
-            + (PAYMENT_LINK or "https://t.me/noir_lab42")
+            "NOIR OS | Предоплата\n\n"
+            "Отсканируйте QR или нажмите кнопку\n"
+            f"Оплатить → {pay_short}"
             + order_info
         )
         if PAYMENT_LINK:
