@@ -1988,13 +1988,11 @@ class handler(BaseHTTPRequestHandler):
                             _handle_text(chat_id, text, st, username)
                 except Exception as e:
                     log.error("text_handler error: %s\n%s", e, traceback.format_exc())
-                    self._send(500, json.dumps({"error": str(e)[:500]}))
-                    return
-
+                    raise
                 self._send(200, "ok")
         except Exception as e:
             log.error("handler error: %s\n%s", e, traceback.format_exc())
-            self._send(500, json.dumps({"error": "Internal error"}))
+            self._send(500, json.dumps({"error": str(e)[:500]}))
 
 
 def _handle_sheets_webhook(sheet, row, col, value):
