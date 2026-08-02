@@ -1952,6 +1952,11 @@ class handler(BaseHTTPRequestHandler):
                 self._send(200, json.dumps(result))
                 return
 
+            if body.get("test_tg"):
+                me = tg("getMe")
+                self._send(200, json.dumps({"tg_ok": me.get("ok", False), "tg_result": me}))
+                return
+
             # Google Sheets webhook
             if body.get("sheet"):
                 sheet = body.get("sheet", "")
