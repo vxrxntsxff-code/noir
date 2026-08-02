@@ -1806,10 +1806,12 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
+        print(f"DO_POST: content_length={length} path={self.path}")
         if length > 1048576:
             self._send(413, json.dumps({"error": "Payload too large"}))
             return
         raw = self.rfile.read(length) if length else b"{}"
+        print(f"DO_POST_RAW: {raw[:200]}")
         try:
             body = json.loads(raw)
 
