@@ -1539,6 +1539,15 @@ def handle_callback(chat_id, data):
         return
 
     if data == "pay:qr":
+        order_info = ""
+        username = st.get("username", "")
+        if username and sheets_find_client:
+            client = sheets_find_client(username)
+            if client and sheets_get_projects:
+                projects = sheets_get_projects(client["name"])
+                if projects:
+                    o = projects[0]
+                    order_info = f"\\n\\nВаш заказ: {o.get('name', o.get('package', '—'))}\\nПакет: {o.get('package', '—')}\\nСумма: {o.get('price', '—')} ₽\\nОплачено: {o.get('paid', '0')} ₽\\nОстаток: {o.get('remaining', '—')} ₽"
         qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={urllib.parse.quote(PAYMENT_LINK or '')}"
         caption = "Оплата через Т-Банк или QR-код.\nСсылка: " + (PAYMENT_LINK or "https://t.me/noir_lab42") + order_info
         if PAYMENT_LINK:
