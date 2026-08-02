@@ -375,7 +375,8 @@ def tg(method, data=None):
         with urllib.request.urlopen(req, timeout=10) as resp:
             return json.loads(resp.read())
     except Exception as e:
-        log.error("tg.%s failed: %s", method, e)
+        log.error("tg.%s FAILED — method=%s error=%s", method, url.split('/')[-2], str(e)[:200])
+        print(f"TELEGRAM_OUTBOUND_ERROR: {method} → {str(e)[:200]}")
         return {"ok": False}
 
 
@@ -918,7 +919,9 @@ def handle_start(chat_id, username=""):
         username = get_username(chat_id)
     state_del(chat_id)
     state_set(chat_id, {"step": None, "data": {}, "username": username})
-    send(chat_id, T["welcome"], reply_markup=kb_main())
+    print(f"HANDLE_START: chat_id={chat_id} username={username}")
+    result = send(chat_id, T["welcome"], reply_markup=kb_main())
+    print(f"SEND_RESULT: {result}")
     log.info("start user=%s chat=%s", username, chat_id)
 
 
