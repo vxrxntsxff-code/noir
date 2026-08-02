@@ -862,20 +862,20 @@ def _restore_json(s):
     """Restore double-quotes stripped by Vercel Python runtime POST bug.
     Converts {key:val,sub:{a:b}} to proper JSON {"key":"val","sub":{"a":"b"}}."""
     import re
-    # Quote unquoted keys and string values
-    # Pattern: word chars followed by : (key), or : word (potential value)
-    # First pass: quote keys
+    # Quote unquoted keys
     result = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', s)
-    # Second pass: quote unquoted string values (word chars after : that aren't numbers/bools/null)
-    result = re.sub(r'(:\s*)([a-zA-Z_][a-zA-Z0-9_/]*)', r'\1"\2"', result)
-    # Fix double-quoted already-quoted values (don't double quote)
-    result = re.sub(r'"\s*:\s*"', r'": "', result)
-    # Fix booleans and null
+    # Quote string values: /start, @bot, true, false, null (after : and before , or })
+    result = re.sub(r'(:\s*)(/[a-zA-Z0-9_/.-]*)', r'\1"\2"', result)
+    result = re.sub(r'(:\s*)(@[a-zA-Z0-9_]*)', r'\1"\2"', result)
+    # Quote keys that start with @ or /
+    result = re.sub(r'([{,]\s*)(/[a-zA-Z0-9_/.-]*)(\s*:)', r'\1"\2"\3', result)
+    result = re.sub(r'([{,]\s*)(@[a-zA-Z0-9_]*)(\s*:)', r'\1"\2"\3', result)
+    # Quote remaining unquoted string values (word chars + colons for callback data)
+    result = re.sub(r'(:\s*)([a-zA-Z_][a-zA-Z0-9_:/.]*)(\s*[,}])', r'\1"\2"\3', result)
+    # Fix booleans and null (don't quote them)
     result = re.sub(r'"true"', 'true', result)
     result = re.sub(r'"false"', 'false', result)
     result = re.sub(r'"null"', 'null', result)
-    # Fix double-quoted numbers
-    result = re.sub(r'"(-?\d+\.?\d*)"', r'\1', result)
     return json.loads(result)
 
 
