@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Личный кабинет — NOIR</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body::before, body::after, .grain, .float-cta, .mobile-menu, .burger { display: none !important; }
+    html { overflow-y: scroll; }
+    #nav {
+      background: rgba(11,11,13,.95) !important;
+      border-bottom: 1px solid var(--border) !important;
+    }
+    #nav.scrolled {
+      background: rgba(11,11,13,.95) !important;
+    }
+    #app { padding-top: 72px; }
+    .dash-container{max-width:1000px;margin:0 auto;padding:24px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media(max-width:768px){.grid{grid-template-columns:1fr}}
+    .card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:24px;
+    }
+    .card-title{font-size:14px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px}
+    .stat-value{font-size:28px;font-weight:700;color:var(--text)}
+    .stat-label{font-size:13px;color:var(--muted);margin-top:4px}
+    .progress-bar{
+      height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:16px 0;
+    }
+    .progress-fill{height:100%;background:var(--accent);transition:width .5s}
+    .progress-text{font-size:13px;color:var(--muted);text-align:right}
+    .timeline{list-style:none}
+    .timeline li{
+      display:flex;gap:16px;padding:12px 0;
+      border-bottom:1px solid var(--border);font-size:14px;
+    }
+    .timeline li:last-child{border-bottom:none}
+    .timeline .dot{
+      width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:4px;
+    }
+    .dot-done{background:var(--success)}
+    .dot-current{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+    .dot-pending{background:var(--border)}
+    .timeline .label{flex:1}
+    .timeline .date{color:var(--muted);font-size:12px}
+    .doc-list{list-style:none}
+    .doc-list li{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 0;border-bottom:1px solid var(--border);font-size:14px;
+    }
+    .doc-list li:last-child{border-bottom:none}
+    .doc-link{color:var(--accent);text-decoration:none}
+    .doc-link:hover{text-decoration:underline}
+    .payment-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:12px 0;border-bottom:1px solid var(--border);font-size:14px;
+    }
+    .payment-row:last-child{border-bottom:none}
+    .payment-amount{font-weight:600}
+    .empty{text-align:center;color:var(--muted);padding:32px;font-size:14px}
+    .login-card{
+      max-width:400px;margin:120px auto 80px;background:var(--surface);
+      border:1px solid var(--border);border-radius:16px;padding:40px;
+    }
+    .login-title{font-family:var(--font-display);font-size:20px;font-weight:600;text-align:center;margin-bottom:8px}
+    .login-sub{color:var(--muted);text-align:center;margin-bottom:24px;font-size:14px}
+    .input{
+      width:100%;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:8px;color:var(--text);font-size:14px;outline:none;
+      transition:border-color .2s;
+    }
+    .input:focus{border-color:var(--accent)}
+    .input::placeholder{color:var(--muted)}
+    .login-card .btn{
+      display:block;width:100%;padding:14px;border:none;border-radius:10px;
+      font-size:16px;font-weight:600;cursor:pointer;text-align:center;
+      text-decoration:none;transition:all .2s;margin-top:16px;
+    }
+    .login-card .btn-primary{background:var(--accent);color:#161310}
+    .login-card .btn-primary:hover{background:#d4b87a}
+    .note{font-size:12px;color:var(--muted);text-align:center;margin-top:16px}
+    .full-width{grid-column:1/-1}
+  </style>
+</head>
+<body>
+  <header id="nav">
+    <div class="container nav-inner">
+      <a href="/" class="logo">NOIR<span>®</span></a>
+      <nav class="nav-links" aria-label="Навигация">
+        <a class="nav-link" href="/">Главная</a>
+        <a class="nav-link" href="/tech">Технологии</a>
+        <a class="btn btn-primary btn-sm" href="/#contact">Рассчитать проект</a>
+      </nav>
+    </div>
+  </header>
+
+  <div id="app">
+    <div class="dash-container" id="dashboard" style="display:none">
+      <div class="grid">
+        <div class="card">
+          <div class="card-title">Прогресс проекта</div>
+          <div class="stat-value" id="project-name">—</div>
+          <div class="stat-label" id="project-package"></div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+          <div class="progress-text" id="progress-text">0%</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Оплата</div>
+          <div class="stat-value" id="payment-total">—</div>
+          <div class="stat-label">Общая стоимость</div>
+          <div style="margin-top:16px">
+            <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0">
+              <span style="color:var(--muted)">Оплачено</span>
+              <span id="payment-paid" style="color:var(--success)">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0">
+              <span style="color:var(--muted)">Остаток</span>
+              <span id="payment-remaining" style="color:var(--warn)">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card full-width">
+          <div class="card-title">Таймлайн</div>
+          <ul class="timeline" id="timeline"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Документы</div>
+          <ul class="doc-list" id="docs"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">История оплат</div>
+          <div id="payments"></div>
+        </div>
+
+        <div class="card full-width">
+          <div class="card-title">Последние обновления</div>
+          <div id="updates"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="login-view" style="display:none">
+      <div class="login-card">
+        <div class="login-title">Личный кабинет</div>
+        <div class="login-sub">Войдите по номеру телефона или Telegram</div>
+        <input class="input" id="login-input" placeholder="Телефон или @username" autocomplete="off">
+        <button class="btn btn-primary" id="login-btn">Войти</button>
+        <div class="note">Или откройте ссылку из Telegram-бота</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token') || params.get('t');
+
+    const STAGES = [
+      {key:'brief', label:'Бриф'},
+      {key:'research', label:'Исследование'},
+      {key:'design', label:'Дизайн'},
+      {key:'development', label:'Разработка'},
+      {key:'integrations', label:'Интеграции'},
+      {key:'launch', label:'Запуск'},
+    ];
+
+    function showLogin() {
+      document.getElementById('login-view').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    function showDashboard(data) {
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+
+      document.getElementById('project-name').textContent = data.project_name || 'Проект';
+      document.getElementById('project-package').textContent = data.package || '';
+
+      const pct = data.progress || 0;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-text').textContent = pct + '%';
+
+      document.getElementById('payment-total').textContent = data.price || '—';
+      document.getElementById('payment-paid').textContent = data.paid || '0 ₽';
+      document.getElementById('payment-remaining').textContent = data.remaining || '—';
+
+      const timeline = document.getElementById('timeline');
+      timeline.innerHTML = '';
+      const currentStage = data.stage || 'brief';
+      let reached = false;
+      STAGES.forEach(s => {
+        const li = document.createElement('li');
+        let dotClass = 'dot-pending';
+        if (!reached && s.key !== currentStage) dotClass = 'dot-done';
+        if (s.key === currentStage) { dotClass = 'dot-current'; reached = true; }
+        li.innerHTML = `<span class="dot ${dotClass}"></span><span class="label">${s.label}</span>`;
+        timeline.appendChild(li);
+      });
+
+      const docs = document.getElementById('docs');
+      docs.innerHTML = '';
+      (data.docs || []).forEach(d => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${d.name}</span><a class="doc-link" href="${d.url}" target="_blank">Открыть</a>`;
+        docs.appendChild(li);
+      });
+      if (!data.docs || !data.docs.length) docs.innerHTML = '<div class="empty">Документов пока нет</div>';
+
+      const payments = document.getElementById('payments');
+      payments.innerHTML = '';
+      (data.payments || []).forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'payment-row';
+        row.innerHTML = `<span>${p.date}<br><span style="color:var(--muted);font-size:12px">${p.method}</span></span><span class="payment-amount">${p.amount}</span>`;
+        payments.appendChild(row);
+      });
+      if (!data.payments || !data.payments.length) payments.innerHTML = '<div class="empty">Оплат пока нет</div>';
+
+      const updates = document.getElementById('updates');
+      updates.innerHTML = '';
+      (data.updates || []).forEach(u => {
+        const row = document.createElement('div');
+        row.style.cssText = 'padding:12px 0;border-bottom:1px solid var(--border);font-size:14px';
+        row.innerHTML = `<div>${u.text}</div><div style="color:var(--muted);font-size:12px;margin-top:4px">${u.date}</div>`;
+        updates.appendChild(row);
+      });
+      if (!data.updates || !data.updates.length) updates.innerHTML = '<div class="empty">Обновлений пока нет</div>';
+    }
+
+    if (token) {
+      fetch('/api/dashboard?token=' + encodeURIComponent(token))
+        .then(r => r.json())
+        .then(d => {
+          if (d.ok) showDashboard(d);
+          else showLogin();
+        })
+        .catch(() => showLogin());
+    } else {
+      showLogin();
+    }
+
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const val = document.getElementById('login-input').value.trim();
+      if (!val) return;
+      fetch('/api/dashboard_login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'dashboard_login', login: val}),
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok && d.token) {
+          history.replaceState(null, '', '?token=' + d.token);
+          showDashboard(d);
+        } else {
+          alert('Клиент не найден. Попробуйте номер телефона или @username из Telegram.');
+        }
+      })
+      .catch(() => alert('Ошибка соединения'));
+    });
+  </script>
+</body>
+</html>

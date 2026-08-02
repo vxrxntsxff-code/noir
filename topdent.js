@@ -118,13 +118,18 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ _form: { ...data, source: 'topdent' } }),
-      }).catch(() => {}).finally(() => {
+      }).then(res => {
+        if (!res.ok) throw new Error();
         form.classList.add('sent');
-        btn.textContent = 'Заявка отправлена ✓';
+        btn.textContent = 'Заявка отправлена';
         note.textContent = 'Перезвоним в течение 10 минут в рабочее время.';
         form.reset();
         chips.forEach(c => c.classList.remove('active'));
         setTimeout(() => { form.classList.remove('sent'); btn.disabled = false; btn.textContent = 'Записаться на приём'; note.textContent = def; }, 6000);
+      }).catch(() => {
+        btn.disabled = false;
+        btn.textContent = 'Записаться на приём';
+        note.textContent = 'Ошибка отправки. Попробуйте снова.';
       });
     });
   }

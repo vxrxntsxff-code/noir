@@ -1,5 +1,35 @@
 {
+  "crons": [
+    { "path": "/api/health", "schedule": "0 12 * * *" }
+  ],
   "rewrites": [
-    { "source": "/api/bot", "destination": "/api/app.py" }
+    { "source": "/api/bot", "destination": "/api/app.py" },
+    { "source": "/api/sheets_webhook", "destination": "/api/app.py" },
+    { "source": "/api/health", "destination": "/api/app.py" },
+    { "source": "/api/payment_status", "destination": "/api/app.py" },
+    { "source": "/api/payment_confirm", "destination": "/api/app.py" },
+    { "source": "/api/topdent", "destination": "/api/topdent.py" },
+    { "source": "/api/dashboard", "destination": "/api/topdent.py" },
+    { "source": "/api/dashboard_login", "destination": "/api/topdent.py" },
+    { "source": "/payment", "destination": "/payment.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/proposal", "destination": "/proposal.html" },
+    { "source": "/invoice", "destination": "/invoice.html" },
+    { "source": "/dogovor", "destination": "/dogovor.html" },
+    { "source": "/tech", "destination": "/tech.html" },
+    { "source": "/support", "destination": "/support.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), payment=(self)" }
+      ]
+    }
   ]
 }

@@ -13,12 +13,14 @@
 
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700&display=swap');
+
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: Georgia, 'Times New Roman', 'PT Serif', serif;
-  font-size: 15px;
-  line-height: 1.7;
+  font-family: 'Times New Roman', Times, Georgia, serif;
+  font-size: 14pt;
+  line-height: 1.5;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
@@ -40,25 +42,25 @@ body {
   padding-bottom: 20px; margin-bottom: 32px; border-bottom: 2px solid var(--ink);
 }
 .doc-brand-name {
-  font-family: 'Arial Black', Arial, sans-serif;
-  font-weight: 900; letter-spacing: .12em; font-size: 20px;
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900; letter-spacing: .12em; font-size: 18px;
 }
-.doc-brand-name span { color: var(--accent); font-size: 12px; vertical-align: super; }
-.doc-brand-meta { font-size: 12px; color: var(--muted); text-align: right; }
+.doc-brand-name span { color: var(--accent); font-size: 10px; vertical-align: super; }
+.doc-brand-meta { font-size: 11pt; color: var(--muted); text-align: right; }
 
 .doc-title {
-  font-size: 22px; font-weight: 700; text-align: center;
-  margin-bottom: 6px; text-transform: uppercase; letter-spacing: .02em;
+  font-size: 16pt; font-weight: 700; text-align: center;
+  margin-bottom: 8px; text-transform: uppercase; letter-spacing: .03em;
 }
-.doc-subtitle { text-align: center; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
-.doc-place { text-align: center; font-size: 13px; color: var(--muted); margin-bottom: 36px; }
+.doc-subtitle { text-align: center; font-size: 12pt; color: var(--muted); margin-bottom: 6px; }
+.doc-place { text-align: center; font-size: 11pt; color: var(--muted); margin-bottom: 36px; }
 
 /* Секции */
-.doc h2 { font-size: 15px; font-weight: 700; margin: 26px 0 10px; }
-.doc p { margin-bottom: 10px; text-align: justify; }
+.doc h2 { font-size: 13pt; font-weight: 700; margin: 24px 0 10px; text-transform: uppercase; letter-spacing: .02em; }
+.doc p { margin-bottom: 10px; text-align: justify; text-indent: 1.25em; }
 .doc ol { margin: 0 0 10px 0; padding-left: 0; counter-reset: clause; list-style: none; }
 .doc ol > li {
-  counter-increment: clause; padding-left: 34px; position: relative;
+  counter-increment: clause; padding-left: 40px; position: relative;
   margin-bottom: 8px; text-align: justify;
 }
 .doc ol > li::before {
@@ -70,21 +72,22 @@ body {
 /* Поля для заполнения */
 .fill {
   display: inline-block; min-width: 120px; border-bottom: 1px solid var(--ink);
-  padding: 0 4px; text-align: center; color: var(--ink); font-weight: 600;
+  padding: 0 4px; text-align: center; color: var(--ink); font-weight: 700;
+  font-family: 'Times New Roman', Times, Georgia, serif;
 }
 .fill:focus { outline: none; background: #fffbe6; }
 .fill-wide { min-width: 100%; display: block; margin: 4px 0; }
 
 /* Реквизиты / подписи */
 .requisites { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-.req-block { font-size: 13px; line-height: 1.8; }
+.req-block { font-size: 11pt; line-height: 1.8; }
 .req-block h3 {
-  font-size: 14px; margin-bottom: 10px;
+  font-size: 12pt; margin-bottom: 10px; font-weight: 700;
   border-bottom: 1px solid var(--line); padding-bottom: 6px;
 }
 .sign-line {
   margin-top: 40px; border-top: 1px solid var(--ink);
-  width: 220px; padding-top: 4px; font-size: 12px; color: var(--muted);
+  width: 220px; padding-top: 4px; font-size: 10pt; color: var(--muted);
 }
 
 /* Кнопки (не печатаются) */
@@ -115,14 +118,17 @@ body {
 }
 
 /* ═══ ПЕЧАТЬ ═══ */
-@page { margin: 16mm 15mm; }
+@page { margin: 20mm 15mm; }
 
 @media print {
   html, body {
     background: #fff !important; margin: 0 !important;
     padding: 0 !important; overflow: visible !important;
   }
-  body { color: #111 !important; font-size: 12pt; }
+  body {
+    color: #111 !important; font-size: 12pt;
+    font-family: 'Times New Roman', Times, Georgia, serif !important;
+  }
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

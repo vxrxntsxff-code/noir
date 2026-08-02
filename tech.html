@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Технологии — NOIR | Стек и инструменты</title>
+  <meta name="description" content="Python, Vercel, Telegram Bot API, Google Sheets, Т-Банк, Upstash Redis — стек NOIR OS. Проверенные технологии для надёжных цифровых систем.">
+  <link rel="canonical" href="https://noir-rosy.vercel.app/tech">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="Технологии — NOIR">
+  <meta property="og:description" content="Python, Vercel, Telegram Bot API, Google Sheets, Т-Банк, Upstash Redis — стек NOIR OS.">
+  <meta property="og:url" content="https://noir-rosy.vercel.app/tech">
+  <meta property="og:image" content="https://noir-rosy.vercel.app/logo.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=2">
+  <style>
+    .tech-section{padding:120px 0 80px}
+    .tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+    .tech-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:20px;
+      padding:32px;transition:transform .2s,border-color .2s;
+    }
+    .tech-card:hover{transform:translateY(-4px);border-color:var(--accent)}
+    .tech-icon{font-size:32px;margin-bottom:16px}
+    .tech-name{font-family:var(--font-display);font-size:16px;font-weight:600;margin-bottom:8px}
+    .tech-desc{font-size:14px;color:var(--muted);line-height:1.6}
+    .section{margin-top:80px}
+    .section-title{font-family:var(--font-display);font-size:24px;font-weight:600;margin-bottom:32px}
+    .flow{display:flex;flex-direction:column;gap:16px}
+    .flow-step{
+      display:flex;align-items:center;gap:16px;
+      background:var(--surface);border:1px solid var(--border);border-radius:16px;
+      padding:20px 24px;
+    }
+    .flow-num{
+      width:36px;height:36px;border-radius:9999px;background:var(--accent);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;color:#0B0B0D;flex-shrink:0;
+    }
+    .flow-text{font-size:14px}
+    .flow-text strong{color:var(--text)}
+    .flow-text span{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header id="nav">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo">NOIR<span>®</span></a>
+      <nav class="nav-links" aria-label="Навигация">
+        <a class="nav-link" href="index.html#services">Модули</a>
+        <a class="nav-link" href="index.html#cases">Портфолио</a>
+        <a class="nav-link" href="index.html#process">Как работаем</a>
+        <a class="nav-link" href="index.html#faq">Вопросы</a>
+        <a class="nav-link" href="/dashboard">Личный кабинет</a>
+        <a class="btn btn-primary btn-sm" href="index.html#contact">Рассчитать проект</a>
+      </nav>
+      <button id="burger" class="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileMenu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <div id="mobileMenu" class="mobile-menu">
+    <nav class="mobile-nav" aria-label="Мобильная навигация">
+      <a class="mobile-link" href="index.html#services">Модули</a>
+      <a class="mobile-link" href="index.html#cases">Портфолио</a>
+      <a class="mobile-link" href="index.html#process">Как работаем</a>
+      <a class="mobile-link" href="index.html#faq">Вопросы</a>
+      <a class="mobile-link" href="/dashboard">Личный кабинет</a>
+      <a class="mobile-link mobile-cta" href="index.html#contact">Рассчитать проект</a>
+      <div class="mobile-meta">Кемерово · работаем по всей России</div>
+    </nav>
+  </div>
+
+  <div class="container tech-section">
+    <h1>Технологии <span>NOIR</span></h1>
+    <p class="subtitle">Стек, который стоит за каждой системой. Только проверенные, надёжные решения.</p>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-icon">PY</div>
+        <div class="tech-name">Python</div>
+        <div class="tech-desc">Бэкенд на чистом Python. Без фреймворков — только стандартная библиотека. Максимальная скорость и контроль.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">EDGE</div>
+        <div class="tech-name">Vercel</div>
+        <div class="tech-desc">Edge-хостинг с мгновенным деплоем. Автоматическое масштабирование. Нулевая настройка сервера.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">API</div>
+        <div class="tech-name">Telegram Bot API</div>
+        <div class="tech-desc">Нативные боты с inline-клавиатурами. Webhook-архитектура для мгновенных ответов.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">CRM</div>
+        <div class="tech-name">Google Sheets</div>
+        <div class="tech-desc">CRM без лишних интерфейсов. Привычный инструмент с автоматической синхронизацией.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">PAY</div>
+        <div class="tech-name">Т-Банк</div>
+        <div class="tech-desc">Оплата через QR-код или ссылку. Без эквайринга — прямой расчёт.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">SEC</div>
+        <div class="tech-name">Upstash Redis</div>
+        <div class="tech-desc">Serverless-хранилище состояний. Каждый пользователь — отдельная сессия.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Как это работает</div>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-text"><strong>Клиент пишет боту</strong> <span>— Telegram или сайт</span></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-text"><strong>Бот квалифицирует</strong> <span>— выясняет потребности за 6 вопросов</span></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-text"><strong>Данные в Google Sheets</strong> <span>— автоматически создаётся карточка клиента</span></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-text"><strong>Договор готов</strong> <span>— PDF собирается с данными клиента</span></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-text"><strong>Оплата</strong> <span>— QR-код или ссылка на Т-Банк</span></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">6</div>
+          <div class="flow-text"><strong>Проект запущен</strong> <span>— клиент видит прогресс в личном кабинете</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

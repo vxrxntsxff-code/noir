@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Оплата — NOIR</title>
+  <meta name="description" content="Оплата услуг NOIR OS через Т-Банк. Безопасная оплата по QR-коду или ссылке.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0B0B0D;--surface:#141417;--border:#232327;
+      --text:#ECECE6;--muted:#9A9A95;--accent:#C9A96E;
+      --success:#4CAF50;--error:#E53935;--warn:#FF9800;
+    }
+    body{
+      font-family:'Golos Text',system-ui,sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      padding:24px;
+    }
+    .card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:24px;padding:40px;max-width:480px;width:100%;
+    }
+    .status-icon{font-size:48px;text-align:center;margin-bottom:16px}
+    .status-text{font-size:20px;font-weight:600;text-align:center;margin-bottom:8px}
+    .status-sub{color:var(--muted);text-align:center;margin-bottom:24px;font-size:14px}
+    .details{margin-bottom:24px}
+    .detail-row{
+      display:flex;justify-content:space-between;padding:12px 0;
+      border-bottom:1px solid var(--border);font-size:14px;
+    }
+    .detail-row:last-child{border-bottom:none}
+    .detail-label{color:var(--muted)}
+    .detail-value{font-weight:500}
+    .qr-wrap{
+      text-align:center;margin:24px 0;
+      background:#fff;border-radius:20px;padding:16px;
+      display:inline-block;
+    }
+    .qr-wrap img{display:block;width:200px;height:200px}
+    .btn{
+      display:block;width:100%;padding:14px;border:none;border-radius:9999px;
+      font-size:16px;font-weight:600;cursor:pointer;text-align:center;
+      text-decoration:none;transition:all .2s;
+    }
+    .btn-primary{background:var(--accent);color:#0B0B0D}
+    .btn-primary:hover{background:#d4b87a}
+    .btn-success{background:var(--success);color:#fff}
+    .btn-success:hover{background:#43a047}
+    .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+    .btn-ghost:hover{color:var(--text);border-color:var(--muted)}
+    .btn+.btn{margin-top:12px}
+    .hidden{display:none}
+    .spinner{
+      width:24px;height:24px;border:3px solid var(--border);
+      border-top-color:var(--accent);border-radius:50%;
+      animation:spin .8s linear infinite;margin:0 auto 16px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .progress-bar{
+      height:4px;background:var(--border);border-radius:9999px;
+      overflow:hidden;margin:16px 0;
+    }
+    .progress-fill{height:100%;background:var(--accent);transition:width .3s}
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div id="view-loading">
+      <div class="spinner"></div>
+      <div class="status-sub">Загрузка...</div>
+    </div>
+
+    <div id="view-payment" class="hidden">
+      <div class="status-icon">Оплата</div>
+      <div class="status-text" id="project-name">Оплата проекта</div>
+      <div class="status-sub" id="payment-desc">НОИР · Пакет «Старт»</div>
+
+      <div class="details">
+        <div class="detail-row">
+          <span class="detail-label">Сумма</span>
+          <span class="detail-value" id="amount">29 000 ₽</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Аванс (50%)</span>
+          <span class="detail-value" id="advance">14 500 ₽</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Остаток</span>
+          <span class="detail-value" id="remaining">14 500 ₽</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Заказ</span>
+          <span class="detail-value" id="order-id">NOIR-20260729-1234</span>
+        </div>
+      </div>
+
+      <div style="text-align:center" id="qr-wrap">
+        <img id="qr-img" src="" alt="QR Code" style="width:200px;height:200px;border-radius:20px;background:#fff;padding:8px">
+      </div>
+
+      <a id="pay-link" href="#" class="btn btn-primary" target="_blank">
+        Оплатить через Т-Банк
+      </a>
+      <button class="btn btn-success" id="btn-paid" style="margin-top:12px">
+        Я оплатил
+      </button>
+      <button class="btn btn-ghost" onclick="history.back()">← Назад</button>
+    </div>
+
+    <div id="view-pending" class="hidden">
+      <div class="status-icon">Ожидание</div>
+      <div class="status-text">Ожидает подтверждения</div>
+      <div class="status-sub">Мы проверим оплату и свяжемся с вами</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+      <button class="btn btn-ghost" onclick="location.reload()">Обновить статус</button>
+    </div>
+
+    <div id="view-success" class="hidden">
+      <div class="status-icon">Оплачено</div>
+      <div class="status-text">Оплата подтверждена</div>
+      <div class="status-sub">Проект переводится в статус «В работе»</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      <a href="/" class="btn btn-primary" style="margin-top:16px">На главную</a>
+    </div>
+
+    <div id="view-fail" class="hidden">
+      <div class="status-icon">Ошибка</div>
+      <div class="status-text">Оплата не прошла</div>
+      <div class="status-sub">Попробуйте ещё раз или свяжитесь с нами</div>
+      <button class="btn btn-primary" onclick="location.reload()">Попробовать снова</button>
+      <a href="/" class="btn btn-ghost" style="margin-top:12px">На главную</a>
+    </div>
+  </div>
+
+   <script>
+     const params = new URLSearchParams(location.search);
+     const order = params.get('order');
+
+     function show(id) {
+       document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
+       document.getElementById(id).classList.remove('hidden');
+     }
+
+     function fmt(n) {
+       n = parseInt(n) || 0;
+       return n.toLocaleString('ru-RU') + ' ₽';
+     }
+
+     async function loadPayment(orderId) {
+       document.getElementById('order-id').textContent = orderId || '—';
+       const resp = await fetch('/api/payment_status?order=' + encodeURIComponent(orderId));
+       if (!resp.ok) throw new Error('fetch failed');
+       return resp.json();
+     }
+
+     if (order) {
+       show('view-loading');
+       loadPayment(order)
+         .then(d => {
+           if (d.status === 'paid') { show('view-success'); return; }
+
+           // populate fields from API or URL params
+           const amount = params.get('amount') || '29000';
+           const amountNum = parseInt(amount.replace(/\D/g, '')) || 29000;
+           const advance = Math.floor(amountNum / 2);
+           const remaining = amountNum - advance;
+
+           document.getElementById('amount').textContent = fmt(amountNum);
+           document.getElementById('advance').textContent = fmt(advance);
+           document.getElementById('remaining').textContent = fmt(remaining);
+           document.getElementById('project-name').textContent = params.get('name') || 'Оплата проекта';
+           document.getElementById('payment-desc').textContent = params.get('package') || 'НОИР';
+           document.getElementById('order-id').textContent = order;
+
+           // set payment link and QR
+           const payLink = document.getElementById('pay-link');
+           const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
+           payLink.href = paymentLink;
+           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(paymentLink);
+
+           show('view-payment');
+         })
+         .catch(() => {
+           // Fallback: show payment with URL params even if API fails
+           const amount = params.get('amount') || '29000';
+           const amountNum = parseInt(amount.replace(/\D/g, '')) || 29000;
+           const advance = Math.floor(amountNum / 2);
+           const remaining = amountNum - advance;
+
+           document.getElementById('amount').textContent = fmt(amountNum);
+           document.getElementById('advance').textContent = fmt(advance);
+           document.getElementById('remaining').textContent = fmt(remaining);
+           document.getElementById('project-name').textContent = params.get('name') || 'Оплата проекта';
+           document.getElementById('payment-desc').textContent = params.get('package') || 'НОИР';
+           document.getElementById('order-id').textContent = order;
+
+           const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
+           document.getElementById('pay-link').href = paymentLink;
+           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(paymentLink);
+
+           show('view-payment');
+         });
+     } else {
+       show('view-fail');
+     }
+
+     const paidBtn = document.getElementById('btn-paid');
+     if (paidBtn) {
+       paidBtn.addEventListener('click', () => {
+         show('view-loading');
+fetch('/api/payment_confirm', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({action: 'payment_confirm', order_id: order}),
+        })
+         .then(r => r.json())
+         .then(d => {
+           if (d.ok) show('view-pending');
+           else show('view-fail');
+         })
+         .catch(() => show('view-fail'));
+       });
+     }
+   </script>
+</body>
+</html>

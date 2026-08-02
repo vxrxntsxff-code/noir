@@ -3,12 +3,110 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NOIR — сайты, боты и автоматизация для бизнеса | Кемерово</title>
-<meta name="description" content="Цифровая студия в Кемерово: продающие сайты, Telegram-боты, автоматизация, AI-ассистенты, онлайн-оплата. Пакеты от 29 000 ₽. Договор, фиксированная цена.">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>NOIR — операционная система для бизнеса | Кемерово</title>
+<meta name="description" content="NOIR OS: модульная цифровая система для бизнеса — сайт, боты, CRM, AI, аналитика. Сроки: 2 недели – от месяца. Пакеты от 29 000 ₽. Договор, фикс-цена.">
+<meta name="keywords" content="разработка сайтов кемерово, создание сайтов, telegram бот, CRM система, AI ассистент, цифровая система для бизнеса, NOIR">
+<link rel="canonical" href="https://noir-rosy.vercel.app/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="NOIR — операционная система для бизнеса | Кемерово">
+<meta property="og:description" content="Модульная система: трафик → заявка → CRM → продажа → аналитика. Сайт, боты, CRM, AI, оплата. Пакеты от 29 000 ₽.">
+<meta property="og:url" content="https://noir-rosy.vercel.app/">
+<meta property="og:site_name" content="NOIR OS">
+<meta property="og:image" content="https://noir-rosy.vercel.app/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NOIR — операционная система для бизнеса">
+<meta name="twitter:description" content="Модульная система: трафик → заявка → CRM → продажа → аналитика. Пакеты от 29 000 ₽.">
+<meta name="twitter:image" content="https://noir-rosy.vercel.app/logo.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "NOIR — цифровая студия",
+  "description": "Модульная цифровая система для бизнеса: сайт, Telegram-бот, CRM, AI-ассистент, онлайн-оплата. Кемерово, работаем по всей России.",
+  "url": "https://noir-rosy.vercel.app",
+  "telephone": "+79515922618",
+  "email": "hello@noirlab.ru",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Кемерово",
+    "addressCountry": "RU"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 55.3333,
+    "longitude": 86.0833
+  },
+  "priceRange": "от 29000 до 112000 RUB",
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    "opens": "10:00",
+    "closes": "22:00"
+  },
+  "sameAs": [
+    "https://t.me/noir_lab42"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "Разработка цифровых систем для бизнеса",
+  "provider": {
+    "@type": "LocalBusiness",
+    "name": "NOIR"
+  },
+  "areaServed": {
+    "@type": "Country",
+    "name": "Россия"
+  },
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Пакеты NOIR OS",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Пакет Старт",
+          "description": "Лендинг + Telegram-бот + CRM"
+        },
+        "price": "29000",
+        "priceCurrency": "RUB"
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Пакет Бизнес",
+          "description": "Сайт + Telegram-бот + CRM + AI-ассистент"
+        },
+        "price": "59000",
+        "priceCurrency": "RUB"
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Пакет Премиум",
+          "description": "Сайт + Telegram-бот + CRM + AI-ассистент + онлайн-оплата"
+        },
+        "price": "112000",
+        "priceCurrency": "RUB"
+      }
+    ]
+  }
+}
+</script>
+<meta name="theme-color" content="#0B0B0D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.qrserver.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
 
@@ -19,10 +117,11 @@
   <div class="container nav-inner">
     <a href="#hero" class="logo">NOIR<span>®</span></a>
     <nav class="nav-links" aria-label="Основная навигация">
-      <a class="nav-link" data-nav="services" href="#services">Пакеты</a>
+      <a class="nav-link" data-nav="services" href="#services">Модули</a>
       <a class="nav-link" data-nav="cases" href="#cases">Портфолио</a>
       <a class="nav-link" data-nav="process" href="#process">Как работаем</a>
       <a class="nav-link" data-nav="faq" href="#faq">Вопросы</a>
+      <a class="nav-link" href="/dashboard">Личный кабинет</a>
       <a class="btn btn-primary btn-sm" href="#contact">Рассчитать проект</a>
     </nav>
     <button id="burger" class="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileMenu">
@@ -34,10 +133,11 @@
 <!-- МОБИЛЬНОЕ МЕНЮ -->
 <div id="mobileMenu" class="mobile-menu">
   <nav class="mobile-nav" aria-label="Мобильная навигация">
-    <a class="mobile-link" href="#services">Пакеты</a>
+    <a class="mobile-link" href="#services">Модули</a>
     <a class="mobile-link" href="#cases">Портфолио</a>
     <a class="mobile-link" href="#process">Как работаем</a>
     <a class="mobile-link" href="#faq">Вопросы</a>
+    <a class="mobile-link" href="/dashboard">Личный кабинет</a>
     <a class="mobile-link mobile-cta" href="#contact">Рассчитать проект</a>
     <div class="mobile-meta">Кемерово · работаем по всей России</div>
   </nav>
@@ -50,17 +150,17 @@
     <div class="container hero-grid">
       <div class="hero-copy">
         <div class="hero-tag" data-reveal>
-          <span class="dot dot-live"></span>Цифровая студия · Кемерово · работаем по всей России
+          <span class="dot dot-live"></span>NOIR OS · Кемерово · работаем по всей России
         </div>
         <h1 class="hero-title" data-reveal style="--d:.08s">
-          Сайты, боты и автоматизация, <span class="accent">которые приносят заявки</span>
+          Операционная система <span class="accent">для вашего бизнеса</span>
         </h1>
         <p class="hero-sub" data-reveal style="--d:.16s">
-          Строим систему: трафик → заявка → CRM → продажа.
-          Вы видите, откуда приходят клиенты и сколько денег даёт каждый канал.
+          Не «сайт + бот». А модульная система: трафик → заявка → CRM → продажа → аналитика.
+          Каждый модуль работает сам. Вместе — работают на вас.
         </p>
         <div class="hero-actions" data-reveal style="--d:.24s">
-          <a class="btn btn-primary" href="#services">Выбрать пакет</a>
+          <a class="btn btn-primary" href="#services">Выбрать модули</a>
           <a class="btn btn-ghost" href="#cases">Смотреть работы</a>
         </div>
         <div class="hero-stats" data-reveal style="--d:.32s">
@@ -79,7 +179,7 @@
         </div>
       </div>
 
-      <aside class="board" data-reveal style="--d:.2s" aria-label="Статус студии">
+      <aside class="board" data-reveal style="--d:.2s" aria-label="Статус NOIR">
         <div class="board-head">
           <span class="board-label"><span class="dot dot-live"></span>На связи</span>
           <span class="board-id">NOIR · статус</span>
@@ -102,10 +202,10 @@
   <div class="marquee" aria-hidden="true">
     <div class="marquee-track">
       <div class="marquee-group">
-        <span>Сайты под ключ</span><i>✦</i><span>Telegram-боты</span><i>✦</i><span>Автоматизация</span><i>✦</i><span>AI-ассистенты</span><i>✦</i><span>Онлайн-оплата</span><i>✦</i><span>Пакеты от 29 000 ₽</span><i>✦</i>
+        <span>NOIR OS</span><i>·</i><span>Сайт-модуль</span><i>·</i><span>Telegram-боты</span><i>·</i><span>CRM-интеграция</span><i>·</i><span>AI-ассистент</span><i>·</i><span>Аналитика</span><i>·</i><span>Онлайн-оплата</span><i>·</i>
       </div>
       <div class="marquee-group">
-        <span>Сайты под ключ</span><i>✦</i><span>Telegram-боты</span><i>✦</i><span>Автоматизация</span><i>✦</i><span>AI-ассистенты</span><i>✦</i><span>Онлайн-оплата</span><i>✦</i><span>Пакеты от 29 000 ₽</span><i>✦</i>
+        <span>NOIR OS</span><i>·</i><span>Сайт-модуль</span><i>·</i><span>Telegram-боты</span><i>·</i><span>CRM-интеграция</span><i>·</i><span>AI-ассистент</span><i>·</i><span>Аналитика</span><i>·</i><span>Онлайн-оплата</span><i>·</i>
       </div>
     </div>
   </div>
@@ -115,14 +215,14 @@
     <div class="container split">
       <div class="split-left">
         <div class="section-tag" data-reveal>Знакомо?</div>
-        <h2 class="section-title" data-reveal>Деньги утекают<br>в тишине</h2>
-        <p class="section-lead" data-reveal>Если хотя бы один пункт про вас — вы по адресу. Эти задачи мы решаем каждый день.</p>
-        <a class="link-arrow" href="#services" data-reveal>Смотрите решения <span>→</span></a>
+        <h2 class="section-title" data-reveal>Бизнес работает<br>вручную</h2>
+        <p class="section-lead" data-reveal>Без системы каждый рост — это боль. Новые клиенты = больше хаоса, а не денег.</p>
+        <a class="link-arrow" href="#services" data-reveal>Смотрите решение <span>→</span></a>
       </div>
       <div class="pain-list">
         <div class="pain" data-reveal>
           <span class="pain-x" aria-hidden="true">✕</span>
-          <div><h3>Сайт есть, а заявок нет</h3><p>Посетители приходят, смотрят и уходят. Куда теряются деньги — непонятно.</p></div>
+          <div><h3>Нет единой системы</h3><p>Сайт от одного, бот от другого, CRM от третьего. Ничто не связано — и вы тратите время на ручную стыковку.</p></div>
         </div>
         <div class="pain" data-reveal style="--d:.08s">
           <span class="pain-x" aria-hidden="true">✕</span>
@@ -130,11 +230,11 @@
         </div>
         <div class="pain" data-reveal style="--d:.16s">
           <span class="pain-x" aria-hidden="true">✕</span>
-          <div><h3>Рутина съедает день</h3><p>Отчёты, напоминания, счета. Часы уходят на то, что скрипт делает за секунды.</p></div>
+          <div><h3>Рутина съедает день</h3><p>Отчёты, напоминания, счета. Часы уходят на то, что система делает за секунды.</p></div>
         </div>
         <div class="pain" data-reveal style="--d:.24s">
           <span class="pain-x" aria-hidden="true">✕</span>
-          <div><h3>Нет системы — нет роста</h3><p>Не видно, какой канал приносит клиентов, поэтому бюджет сливается вслепую.</p></div>
+          <div><h3>Нет видимости — нет роста</h3><p>Не видно, какой канал приносит клиентов, поэтому бюджет сливается вслепую.</p></div>
         </div>
       </div>
     </div>
@@ -145,17 +245,17 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="section-tag" data-reveal>Пакеты и услуги</div>
-          <h2 class="section-title" data-reveal>Система целиком —<br>дешевле, чем по частям</h2>
+          <div class="section-tag" data-reveal>Модули NOIR OS</div>
+          <h2 class="section-title" data-reveal>Каждый модуль —<br>часть системы</h2>
         </div>
-        <p class="section-lead" data-reveal>Пакет — это готовая система под ключ. По отдельности — дороже.</p>
+        <p class="section-lead" data-reveal>Соберите только то, что нужно. Добавляйте модули по мере роста.</p>
       </div>
 
       <div class="packages-grid">
         <div class="package-card" data-reveal>
           <div class="package-top">
             <h3 class="package-name">Старт</h3>
-            <p class="package-tag">Чтобы заявки пошли</p>
+            <p class="package-tag">Модуль «Сайт + Оплата»</p>
           </div>
           <div class="package-price">
             <span class="price-old">39 000 ₽</span>
@@ -163,10 +263,11 @@
             <span class="price-note">первым 3 клиентам</span>
           </div>
           <ul class="package-list">
-            <li>Лендинг с блоком заявок</li>
+            <li>Лендинг с модулем заявок</li>
             <li>Онлайн-оплата: карты и СБП</li>
             <li>Яндекс.Метрика + настроенные цели</li>
             <li>Заявки сразу вам в Telegram</li>
+            <li>Срок: 2–3 недели</li>
             <li>Месяц поддержки бесплатно</li>
           </ul>
           <a class="btn btn-ghost package-btn" href="#contact">Выбрать «Старт»</a>
@@ -176,7 +277,7 @@
           <div class="package-badge">Выбирают чаще всего</div>
           <div class="package-top">
             <h3 class="package-name">Бизнес</h3>
-            <p class="package-tag">Заявки на автопилоте</p>
+            <p class="package-tag">Система из 4 модулей</p>
           </div>
           <div class="package-price">
             <span class="price-old">79 000 ₽</span>
@@ -188,6 +289,7 @@
             <li>Telegram-бот: запись и напоминания</li>
             <li>CRM: amoCRM или Битрикс24</li>
             <li>Ни одна заявка не теряется</li>
+            <li>Срок: до месяца</li>
             <li>2 месяца поддержки бесплатно</li>
           </ul>
           <a class="btn btn-primary package-btn" href="#contact">Выбрать «Бизнес»</a>
@@ -196,7 +298,7 @@
         <div class="package-card" data-reveal style="--d:.16s">
           <div class="package-top">
             <h3 class="package-name">Премиум</h3>
-            <p class="package-tag">Полная цифровизация</p>
+            <p class="package-tag">Полная NOIR OS</p>
           </div>
           <div class="package-price">
             <span class="price-old">149 000 ₽</span>
@@ -207,7 +309,7 @@
             <li>Всё из «Бизнеса»</li>
             <li>AI-ассистент на вашем бизнесе</li>
             <li>Полная автоматизация: 1С, телефония</li>
-            <li>Приоритетная поддержка</li>
+            <li>Срок: от месяца</li>
             <li>3 месяца поддержки бесплатно</li>
           </ul>
           <a class="btn btn-ghost package-btn" href="#contact">Выбрать «Премиум»</a>
@@ -217,59 +319,59 @@
       <p class="packages-note" data-reveal>Первые три проекта — по цене ниже рынка в обмен на кейс с цифрами и отзыв. Дальше — обычный прайс.</p>
 
       <div class="services-sub" data-reveal>
-        <h3>Нужно что-то одно?</h3>
-        <p>Любую услугу можно заказать отдельно — но дороже, чем в пакете: нам интереснее строить вам систему, а не латать дыры.</p>
+        <h3>Нужен один модуль?</h3>
+        <p>Любой модуль можно подключить отдельно — но в системе он работает эффективнее. Мы строим экосистему, а не точечные решения.</p>
       </div>
 
       <div class="services-list">
         <a class="service-row" href="#contact" data-reveal>
           <span class="service-num">01</span>
           <span class="service-body">
-            <span class="service-title">Сайты и лендинги</span>
-            <span class="service-desc">Лендинги, корпоративные сайты, магазины. За 10 секунд объясняем, почему покупать нужно у вас, — и доводим до заявки.</span>
+            <span class="service-title">Модуль «Сайт»</span>
+            <span class="service-desc">Лендинг, корпоративный сайт, магазин. Объясняем, почему покупать у вас — и доводим до заявки за 10 секунд.</span>
           </span>
-          <span class="service-meta"><span class="service-term">2–3 недели</span><span class="service-price">от 35 000 ₽</span></span>
+          <span class="service-meta"><span class="service-term">2–3 недели</span><span class="service-price">35 000 ₽</span></span>
           <span class="service-arrow" aria-hidden="true">→</span>
         </a>
         <a class="service-row" href="#contact" data-reveal style="--d:.06s">
           <span class="service-num">02</span>
           <span class="service-body">
-            <span class="service-title">Telegram-боты</span>
-            <span class="service-desc">Запись, оплата, каталог, напоминания — прямо в Telegram. Бот работает круглосуточно: без отпусков, больничных и зарплаты.</span>
+            <span class="service-title">Модуль «Бот»</span>
+            <span class="service-desc">Запись, оплата, каталог, напоминания — в Telegram. Бот работает 24/7: без отпусков, больничных и зарплаты.</span>
           </span>
-          <span class="service-meta"><span class="service-term">1–2 недели</span><span class="service-price">от 20 000 ₽</span></span>
+          <span class="service-meta"><span class="service-term">1–2 недели</span><span class="service-price">20 000 ₽</span></span>
           <span class="service-arrow" aria-hidden="true">→</span>
         </a>
         <a class="service-row" href="#contact" data-reveal style="--d:.12s">
           <span class="service-num">03</span>
           <span class="service-body">
-            <span class="service-title">Автоматизация</span>
-            <span class="service-desc">Связываем сайт, CRM, телефонию и 1С в одну систему. Заявки не теряются, отчёты собираются сами.</span>
+            <span class="service-title">Модуль «CRM»</span>
+            <span class="service-desc">Связываем сайт, бота, телефонию и 1С в одну систему. Заявки не теряются, отчёты собираются сами.</span>
           </span>
-          <span class="service-meta"><span class="service-term">от 2 недель</span><span class="service-price">от 45 000 ₽</span></span>
+          <span class="service-meta"><span class="service-term">от 2 недель</span><span class="service-price">45 000 ₽</span></span>
           <span class="service-arrow" aria-hidden="true">→</span>
         </a>
         <a class="service-row" href="#contact" data-reveal style="--d:.18s">
           <span class="service-num">04</span>
           <span class="service-body">
-            <span class="service-title">AI-ассистенты</span>
+            <span class="service-title">Модуль «AI»</span>
             <span class="service-desc">Чат-бот, который отвечает как ваш лучший менеджер: консультирует, записывает, доводит до сделки. Обучаем на вашем бизнесе.</span>
           </span>
-          <span class="service-meta"><span class="service-term">от 3 недель</span><span class="service-price">от 60 000 ₽</span></span>
+          <span class="service-meta"><span class="service-term">от 3 недель</span><span class="service-price">60 000 ₽</span></span>
           <span class="service-arrow" aria-hidden="true">→</span>
         </a>
         <a class="service-row" href="#contact" data-reveal style="--d:.24s">
           <span class="service-num">05</span>
           <span class="service-body">
-            <span class="service-title">Онлайн-оплата</span>
-            <span class="service-desc">ЮKassa или Т-Банк: карты и СБП на сайте, оплата внутри Telegram-бота, автоматические чеки по 54-ФЗ. Клиент платит за 30 секунд — деньги сразу вам.</span>
+            <span class="service-title">Модуль «Оплата»</span>
+            <span class="service-desc">ЮKassa или Т-Банк: карты и СБП на сайте, оплата в боте, автоматические чеки по 54-ФЗ. Клиент платит за 30 секунд.</span>
           </span>
-          <span class="service-meta"><span class="service-term">3–5 дней</span><span class="service-price">от 10 000 ₽</span></span>
+          <span class="service-meta"><span class="service-term">3–5 дней</span><span class="service-price">10 000 ₽</span></span>
           <span class="service-arrow" aria-hidden="true">→</span>
         </a>
       </div>
 
-      <p class="services-note" data-reveal>Не знаете, что именно нужно? <a href="#contact">Расскажите задачу</a> — предложим решение и назовём цену. Бесплатно.</p>
+      <p class="services-note" data-reveal>Не знаете, какие модули нужны? <a href="#contact">Расскажите задачу</a> — предложим архитектуру и назовём цену. Бесплатно.</p>
     </div>
   </section>
 
@@ -290,7 +392,7 @@
       <div class="cases-grid">
         <article class="case-card featured" data-reveal>
           <div class="case-info">
-            <div class="case-meta"><span class="case-cat">Лендинг · свой проект</span><span class="case-year">2026 · живьём</span></div>
+            <div class="case-meta"><span class="case-cat">NOIR OS · собственный проект</span><span class="case-year">2026 · живьём</span></div>
             <h3 class="case-title">Этот сайт</h3>
             <p class="case-desc">Наш собственный лендинг: от идеи до запуска за 10 дней. Адаптивный, быстрый, с анимациями без тяжёлых библиотек. Судите о нас по нему.</p>
           </div>
@@ -302,9 +404,9 @@
 
         <article class="case-card" data-reveal>
           <div class="case-info">
-            <div class="case-meta"><span class="case-cat">Telegram-бот</span><span class="case-year">демо · живьём</span></div>
-            <h3 class="case-title">Бот записи для салона</h3>
-            <p class="case-desc">Рабочий бот: услуги, свободные окна, запись, напоминания. Напишите ему — он отвечает как администратор.</p>
+            <div class="case-meta"><span class="case-cat">Модуль «Бот»</span><span class="case-year">демо · живьём</span></div>
+            <h3 class="case-title">Бот записи для клиники</h3>
+            <p class="case-desc">Рабочий бот: услуги, свободные окна, запись, напоминания, личный кабинет. Напишите ему — он отвечает как администратор.</p>
           </div>
           <div class="case-metric">
             <div class="metric-num">24/7</div>
@@ -314,7 +416,7 @@
 
         <article class="case-card" data-reveal style="--d:.08s">
           <div class="case-info">
-            <div class="case-meta"><span class="case-cat">Автоматизация</span><span class="case-year">демо · CRM + 1С</span></div>
+            <div class="case-meta"><span class="case-cat">Модуль «CRM»</span><span class="case-year">демо · CRM + 1С</span></div>
             <h3 class="case-title">Заявка → CRM за 3 секунды</h3>
             <p class="case-desc">Заявка с сайта сама попадает в CRM и 1С. Менеджер не участвует — значит, ничего не потеряется.</p>
           </div>
@@ -341,7 +443,7 @@
       <div class="section-head">
         <div>
           <div class="section-tag" data-reveal>Результат</div>
-         <h2 class="section-title" data-reveal>Что меняется<br>после запуска</h2>
+         <h2 class="section-title" data-reveal>Что меняется<br>после запуска NOIR OS</h2>
         </div>
         <p class="section-lead" data-reveal>Не «красивый сайт», а другая механика бизнеса.</p>
       </div>
@@ -382,25 +484,25 @@
       <div class="section-head">
         <div>
           <div class="section-tag" data-reveal>Процесс</div>
-          <h2 class="section-title" data-reveal>Как мы работаем</h2>
+          <h2 class="section-title" data-reveal>Как запускаем NOIR OS</h2>
         </div>
-        <p class="section-lead" data-reveal>Без сюрпризов: вы видите проект на каждом этапе и знаете, что будет дальше.</p>
+        <p class="section-lead" data-reveal>Без сюрпризов: вы видите систему на каждом этапе и знаете, что будет дальше.</p>
       </div>
       <div class="process-grid">
         <div class="process-step" data-reveal>
           <div class="ghost" aria-hidden="true">01</div>
-          <h3>Погружение</h3>
-          <p>1–2 дня. Смотрим бизнес, конкурентов, где теряются клиенты. Фиксируем задачу, сроки и цену.</p>
+          <h3>Аудит</h3>
+          <p>1–2 дня. Смотрим бизнес, конкурентов, где теряются клиенты. Проектируем архитектуру системы.</p>
         </div>
         <div class="process-step" data-reveal style="--d:.08s">
           <div class="ghost" aria-hidden="true">02</div>
-          <h3>Прототип и дизайн</h3>
-          <p>Показываем структуру сайта до кода. Согласовываете — только потом рисуем.</p>
+          <h3>Прототип модулей</h3>
+          <p>Показываем структуру каждого модуля до кода. Согласовываете — только потом собираем.</p>
         </div>
         <div class="process-step" data-reveal style="--d:.16s">
           <div class="ghost" aria-hidden="true">03</div>
-          <h3>Разработка</h3>
-          <p>Верстаем, подключаем аналитику, CRM, оплату. Тестируем на реальных сценариях.</p>
+          <h3>Сборка системы</h3>
+          <p>Связываем модули: сайт → бот → CRM → оплата. Тестируем на реальных сценариях.</p>
         </div>
         <div class="process-step" data-reveal style="--d:.24s">
           <div class="ghost" aria-hidden="true">04</div>
@@ -417,7 +519,7 @@
       <div class="section-head">
         <div>
           <div class="section-tag" data-reveal>Гарантии</div>
-          <h2 class="section-title" data-reveal>Почему нам доверяют</h2>
+          <h2 class="section-title" data-reveal>Почему доверяют NOIR</h2>
         </div>
         <p class="section-lead" data-reveal>Не слова, а условия, которые можно проверить до оплаты.</p>
       </div>
@@ -458,16 +560,16 @@
       </div>
       <div class="faq-list">
         <div class="faq-item" data-reveal>
-          <button class="faq-q" aria-expanded="false"><span>Сколько будет стоить мой проект?</span><span class="faq-icon" aria-hidden="true">+</span></button>
-          <div class="faq-a"><div><p>Пакеты: «Старт» — 29 000 ₽, «Бизнес» — 59 000 ₽, «Премиум» — 112 000 ₽ (первым 3 клиентам, обычная цена — 39 / 79 / 149 тыс.). Отдельные услуги — от 10 000 ₽. Точную цену называем после бесплатной консультации.</p></div></div>
+          <button class="faq-q" aria-expanded="false"><span>Сколько стоит NOIR OS?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a"><div><p>Пакеты: «Старт» — 29 000 ₽, «Бизнес» — 59 000 ₽, «Премиум» — 112 000 ₽ (первым 3 клиентам, обычная цена — 39 / 79 / 149 тыс.). Отдельные модули — от 10 000 ₽. Точную цену называем после бесплатной консультации.</p></div></div>
         </div>
         <div class="faq-item" data-reveal style="--d:.05s">
-          <button class="faq-q" aria-expanded="false"><span>Почему пакет выгоднее?</span><span class="faq-icon" aria-hidden="true">+</span></button>
-          <div class="faq-a"><div><p>Пакет — это система, а не набор деталей. «Бизнес» экономит около 16 000 ₽ по сравнению с покупкой услуг по отдельности. Плюс всё связано между собой с первого дня: сайт, бот, CRM и оплата работают как одно целое.</p></div></div>
+          <button class="faq-q" aria-expanded="false"><span>Почему система выгоднее?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a"><div><p>Модули в системе связаны с первого дня. «Бизнес» экономит около 16 000 ₽ по сравнению с покупкой по отдельности. Плюс сайт, бот, CRM и оплата работают как одно целое — без ручной стыковки.</p></div></div>
         </div>
         <div class="faq-item" data-reveal style="--d:.1s">
-          <button class="faq-q" aria-expanded="false"><span>Какие сроки?</span><span class="faq-icon" aria-hidden="true">+</span></button>
-          <div class="faq-a"><div><p>«Старт» — 2–3 недели, «Бизнес» — 3–4 недели, «Премиум» — от месяца. Сроки фиксируем в договоре.</p></div></div>
+          <button class="faq-q" aria-expanded="false"><span>Какие сроки запуска?</span><span class="faq-icon" aria-hidden="true">+</span></button>
+          <div class="faq-a"><div><p>«Старт» — 2–3 недели, «Бизнес» — до месяца, «Премиум» — от месяца. Сроки фиксируем в договоре.</p></div></div>
         </div>
         <div class="faq-item" data-reveal style="--d:.15s">
           <button class="faq-q" aria-expanded="false"><span>А если дизайн не понравится?</span><span class="faq-icon" aria-hidden="true">+</span></button>
@@ -479,7 +581,7 @@
         </div>
         <div class="faq-item" data-reveal style="--d:.25s">
           <button class="faq-q" aria-expanded="false"><span>Что после запуска?</span><span class="faq-icon" aria-hidden="true">+</span></button>
-          <div class="faq-a"><div><p>Поддержка по пакету — 1–3 месяца бесплатно. Дальше — сопровождение от 10 000 ₽/мес: правки, обновления, развитие.</p></div></div>
+          <div class="faq-a"><div><p>Поддержка по пакету — 1–3 месяца бесплатно. Дальше — сопровождение от 10 000 ₽/мес: правки, обновления, развитие модулей.</p></div></div>
         </div>
       </div>
     </div>
@@ -490,7 +592,7 @@
     <div class="container contact-grid">
       <div class="contact-info">
         <div class="section-tag" data-reveal>Контакты</div>
-        <h2 class="section-title" data-reveal>Рассчитайте<br>проект</h2>
+        <h2 class="section-title" data-reveal>Запустите<br>NOIR OS</h2>
         <p class="section-lead" data-reveal>Расскажите о задаче — ответим в течение 15 минут в рабочее время. Зададим 2–3 вопроса и назовём вилку цены и сроков. Бесплатно и ни к чему не обязывает.</p>
         <div class="contact-methods">
           <a class="method" href="https://t.me/noir_lab42" target="_blank" rel="noopener" data-reveal>
@@ -519,13 +621,13 @@
         </div>
         <div class="form-group">
           <label for="f-task">Задача</label>
-          <textarea id="f-task" name="task" rows="4" placeholder="Например: нужен пакет «Бизнес» для салона красоты"></textarea>
+          <textarea id="f-task" name="task" rows="4" maxlength="500" placeholder="Например: нужен пакет «Бизнес» для салона красоты"></textarea>
         </div>
         <label class="form-consent">
           <input type="checkbox" name="consent" required>
           <span>Согласен на <a href="privacy.html" target="_blank">обработку персональных данных</a> и принимаю условия <a href="oferta.html" target="_blank">публичной оферты</a></span>
         </label>
-        <button type="submit" class="btn btn-primary form-submit">Получить расчёт</button>
+        <button type="submit" class="btn btn-primary form-submit">Запустить NOIR OS</button>
         <p class="form-note">Контакты никому не передаём. Никакого спама — только по делу.</p>
       </form>
     </div>
@@ -538,7 +640,7 @@
   <div class="container footer-grid">
     <div>
       <div class="logo">NOIR<span>®</span></div>
-      <p class="footer-note">Цифровая студия. Сайты, боты и автоматизация для бизнеса.</p>
+      <p class="footer-note">NOIR — операционная система для бизнеса. Модули: сайт, боты, CRM, AI, аналитика.</p>
     </div>
     <div class="footer-col">
       <span class="footer-cap">Навигация</span>
@@ -561,7 +663,7 @@
   </div>
   <div class="container footer-bottom">
     <span>© <span id="year">2026</span> NOIR. Все права защищены.</span>
-    <span class="footer-self">Этот сайт — тоже наш кейс. Сделан NOIR.</span>
+    <span class="footer-self">Этот сайт — тоже наш кейс. Сделан на NOIR OS.</span>
   </div>
 </footer>
 

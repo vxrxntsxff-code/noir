@@ -1,2 +1,1 @@
-# stdlib only — no external deps
-# cache bust: 1
+cryptography>=41.0.0

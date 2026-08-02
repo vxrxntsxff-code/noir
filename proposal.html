@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Коммерческое предложение — NOIR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page{size:A4;margin:20mm}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      background:#fff;color:#1a1a1a;
+      max-width:210mm;margin:0 auto;padding:20mm;
+      line-height:1.6;font-size:11pt;
+    }
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;border-bottom:2px solid #C9A96E;padding-bottom:20px}
+    .logo{font-size:24px;font-weight:700;color:#C9A96E}
+    .meta{text-align:right;font-size:10pt;color:#666}
+    .title{font-size:18pt;font-weight:700;margin:30px 0 10px;color:#0B0B0D}
+    .subtitle{font-size:12pt;color:#666;margin-bottom:30px}
+    .section{margin-bottom:24px}
+    .section-title{font-size:12pt;font-weight:600;color:#C9A96E;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+    .package{background:#f8f6f3;border:1px solid #e8e4de;border-radius:8px;padding:20px;margin-bottom:16px}
+    .package-name{font-size:14pt;font-weight:600;color:#0B0B0D}
+    .package-price{font-size:18pt;font-weight:700;color:#C9A96E;margin:8px 0}
+    .package-desc{font-size:10pt;color:#666;line-height:1.5}
+    .features{list-style:none;margin:16px 0}
+    .features li{padding:6px 0;font-size:10pt;border-bottom:1px solid #eee}
+    .features li::before{content:"✓ ";color:#C9A96E;font-weight:600}
+    .total{background:#0B0B0D;color:#fff;padding:20px;border-radius:8px;margin:30px 0}
+    .total-label{font-size:10pt;color:#999}
+    .total-amount{font-size:20pt;font-weight:700;color:#C9A96E}
+    .total-note{font-size:9pt;color:#888;margin-top:8px}
+    .footer{margin-top:40px;padding-top:20px;border-top:1px solid #eee;font-size:9pt;color:#999;text-align:center}
+    .signature{margin-top:40px;display:flex;justify-content:space-between}
+    .sig-block{width:45%}
+    .sig-line{border-top:1px solid #333;margin-top:60px;padding-top:8px;font-size:9pt;color:#666}
+    @media print{
+      body{padding:0}
+      .no-print{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="logo">NOIR</div>
+      <div style="font-size:9pt;color:#999;margin-top:4px">Цифровые системы для бизнеса</div>
+    </div>
+    <div class="meta">
+      <div id="doc-number">КП-2026-001</div>
+      <div id="doc-date"></div>
+      <div>Кемерово, Россия</div>
+    </div>
+  </div>
+
+  <div class="title">Коммерческое предложение</div>
+  <div class="subtitle" id="client-name">Для: —</div>
+
+  <div class="section">
+    <div class="section-title">Предложение</div>
+    <div class="package" id="package-block">
+      <div class="package-name" id="pkg-name">Пакет «Старт»</div>
+      <div class="package-price" id="pkg-price">29 000 ₽</div>
+      <div class="package-desc" id="pkg-desc">
+        Лендинг до 5 экранов · мобильная адаптация<br>
+        Форма заявки · SEO-базовая настройка<br>
+        Договор · чек НПД
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Что входит</div>
+    <ul class="features" id="features-list">
+      <li>Дизайн до 5 экранов</li>
+      <li>Мобильная адаптация</li>
+      <li>Форма заявки</li>
+      <li>SEO-базовая настройка</li>
+      <li>Интеграция с Telegram</li>
+      <li>Договор и чек НПД</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Этапы работы</div>
+    <div style="font-size:10pt;color:#444">
+      <div style="padding:8px 0;border-bottom:1px solid #eee">1. Бриф и анализ — 1–2 дня</div>
+      <div style="padding:8px 0;border-bottom:1px solid #eee">2. Дизайн — 3–5 дней</div>
+      <div style="padding:8px 0;border-bottom:1px solid #eee">3. Разработка — 5–7 дней</div>
+      <div style="padding:8px 0;border-bottom:1px solid #eee">4. Тестирование — 1–2 дня</div>
+      <div style="padding:8px 0">5. Запуск — 1 день</div>
+    </div>
+  </div>
+
+  <div class="total">
+    <div class="total-label">Итого к оплате</div>
+    <div class="total-amount" id="total-amount">29 000 ₽</div>
+    <div class="total-note">Аванс 50% при подписании · Остаток 50% при запуске</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Условия</div>
+    <div style="font-size:10pt;color:#444;line-height:1.8">
+      • Оплата: 50% аванс, 50% при запуске<br>
+      • Сроки: 10–15 рабочих дней<br>
+      • Гарантия: 30 дней после запуска<br>
+      • Поддержка: 14 дней бесплатно после запуска
+    </div>
+  </div>
+
+  <div class="signature">
+    <div class="sig-block">
+      <div class="sig-line">Исполнитель · NOIR</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line">Заказчик</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    NOIR · Цифровые системы для бизнеса · Кемерово<br>
+    noir-rosy.vercel.app · @noir_lab42
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const name = params.get('name') || 'Клиент';
+    const pkg = params.get('package') || 'start';
+    const price = params.get('price') || '29000';
+
+    const packages = {
+      start: {name:'Пакет «Старт»', price:'29 000 ₽', desc:'Лендинг до 5 экранов · мобильная адаптация\nФорма заявки · SEO-базовая настройка\nДоговор · чек НПД'},
+      business: {name:'Пакет «Бизнес»', price:'59 000 ₽', desc:'Сайт до 10 экранов · CRM-интеграция\nОнлайн-запись · Аналитика\nДоговор · чек НПД'},
+      premium: {name:'Пакет «Премиум»', price:'112 000 ₽', desc:'Полная цифровая система\nБот + сайт + CRM + аналитика\nДоговор · чек НПД'},
+    };
+
+    const p = packages[pkg] || packages.start;
+    document.getElementById('client-name').textContent = 'Для: ' + name;
+    document.getElementById('pkg-name').textContent = p.name;
+    document.getElementById('pkg-price').textContent = p.price;
+    document.getElementById('pkg-desc').textContent = p.desc;
+    document.getElementById('total-amount').textContent = p.price;
+    document.getElementById('doc-date').textContent = new Date().toLocaleDateString('ru-RU');
+  </script>
+</body>
+</html>

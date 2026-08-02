@@ -3,6 +3,8 @@
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  if (prefersReduced) document.querySelector('.marquee')?.classList.add('paused');
+
   /* ── Шапка при скролле ─────────────────── */
   const nav = document.getElementById('nav');
   const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 24);
@@ -128,17 +130,38 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ _form: data }),
-      }).catch(() => {}).finally(() => {
+      }).then(async res => {
+        if (!res.ok) throw new Error();
+        const result = await res.json();
+
         form.classList.add('sent');
-        btn.textContent = 'Заявка отправлена ✓';
+        btn.disabled = true;
+        btn.textContent = 'Заявка отправлена';
         note.textContent = 'Ответим в течение 15 минут в рабочее время.';
+
+        if (result.payment_url) {
+          const payBtn = document.createElement('button');
+          payBtn.type = 'button';
+          payBtn.className = 'form-pay';
+          payBtn.textContent = 'Оплатить онлайн';
+          payBtn.onclick = () => window.open(result.payment_url, '_blank');
+          const noteEl = form.querySelector('.form-note');
+          noteEl.parentNode.insertBefore(payBtn, noteEl.nextSibling);
+        }
+
         form.reset();
         setTimeout(() => {
           form.classList.remove('sent');
           btn.disabled = false;
-          btn.textContent = 'Получить расчёт';
+          btn.textContent = 'Запустить NOIR OS';
           note.textContent = defaultNote;
+          const payBtn = form.querySelector('.form-pay');
+          if (payBtn) payBtn.remove();
         }, 6000);
+      }).catch(() => {
+        btn.disabled = false;
+        btn.textContent = 'Запустить NOIR OS';
+        note.textContent = 'Ошибка отправки. Попробуйте снова.';
       });
     });
   }

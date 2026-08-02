@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /payment
+Disallow: /dogovor
+Disallow: /invoice
+Disallow: /support
+Disallow: /proposal
+
+Sitemap: https://noir-rosy.vercel.app/sitemap.xml
