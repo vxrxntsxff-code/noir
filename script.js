@@ -182,10 +182,18 @@
     if (qrImg) qrImg.src = qrUrl;
   }
   function markPaid() {
+    const clientInfo = {
+      name: document.getElementById('pay-name')?.value || '',
+      phone: document.getElementById('pay-phone')?.value || '',
+      telegram: document.getElementById('pay-tg')?.value || '',
+      email: document.getElementById('pay-email')?.value || '',
+      order_id: window.pendingOrderId || '',
+      price: document.querySelector('.modal-step:where(#modal-qr) p')?.textContent.replace('Предоплата 50% — ', '') || '',
+    };
     fetch('/api/payment_confirm', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({action: 'payment_confirm', order_id: window.pendingOrderId || ''}),
+      body: JSON.stringify({action: 'payment_confirm', ...clientInfo}),
     }).then(r => r.json()).then(d => {
       if (d.ok) {
         alert('Спасибо! Мы свяжемся с вами для подтверждения оплаты.');

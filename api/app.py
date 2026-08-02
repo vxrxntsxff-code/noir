@@ -1829,12 +1829,38 @@ class handler(BaseHTTPRequestHandler):
             if body.get("action") == "payment_confirm":
                 order_id = body.get("order_id", "")
                 if order_id:
+                    client_data = {
+                        "name": body.get("name", ""),
+                        "phone": body.get("phone", ""),
+                        "telegram": body.get("telegram", ""),
+                        "email": body.get("email", ""),
+                        "price": body.get("price", ""),
+                        "status": "pending",
+                        "order_id": order_id,
+                    }
                     _redis("SET", f"noir:pay:{order_id}",
-                           json.dumps({"status": "pending", "order_id": order_id}),
+                           json.dumps(client_data),
                            "EX", "604800")
+                    # Store in order record too
+                    existing = _redis("GET", f"noir:order:{order_id}")
+                    if existing:
+                        order = json.loads(existing)
+                        order.update({"paid": client_data["price"], "status": "pending"})
+                        _redis("SET", f"noir:order:{order_id}",
+                               json.dumps(order), "EX", "604800")
                     if OWNER_ID:
-                        tg("sendMessage", {"chat_id": OWNER_ID,
-                            "text": f"Клиент подтвердил оплату\nЗаказ: {order_id}"})
+                        msg = (
+                            "✅ Клиент подтвердил оплату\n\n"
+                            f"Заказ: {order_id}\n"
+                            f"ФИО: {client_data['name']}\n"
+                            f"Телефон: {client_data['phone']}\n"
+                            f"Telegram: {client_data['telegram']}\n"
+                            f"Email: {client_data['email']}\n"
+                            f"Сумма: {client_data['price']}"
+                        )
+                        tg("sendMessage", {"chat_id": OWNER_ID, "text": msg})
+                        # Also send to group chat
+                        tg("sendMessage", {"chat_id": -1004435537674, "text": msg})
                     self._send(200, json.dumps({"ok": True}))
                 else:
                     self._send(400, json.dumps({"error": "missing order_id"}))
