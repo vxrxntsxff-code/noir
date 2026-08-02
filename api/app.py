@@ -24,7 +24,7 @@ except Exception as _sheets_err:
 # ── Config ───────────────────────────────────────────────
 BOT_TOKEN   = os.environ.get("BOT_TOKEN", "")
 OWNER_ID    = int(os.environ.get("OWNER_ID", "0"))
-SITE_URL    = os.environ.get("SITE_URL", "https://noir-rosy.vercel.app").rstrip("/")
+SITE_URL    = os.environ.get("SITE_URL", "https://www.noiros.ru").rstrip("/")
 _raw        = os.environ.get("LEADS_CHAT_ID", "").strip()
 LEADS_CHAT_ID = int(_raw) if _raw and _raw.lstrip("-").isdigit() else OWNER_ID
 
@@ -1758,20 +1758,7 @@ def _finish_qualification(chat_id, data):
 
     pay_url = payment_url(order_id, advance, name)
 
-    pay_kb = kb_inline([
-        [{"text": "Оплатить", "url": pay_url}],
-        [{"text": "Договор", "url": url}],
-        [{"text": "Главное меню", "callback_data": "menu"}],
-    ])
-    pay_text = (
-        f"Заявка принята.\n\n"
-        f"Пакет: {LABELS.get(level, 'Бизнес')}\n"
-        f"Счёт: {price_num:,} ₽\n"
-        f"Аванс (50%): {advance:,} ₽\n\n"
-        f"Оплатить → {pay_url}\n\n"
-        f"После оплаты — проект в личном кабинете."
-    ).replace(",", " ")
-    send(chat_id, pay_text, reply_markup=pay_kb)
+    send(chat_id, "Заявка принята. Мы свяжемся с вами для подтверждения оплаты.", reply_markup=kb_main())
 
     if sheets_lead:
         budget_str = PRICES.get(level, "")
@@ -1785,6 +1772,23 @@ def _finish_qualification(chat_id, data):
             city=data.get("city", ""), niche=data.get("niche", ""),
             budget=budget_str,
         )
+
+        # Send detailed lead notification to owner/group, not to client
+        task = service if service else f"Пакет «{LABELS.get(level, 'Бизнес')}»"
+        lead_text = (
+            "Заявка принята\n\n"
+            f"ФИО: {data.get('name', '---')}\n"
+            f"Телефон: {data.get('phone', '---')}\n"
+            f"Telegram: {data.get('telegram', '---')}\n"
+            f"Email: {data.get('email', '---')}\n"
+            f"Город: {data.get('city', '---')}\n"
+            f"Ниша: {data.get('niche', '---')}\n\n"
+            f"Пакет: {LABELS.get(level, 'Бизнес')}\n"
+            f"Счёт: {price_num:,} ₽\n"
+            f"Аванс (50%): {advance:,} ₽\n\n"
+            f"Ссылка для оплаты: {pay_url}"
+        )
+        send_lead(lead_text)
         task = service if service else f"Пакет «{LABELS.get(level, 'Бизнес')}»"
         if sheets_project:
             deadline_days = {"Старт": 21, "Бизнес": 30, "Премиум": 30}
@@ -2098,8 +2102,9 @@ class handler(BaseHTTPRequestHandler):
                 if cb["message"]["chat"].get("type", "private") != "private":
                     self._send(200, "ok")
                     return
-                handle_callback(chat_id, cb["data"])
+                # Answer callback immediately to avoid Telegram timeout
                 tg("answerCallbackQuery", {"callback_query_id": cb["id"]})
+                handle_callback(chat_id, cb["data"])
             else:
                 chat_id = msg["chat"]["id"]
                 if msg["chat"].get("type", "private") != "private":
