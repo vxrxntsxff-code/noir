@@ -1534,7 +1534,7 @@ def handle_callback(chat_id, data):
                 if projects:
                     o = projects[0]
                     order_info = f"\n\nВаш заказ: {o.get('name', o.get('package', '—'))}\nПакет: {o.get('package', '—')}\nСумма: {o.get('price', '—')} ₽\nОплачено: {o.get('paid', '0')} ₽\nОстаток: {o.get('remaining', '—')} ₽"
-        msg = "Оплата через Т-Банк или QR-код.\nСсылка: " + (PAYMENT_LINK or "https://t.me/noir_lab42") + order_info
+        msg = f"Оплата через Т-Банк или QR-код.\nСсылка: {SITE_URL}/pay" + order_info
         send(chat_id, msg, reply_markup=kb_pay_start())
         return
 
