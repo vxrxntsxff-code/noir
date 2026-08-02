@@ -1969,23 +1969,29 @@ class handler(BaseHTTPRequestHandler):
                     return
                 text = msg.get("text", "")
                 username = msg.get("from", {}).get("username", "")
+                print(f"TEXT_HANDLER: chat_id={chat_id} text='{text[:50]}' username='{username}'")
 
-                if text == "/start":
-                    handle_start(chat_id, username)
-                elif text == "/menu":
-                    handle_menu(chat_id)
-                elif text == "/admin":
-                    handle_admin(chat_id)
-                elif text == "/diag":
-                    _handle_diag(chat_id)
-                else:
-                    st = state_get(chat_id)
-                    if not st:
-                        send(chat_id, T["state_lost"])
+                try:
+                    if text == "/start":
+                        handle_start(chat_id, username)
+                    elif text == "/menu":
+                        handle_menu(chat_id)
+                    elif text == "/admin":
+                        handle_admin(chat_id)
+                    elif text == "/diag":
+                        _handle_diag(chat_id)
                     else:
-                        _handle_text(chat_id, text, st, username)
+                        st = state_get(chat_id)
+                        if not st:
+                            send(chat_id, T["state_lost"])
+                        else:
+                            _handle_text(chat_id, text, st, username)
+                except Exception as e:
+                    log.error("text_handler error: %s\n%s", e, traceback.format_exc())
+                    self._send(500, json.dumps({"error": str(e)[:500]}))
+                    return
 
-            self._send(200, "ok")
+                self._send(200, "ok")
         except Exception as e:
             log.error("handler error: %s\n%s", e, traceback.format_exc())
             self._send(500, json.dumps({"error": "Internal error"}))
