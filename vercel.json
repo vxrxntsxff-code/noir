@@ -4,6 +4,7 @@
   ],
   "rewrites": [
     { "source": "/api/bot", "destination": "/api/app.py" },
+    { "source": "/api/app.py", "destination": "/api/app.py" },
     { "source": "/api/sheets_webhook", "destination": "/api/app.py" },
     { "source": "/api/health", "destination": "/api/app.py" },
     { "source": "/api/payment_status", "destination": "/api/app.py" },
