@@ -858,6 +858,27 @@ def pkg_desc(level):
 _mem = {}  # fallback when Redis unavailable
 
 
+def _restore_json(s):
+    """Restore double-quotes stripped by Vercel Python runtime POST bug.
+    Converts {key:val,sub:{a:b}} to proper JSON {"key":"val","sub":{"a":"b"}}."""
+    import re
+    # Quote unquoted keys and string values
+    # Pattern: word chars followed by : (key), or : word (potential value)
+    # First pass: quote keys
+    result = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', s)
+    # Second pass: quote unquoted string values (word chars after : that aren't numbers/bools/null)
+    result = re.sub(r'(:\s*)([a-zA-Z_][a-zA-Z0-9_/]*)', r'\1"\2"', result)
+    # Fix double-quoted already-quoted values (don't double quote)
+    result = re.sub(r'"\s*:\s*"', r'": "', result)
+    # Fix booleans and null
+    result = re.sub(r'"true"', 'true', result)
+    result = re.sub(r'"false"', 'false', result)
+    result = re.sub(r'"null"', 'null', result)
+    # Fix double-quoted numbers
+    result = re.sub(r'"(-?\d+\.?\d*)"', r'\1', result)
+    return json.loads(result)
+
+
 def _redis(*args):
     if not UPSTASH_URL or not UPSTASH_TOK:
         return None
@@ -1815,11 +1836,18 @@ class handler(BaseHTTPRequestHandler):
         print(f"RAW_BODY: {repr(raw[:500])}", flush=True)
         
         try:
-            body = json.loads(raw)
+            raw_str = raw.decode('utf-8') if isinstance(raw, bytes) else str(raw)
+            body = json.loads(raw_str)
         except Exception as e:
-            print(f"PARSE_FAIL: {e} body={repr(raw[:200])}", flush=True)
-            self._send(500, json.dumps({"error": str(e)[:100], "raw": repr(raw[:100])}))
-            return
+            print(f"JSON_FAIL: {repr(raw_str[:200])}", flush=True)
+            # Vercel strips JSON double-quotes from POST body.
+            # Restore them: {key:value} -> {"key":"value"}, {key:{sub:val}} -> {"key":{"sub":"val"}}
+            try:
+                body = _restore_json(raw_str)
+            except Exception as e2:
+                print(f"RESTORE_FAIL: {e2}", flush=True)
+                self._send(500, json.dumps({"error": str(e)[:200]}))
+                return
 
             if body.get("_form"):
                 result = handle_form(body["_form"])
