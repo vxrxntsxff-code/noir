@@ -702,6 +702,15 @@ section { padding: 110px 0; }
 main, #footer { position: relative; z-index: 1; }
 
 /* ── Кнопка оплаты в форме заявки ── */
+.modal .btn-ghost {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--surface);
+}
+.modal .btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .form-pay {
   margin: 12px auto 0;
   padding: 12px 24px;

@@ -335,6 +335,7 @@ def kb_pay_start():
 
 def kb_pay_back():
     return kb_inline([
+        [{"text": "Я оплатил", "callback_data": "pay:confirm"}],
         [{"text": "Главное меню", "callback_data": "menu"}],
     ])
 
@@ -1413,17 +1414,25 @@ def handle_callback(chat_id, data):
         return
 
     if data == "pay:qr":
-        # Generate QR image from payment link
         qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={urllib.parse.quote(PAYMENT_LINK or '')}"
-        caption = "Оплата через QR-код\n\nСсылка: " + (PAYMENT_LINK or "https://t.me/noir_lab42")
-        send(chat_id, caption, reply_markup=kb_pay_back())
-        # Send QR as photo
+        caption = "Оплата через Т-Банк или QR-код.\nСсылка: " + (PAYMENT_LINK or "https://t.me/noir_lab42") + order_info
         if PAYMENT_LINK:
             tg("sendPhoto", {
                 "chat_id": chat_id,
                 "photo": qr_url,
-                "caption": "Отсканируйте QR-код для оплаты",
+                "caption": caption,
+                "reply_markup": json.dumps(kb_pay_back()),
             })
+        else:
+            send(chat_id, caption, reply_markup=kb_pay_back())
+        return
+
+    if data == "pay:confirm":
+        _redis("SET", f"noir:pay:{st.get('order_id', chat_id)}",
+               json.dumps({"status": "pending", "telegram_id": chat_id, "username": st.get("username", "")}),
+               "EX", "604800")
+        notify_owner(f"Пользователь @{st.get('username', 'без_ник')} оплатил. Telegram: {chat_id}")
+        send(chat_id, "Спасибо! Подтверждение оплаты отправлено администратору.", reply_markup=kb_menu_main())
         return
 
     if data == "pay:back":
@@ -1722,6 +1731,7 @@ def handle_form(payload):
                }),
                "EX", "604800")
         result["payment_url"] = payment_url(order_id, name=name)
+        result["order_id"] = order_id
     return result
 
 

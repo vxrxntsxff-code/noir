@@ -111,12 +111,20 @@
   }
 
   /* ── Автозаполнение услуги в форму ── */
+  const serviceMap = {
+    'site': 'Модуль «Сайт» — лендинг/корпоративный сайт/магазин. 35 000 ₽',
+    'bot': 'Модуль «Бот» — запись, оплата, каталог в Telegram. 20 000 ₽',
+    'crm': 'Модуль «CRM» — связь сайт, бот, телефония, 1С. 45 000 ₽',
+    'ai': 'Модуль «AI» — чат-бот менеджер. 60 000 ₽',
+    'payment': 'Модуль «Оплата» — Kassa или Т-Банк, СБП, чеки по 54-ФЗ. 10 000 ₽',
+  };
+
   document.querySelectorAll('.service-row[data-service]').forEach(link => {
     link.addEventListener('click', () => {
-      const service = link.getAttribute('data-service');
+      const serviceKey = link.getAttribute('data-service');
       const taskEl = document.getElementById('f-task');
-      if (taskEl) {
-        taskEl.value = service;
+      if (taskEl && serviceMap[serviceKey]) {
+        taskEl.value = serviceMap[serviceKey];
       }
     });
   });
@@ -174,8 +182,19 @@
     if (qrImg) qrImg.src = qrUrl;
   }
   function markPaid() {
-    alert('Спасибо! Мы свяжемся с вами для подтверждения оплаты.');
-    closePayModal();
+    fetch('/api/payment_confirm', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'payment_confirm', order_id: window.pendingOrderId || ''}),
+    }).then(r => r.json()).then(d => {
+      if (d.ok) {
+        alert('Спасибо! Мы свяжемся с вами для подтверждения оплаты.');
+      } else {
+        alert('Ошибка подтверждения. Попробуйте снова.');
+      }
+    }).catch(() => {
+      alert('Ошибка связи. Попробуйте снова.');
+    }).finally(() => closePayModal());
   }
   window.closePayModal = closePayModal;
   window.showPayForm = showPayForm;
@@ -214,6 +233,11 @@
         if (nameInput) nameInput.value = data.name || '';
         const phoneInput = document.getElementById('pay-phone');
         if (phoneInput) phoneInput.value = data.contact || '';
+
+        // Store order_id for markPaid()
+        if (result.order_id) {
+          window.pendingOrderId = result.order_id;
+        }
 
         // Show modal with "Оплатить / Связаться"
         setTimeout(() => showModal(), 300);
