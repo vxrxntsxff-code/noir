@@ -375,8 +375,7 @@ def tg(method, data=None):
         with urllib.request.urlopen(req, timeout=10) as resp:
             return json.loads(resp.read())
     except Exception as e:
-        log.error("tg.%s FAILED — method=%s error=%s", method, url.split('/')[-2], str(e)[:200])
-        print(f"TELEGRAM_OUTBOUND_ERROR: {method} → {str(e)[:200]}")
+        log.error("tg.%s failed: %s", method, e)
         return {"ok": False}
 
 
@@ -940,9 +939,7 @@ def handle_start(chat_id, username=""):
         username = get_username(chat_id)
     state_del(chat_id)
     state_set(chat_id, {"step": None, "data": {}, "username": username})
-    print(f"HANDLE_START: chat_id={chat_id} username={username}")
-    result = send(chat_id, T["welcome"], reply_markup=kb_main())
-    print(f"SEND_RESULT: {result}")
+    send(chat_id, T["welcome"], reply_markup=kb_main())
     log.info("start user=%s chat=%s", username, chat_id)
 
 
@@ -1827,25 +1824,22 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
-        print(f"DO_POST: len={length} path={self.path}", flush=True)
         if length > 1048576:
             self._send(413, json.dumps({"error": "too large"}))
             return
         
         raw = self.rfile.read(length) if length else b"{}"
-        print(f"RAW_BODY: {repr(raw[:500])}", flush=True)
         
         try:
             raw_str = raw.decode('utf-8') if isinstance(raw, bytes) else str(raw)
             body = json.loads(raw_str)
         except Exception as e:
-            print(f"JSON_FAIL: {repr(raw_str[:200])}", flush=True)
-            # Vercel strips JSON double-quotes from POST body.
-            # Restore them: {key:value} -> {"key":"value"}, {key:{sub:val}} -> {"key":{"sub":"val"}}
+            # Vercel strips JSON double-quotes from POST body — restore them
+            log.error("JSON parse fail, raw=%s", repr(raw_str[:200]))
             try:
                 body = _restore_json(raw_str)
             except Exception as e2:
-                print(f"RESTORE_FAIL: {e2}", flush=True)
+                log.error("restore_json fail: %s", e2)
                 self._send(500, json.dumps({"error": str(e)[:200]}))
                 return
 
@@ -2005,26 +1999,21 @@ class handler(BaseHTTPRequestHandler):
                     return
                 text = msg.get("text", "")
                 username = msg.get("from", {}).get("username", "")
-                print(f"TEXT_HANDLER: chat_id={chat_id} text='{text[:50]}' username='{username}'")
 
-                try:
-                    if text == "/start":
-                        handle_start(chat_id, username)
-                    elif text == "/menu":
-                        handle_menu(chat_id)
-                    elif text == "/admin":
-                        handle_admin(chat_id)
-                    elif text == "/diag":
-                        _handle_diag(chat_id)
+                if text == "/start":
+                    handle_start(chat_id, username)
+                elif text == "/menu":
+                    handle_menu(chat_id)
+                elif text == "/admin":
+                    handle_admin(chat_id)
+                elif text == "/diag":
+                    _handle_diag(chat_id)
+                else:
+                    st = state_get(chat_id)
+                    if not st:
+                        send(chat_id, T["state_lost"])
                     else:
-                        st = state_get(chat_id)
-                        if not st:
-                            send(chat_id, T["state_lost"])
-                        else:
-                            _handle_text(chat_id, text, st, username)
-                except Exception as e:
-                    log.error("text_handler error: %s\n%s", e, traceback.format_exc())
-                    raise
+                        _handle_text(chat_id, text, st, username)
                 self._send(200, "ok")
         except Exception as e:
             log.error("handler error: %s\n%s", e, traceback.format_exc())
