@@ -861,24 +861,114 @@ _mem = {}  # fallback when Redis unavailable
 
 
 def _restore_json(s):
-    """Restore double-quotes stripped by Vercel Python runtime POST bug.
-    Converts {key:val,sub:{a:b}} to proper JSON {"key":"val","sub":{"a":"b"}}."""
+    """Parse JSON where Vercel stripped double-quotes from keys and string values.
+    Uses a proper tokenizer that handles nested objects and colons in values."""
     import re
-    # Quote unquoted keys
-    result = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', s)
-    # Quote string values: /start, @bot, true, false, null (after : and before , or })
-    result = re.sub(r'(:\s*)(/[a-zA-Z0-9_/.-]*)', r'\1"\2"', result)
-    result = re.sub(r'(:\s*)(@[a-zA-Z0-9_]*)', r'\1"\2"', result)
-    # Quote keys that start with @ or /
-    result = re.sub(r'([{,]\s*)(/[a-zA-Z0-9_/.-]*)(\s*:)', r'\1"\2"\3', result)
-    result = re.sub(r'([{,]\s*)(@[a-zA-Z0-9_]*)(\s*:)', r'\1"\2"\3', result)
-    # Quote remaining unquoted string values (word chars + colons for callback data)
-    result = re.sub(r'(:\s*)([a-zA-Z_][a-zA-Z0-9_:/.]*)(\s*[,}])', r'\1"\2"\3', result)
-    # Fix booleans and null (don't quote them)
-    result = re.sub(r'"true"', 'true', result)
-    result = re.sub(r'"false"', 'false', result)
-    result = re.sub(r'"null"', 'null', result)
-    return json.loads(result)
+    
+    # First, quote any unquoted keys
+    s = re.sub(r'([{,]\s*)([^"\\s{},:]+)(\s*:)', r'\1"\2"\3', s)
+    
+    def skip_ws(s, pos):
+        while pos < len(s) and s[pos] in ' \t\n\r':
+            pos += 1
+        return pos
+
+    def parse_value(s, pos):
+        pos = skip_ws(s, pos)
+        if pos >= len(s):
+            raise ValueError("Unexpected end")
+        
+        if s[pos] == '{':
+            return parse_object(s, pos)
+        elif s[pos] == '[':
+            return parse_array(s, pos)
+        elif s[pos] == '"':
+            return parse_string(s, pos)
+        else:
+            # Number, boolean, null, or unquoted string
+            start = pos
+            while pos < len(s) and s[pos] not in ',}]':
+                pos += 1
+            val = s[start:pos].strip()
+            if re.match(r'^-?\d+(\.\d+)?$', val):
+                return (float(val) if '.' in val else int(val), pos)
+            elif val == 'true':
+                return (True, pos)
+            elif val == 'false':
+                return (False, pos)
+            elif val == 'null':
+                return (None, pos)
+            else:
+                return (val, pos)  # unquoted string
+
+    def parse_string(s, pos):
+        pos += 1  # skip opening "
+        result = []
+        while pos < len(s) and s[pos] != '"':
+            if s[pos] == '\\' and pos + 1 < len(s):
+                result.append(s[pos+1])
+                pos += 2
+            else:
+                result.append(s[pos])
+                pos += 1
+        return (''.join(result), pos + 1)
+
+    def parse_object(s, pos):
+        pos += 1  # skip {
+        obj = {}
+        while True:
+            pos = skip_ws(s, pos)
+            if pos < len(s) and s[pos] == '}':
+                return (obj, pos + 1)
+            if pos >= len(s):
+                return (obj, pos)
+            
+            if s[pos] == '"':
+                key, pos = parse_string(s, pos)
+            else:
+                start = pos
+                while pos < len(s) and s[pos] != ':':
+                    pos += 1
+                key = s[start:pos].strip()
+            
+            pos = skip_ws(s, pos)
+            if pos < len(s) and s[pos] == ':':
+                pos += 1
+            else:
+                raise ValueError(f"Expected : at {pos}")
+            
+            val, pos = parse_value(s, pos)
+            obj[key] = val
+            
+            pos = skip_ws(s, pos)
+            if pos < len(s) and s[pos] == ',':
+                pos += 1
+            elif pos < len(s) and s[pos] == '}':
+                return (obj, pos + 1)
+            else:
+                break
+        return (obj, pos)
+
+    def parse_array(s, pos):
+        pos += 1  # skip [
+        arr = []
+        while True:
+            pos = skip_ws(s, pos)
+            if pos >= len(s) or s[pos] == ']':
+                return (arr, pos + 1)
+            val, pos = parse_value(s, pos)
+            arr.append(val)
+            pos = skip_ws(s, pos)
+            if pos < len(s) and s[pos] == ',':
+                pos += 1
+            elif pos < len(s) and s[pos] == ']':
+                return (arr, pos + 1)
+            else:
+                break
+        return (arr, pos)
+
+    result, _ = parse_value(s, 0)
+    return result
 
 
 def _redis(*args):
