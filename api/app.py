@@ -1548,12 +1548,23 @@ def handle_callback(chat_id, data):
                 if projects:
                     o = projects[0]
                     order_info = f"\\n\\nВаш заказ: {o.get('name', o.get('package', '—'))}\\nПакет: {o.get('package', '—')}\\nСумма: {o.get('price', '—')} ₽\\nОплачено: {o.get('paid', '0')} ₽\\nОстаток: {o.get('remaining', '—')} ₽"
-        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={urllib.parse.quote(PAYMENT_LINK or '')}"
-        caption = "Оплата через Т-Банк или QR-код.\nСсылка: " + (PAYMENT_LINK or "https://t.me/noir_lab42") + order_info
+         # Styled QR with brand colors (dark bg, gold foreground, rounded corners)
+        qr_url = (
+            f"https://api.qrserver.com/v1/create-qr-code/"
+            f"?size=432x432&data={urllib.parse.quote(PAYMENT_LINK or '')}"
+            "&color=C9A96E&bgcolor=0B0B0D&margin=0&qzone=1&radius=20"
+        )
+        # Add branded overlay label
+        qr_img = qr_url
+        caption = (
+            "Оплата через Т-Банк или QR\n"
+            + (PAYMENT_LINK or "https://t.me/noir_lab42")
+            + order_info
+        )
         if PAYMENT_LINK:
             tg("sendPhoto", {
                 "chat_id": chat_id,
-                "photo": qr_url,
+                "photo": qr_img,
                 "caption": caption,
                 "reply_markup": json.dumps(kb_pay_back()),
             })
