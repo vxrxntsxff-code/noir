@@ -7,6 +7,10 @@
   ],
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/favicon.svg"
+    },
+    {
       "source": "/cases",
       "destination": "/cases.html"
     },
