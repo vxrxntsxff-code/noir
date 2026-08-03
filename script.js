@@ -2,9 +2,21 @@
   'use strict';
 
   /* ── Clean URL — убрать #hero, #services и т.д. из адресной строки ── */
-  if (window.location.hash) {
-    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  function hideHash() {
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
   }
+  hideHash();
+
+  // ponytail: убираем hash после скролла при клике на ссылки с #
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^=\"#"]');
+    if (a) {
+      setTimeout(hideHash, 1);
+    }
+  });
+  window.addEventListener('hashchange', hideHash);
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
