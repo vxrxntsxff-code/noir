@@ -23,8 +23,6 @@
   "redirects": [
     { "source": "/pay", "destination": "https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022", "permanent": false },
     { "source": "/index.html", "destination": "/", "permanent": true },
-    { "source": "/cases.html", "destination": "/cases.html", "permanent": true },
-    { "source": "/topdent.html", "destination": "/topdent.html", "permanent": true },
     { "source": "/payment.html", "destination": "/payment", "permanent": true }
   ],
   "headers": [
