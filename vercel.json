@@ -1,55 +1,183 @@
 {
   "crons": [
-    { "path": "/api/health", "schedule": "0 12 * * *" }
+    {
+      "path": "/api/health",
+      "schedule": "0 12 * * *"
+    }
   ],
   "rewrites": [
-    { "source": "/api/bot", "destination": "/api/app.py" },
-    { "source": "/api/app.py", "destination": "/api/app.py" },
-    { "source": "/api/sheets_webhook", "destination": "/api/app.py" },
-    { "source": "/api/health", "destination": "/api/app.py" },
-    { "source": "/api/payment_status", "destination": "/api/app.py" },
-    { "source": "/api/payment_confirm", "destination": "/api/app.py" },
-    { "source": "/api/topdent", "destination": "/api/topdent.py" },
-    { "source": "/api/dashboard", "destination": "/api/topdent.py" },
-    { "source": "/api/dashboard_login", "destination": "/api/topdent.py" },
-    { "source": "/payment", "destination": "/payment.html" },
-    { "source": "/dashboard", "destination": "/dashboard.html" },
-    { "source": "/proposal", "destination": "/proposal.html" },
-    { "source": "/invoice", "destination": "/invoice.html" },
-    { "source": "/dogovor", "destination": "/dogovor.html" },
-    { "source": "/tech", "destination": "/tech.html" },
-    { "source": "/support", "destination": "/support.html" }
+    {
+      "source": "/cases",
+      "destination": "/cases.html"
+    },
+    {
+      "source": "/topdent",
+      "destination": "/topdent.html"
+    },
+    {
+      "source": "/api/bot",
+      "destination": "/api/app.py"
+    },
+    {
+      "source": "/api/app.py",
+      "destination": "/api/app.py"
+    },
+    {
+      "source": "/api/sheets_webhook",
+      "destination": "/api/app.py"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/app.py"
+    },
+    {
+      "source": "/api/payment_status",
+      "destination": "/api/app.py"
+    },
+    {
+      "source": "/api/payment_confirm",
+      "destination": "/api/app.py"
+    },
+    {
+      "source": "/api/topdent",
+      "destination": "/api/topdent.py"
+    },
+    {
+      "source": "/api/dashboard",
+      "destination": "/api/topdent.py"
+    },
+    {
+      "source": "/api/dashboard_login",
+      "destination": "/api/topdent.py"
+    },
+    {
+      "source": "/payment",
+      "destination": "/payment.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/proposal",
+      "destination": "/proposal.html"
+    },
+    {
+      "source": "/invoice",
+      "destination": "/invoice.html"
+    },
+    {
+      "source": "/dogovor",
+      "destination": "/dogovor.html"
+    },
+    {
+      "source": "/tech",
+      "destination": "/tech.html"
+    },
+    {
+      "source": "/support",
+      "destination": "/support.html"
+    }
   ],
   "redirects": [
-    { "source": "/pay", "destination": "https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022", "permanent": false },
-    { "source": "/index.html", "destination": "/", "permanent": true },
-    { "source": "/cases.html", "destination": "/cases", "permanent": true },
-    { "source": "/topdent.html", "destination": "/topdent", "permanent": true },
-    { "source": "/payment.html", "destination": "/payment", "permanent": true },
-    { "source": "/proposal.html", "destination": "/proposal", "permanent": true },
-    { "source": "/invoice.html", "destination": "/invoice", "permanent": true },
-    { "source": "/dogovor.html", "destination": "/dogovor", "permanent": true },
-    { "source": "/tech.html", "destination": "/tech", "permanent": true },
-    { "source": "/support.html", "destination": "/support", "permanent": true },
-    { "source": "/oferta.html", "destination": "/oferta", "permanent": true },
-    { "source": "/privacy.html", "destination": "/privacy", "permanent": true }
+    {
+      "source": "/pay",
+      "destination": "https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/cases.html",
+      "destination": "/cases",
+      "permanent": true
+    },
+    {
+      "source": "/topdent.html",
+      "destination": "/topdent",
+      "permanent": true
+    },
+    {
+      "source": "/payment.html",
+      "destination": "/payment",
+      "permanent": true
+    },
+    {
+      "source": "/proposal.html",
+      "destination": "/proposal",
+      "permanent": true
+    },
+    {
+      "source": "/invoice.html",
+      "destination": "/invoice",
+      "permanent": true
+    },
+    {
+      "source": "/dogovor.html",
+      "destination": "/dogovor",
+      "permanent": true
+    },
+    {
+      "source": "/tech.html",
+      "destination": "/tech",
+      "permanent": true
+    },
+    {
+      "source": "/support.html",
+      "destination": "/support",
+      "permanent": true
+    },
+    {
+      "source": "/oferta.html",
+      "destination": "/oferta",
+      "permanent": true
+    },
+    {
+      "source": "/privacy.html",
+      "destination": "/privacy",
+      "permanent": true
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), payment=(self)" }
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), payment=(self)"
+        }
       ]
     },
     {
       "source": "/(.*).(html|htm)",
       "headers": [
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" }
+        {
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
+        }
       ]
     }
   ]
