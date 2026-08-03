@@ -37,11 +37,11 @@
     .detail-label{color:var(--muted)}
     .detail-value{font-weight:500}
     .qr-wrap{
-      text-align:center;margin:24px 0;
+      text-align:center;margin:40px 0 24px;
       background:#fff;border-radius:20px;padding:16px;
       display:inline-block;
     }
-    .qr-wrap img{display:block;width:200px;height:200px}
+    .qr-wrap img{display:block;width:300px;height:300px}
     .btn{
       display:block;width:100%;padding:14px;border:none;border-radius:9999px;
       font-size:16px;font-weight:600;cursor:pointer;text-align:center;
@@ -79,7 +79,7 @@
     <div id="view-payment" class="hidden">
       <div class="status-icon">Оплата</div>
       <div class="status-text" id="project-name">Оплата проекта</div>
-      <div class="status-sub" id="payment-desc">НОИР · Пакет «Старт»</div>
+      <div class="status-sub" id="payment-desc">NOIR OS · Пакет «Старт»</div>
 
       <div class="details">
         <div class="detail-row">
@@ -101,16 +101,16 @@
       </div>
 
       <div style="text-align:center" id="qr-wrap">
-        <img id="qr-img" src="" alt="QR Code" style="width:200px;height:200px;border-radius:20px;background:#fff;padding:8px">
+        <img id="qr-img" src="" alt="QR Code" style="width:300px;height:300px;border-radius:20px;background:#fff;padding:8px">
       </div>
 
       <a id="pay-link" href="#" class="btn btn-primary" target="_blank">
         Оплатить через Т-Банк
       </a>
-      <button class="btn btn-success" id="btn-paid" style="margin-top:12px">
-        Я оплатил
+      <button class="btn btn-primary" id="btn-paid" style="margin-top:12px">
+        Я оплатил(а)
       </button>
-      <button class="btn btn-ghost" onclick="history.back()">← Назад</button>
+      
     </div>
 
     <div id="view-pending" class="hidden">
@@ -175,14 +175,14 @@
            document.getElementById('advance').textContent = fmt(advance);
            document.getElementById('remaining').textContent = fmt(remaining);
            document.getElementById('project-name').textContent = params.get('name') || 'Оплата проекта';
-           document.getElementById('payment-desc').textContent = params.get('package') || 'НОИР';
+           document.getElementById('payment-desc').textContent = params.get('package') || 'NOIR OS';
            document.getElementById('order-id').textContent = order;
 
            // set payment link and QR
            const payLink = document.getElementById('pay-link');
            const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
            payLink.href = paymentLink;
-           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(paymentLink);
+           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=432x432&data=' + encodeURIComponent(paymentLink);
 
            show('view-payment');
          })
@@ -197,12 +197,12 @@
            document.getElementById('advance').textContent = fmt(advance);
            document.getElementById('remaining').textContent = fmt(remaining);
            document.getElementById('project-name').textContent = params.get('name') || 'Оплата проекта';
-           document.getElementById('payment-desc').textContent = params.get('package') || 'НОИР';
+           document.getElementById('payment-desc').textContent = params.get('package') || 'NOIR OS';
            document.getElementById('order-id').textContent = order;
 
            const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
            document.getElementById('pay-link').href = paymentLink;
-           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(paymentLink);
+           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=432x432&data=' + encodeURIComponent(paymentLink);
 
            show('view-payment');
          });
