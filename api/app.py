@@ -2074,10 +2074,16 @@ class handler(BaseHTTPRequestHandler):
                 project_name = proj.get("name", "Проект")
                 package = proj.get("package", "")
                 stage = proj.get("stage", "brief")
+                status = proj.get("status", "awaiting")
                 progress = proj.get("progress", 0)
                 price = proj.get("price", "")
-                paid = proj.get("paid", "0")
-                remaining = proj.get("remaining", "")
+                # ponytail: derive paid/remaining from status; only show "paid" when status=="paid"
+                if status == "paid":
+                    paid, remaining = price, "0"
+                else:
+                    paid = proj.get("paid", "0")
+                    remaining = price
+                data = {
                 data = {
                     "stage": stage,
                     "progress": progress,
@@ -2094,6 +2100,7 @@ class handler(BaseHTTPRequestHandler):
                     "stage": stage,
                     "progress": progress,
                     "price": f"{price} ₽" if price else "—",
+                    # ponytail: only show paid if status is "paid"
                     "paid": f"{paid} ₽" if paid and paid != "0" else "0 ₽",
                     "remaining": f"{remaining} ₽" if remaining else "—",
                     "docs": [{"name": "Договор", "url": "/dogovor.html"}],
