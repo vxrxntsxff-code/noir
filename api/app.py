@@ -999,7 +999,10 @@ def state_get(chat_id):
         try:
             return json.loads(raw)
         except Exception:
-            return None
+            try:
+                return _restore_json(raw)
+            except Exception:
+                return None
     return _mem.get(chat_id)
 
 
@@ -1384,6 +1387,10 @@ def handle_callback(chat_id, data):
                 extra_modules.append("Форма заявки")
                 extra_price += 5000
 
+        # посчитать total для landing/site
+        if est_type in ("landing", "site"):
+            total = (package[2] if package else 0) + extra_price
+
         # Individual services — site module prices from website
         else:
             svc_prices = {"bot": 20000, "crm": 45000, "ai": 60000, "pay": 10000}
@@ -1552,7 +1559,7 @@ def handle_callback(chat_id, data):
         pay_short = f"{SITE_URL}/pay" if PAYMENT_LINK else "https://t.me/noir_lab42"
         qr_url = (
             f"https://api.qrserver.com/v1/create-qr-code/"
-            f"?size=432x432&data={urllib.parse.quote(PAYMENT_LINK or '')}"
+            f"?size=432x432&data={urllib.parse.quote(PAYMENT_QR or '')}"
             "&color=C9A96E&bgcolor=0B0B0D&margin=0&qzone=1&radius=20"
         )
         qr_img = qr_url
@@ -1577,8 +1584,10 @@ def handle_callback(chat_id, data):
         _redis("SET", f"noir:pay:{st.get('order_id', chat_id)}",
                json.dumps({"status": "pending", "telegram_id": chat_id, "username": st.get("username", "")}),
                "EX", "604800")
-        notify_owner(f"Пользователь @{st.get('username', 'без_ник')} оплатил. Telegram: {chat_id}")
-        send(chat_id, "Спасибо! Подтверждение оплаты отправлено администратору.", reply_markup=kb_menu_main())
+        if OWNER_ID:
+            tg("sendMessage", {"chat_id": OWNER_ID,
+                               "text": f"Пользователь @{st.get('username', 'без_ник')} оплатил. Telegram: {chat_id}"})
+        send(chat_id, "Спасибо! Подтверждение оплаты отправлено администратору.", reply_markup=kb_main())
         return
 
     if data == "pay:back":

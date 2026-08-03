@@ -18,8 +18,9 @@ if not log.handlers:
     log.addHandler(h)
 
 BOT_TOKEN = os.environ.get("TOPDENT_TOKEN", "")
-OWNER_ID = int(os.environ.get("OWNER_ID", "0"))
-OWNER_TG = int(os.environ.get("OWNER_TG", str(OWNER_ID)))
+OWNER_ID  = int(os.environ.get("OWNER_ID", "0") or "0")
+_raw_tg = os.environ.get("OWNER_TG", "").strip()
+OWNER_TG  = int(_raw_tg) if _raw_tg and _raw_tg.lstrip("-").isdigit() else OWNER_ID
 CLINIC_PHONE = "+7 (913) 307-77-57"
 CLINIC_ADDR = "Рудничный район, ул. Институтская, 34"
 
@@ -838,8 +839,8 @@ class handler(BaseHTTPRequestHandler):
                 if chat_type != "private":
                     self._send(200, "ok")
                     return
-                handle_callback(chat_id, cb["data"], cb["message"]["message_id"])
                 tg("answerCallbackQuery", {"callback_query_id": cb["id"]})
+                handle_callback(chat_id, cb["data"], cb["message"]["message_id"])
             else:
                 chat_id = msg["chat"]["id"]
                 chat_type = msg["chat"].get("type", "private")
