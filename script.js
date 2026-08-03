@@ -7,13 +7,14 @@
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
   }
-  hideHash();
+  // ponytail: delay to let browser scroll to hash BEFORE removing it
+  setTimeout(hideHash, 100);
 
   // ponytail: убираем hash после скролла при клике на ссылки с #
   document.addEventListener('click', e => {
     const a = e.target.closest('a[href^=\"#"]');
     if (a) {
-      setTimeout(hideHash, 1);
+      setTimeout(hideHash, 50);
     }
   });
   window.addEventListener('hashchange', hideHash);
