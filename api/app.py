@@ -1560,15 +1560,14 @@ def handle_callback(chat_id, data):
         # ponytail: QR with gold border + NOIR label, same style as web
         import urllib.request as _req, io as _io
         qr_img = (
-            "https://quickchart.io/qr"
-            f"?text={urllib.parse.quote(PAYMENT_QR or '')}"
-            "&size=280&darkcolor=0B0B0D&lightcolor=C9A96E"
-            "&margin=2&caption=NOIR&caption_font_size=20"
+            f"https://api.qrserver.com/v1/create-qr-code/"
+            f"?size=432x432&data={urllib.parse.quote(PAYMENT_QR or '')}"
+            "&color=C9A96E&bgcolor=0B0B0D&margin=0&qzone=1&radius=20"
         )
         caption = (
-            "▪️▫️▪️ NOIR OS ▫️▪️▪️\n\n"
+            "NOIR OS | Предоплата\n\n"
             "Отсканируйте QR или нажмите кнопку\n"
-            f"Оплатить → {pay_short}"
+            f"Оплатить → https://www.noiros.ru/pay"
             + order_info
         )
         if PAYMENT_LINK:
