@@ -271,7 +271,7 @@ section { padding: 110px 0; }
   display: inline-flex; align-items: center; gap: 10px;
   font-weight: 600; color: var(--accent); transition: gap .3s ease;
 }
-.link-arrow:hover { gap: 16px; }
+.link-arrow:hover { gap: 16px; transition: gap .2s ease; }
 .pain-list { display: flex; flex-direction: column; gap: 16px; }
 .pain {
   display: flex; gap: 20px; padding: 28px;
