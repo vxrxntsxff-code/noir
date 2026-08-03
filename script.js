@@ -1,6 +1,11 @@
 (function () {
   'use strict';
 
+  /* ── Clean URL — убрать #hero, #services и т.д. из адресной строки ── */
+  if (window.location.hash) {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (prefersReduced) document.querySelector('.marquee')?.classList.add('paused');
