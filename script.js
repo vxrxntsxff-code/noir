@@ -146,143 +146,41 @@
     });
   });
   const form = document.getElementById('contactForm');
-  const payModal = document.getElementById('payModal');
-  const modalChoose = document.getElementById('modal-choose');
-  const modalPayForm = document.getElementById('modal-pay-form');
-  const modalQr = document.getElementById('modal-qr');
-
-  function showModal() {
-    if (payModal) {
-      payModal.style.display = 'flex';
-      showStep(modalChoose);
-    }
-  }
-  function closePayModal() {
-    if (payModal) payModal.style.display = 'none';
-    showStep(modalChoose);
-  }
-  function showStep(step) {
-    [modalChoose, modalPayForm, modalQr].forEach(s => {
-      if (s) {
-        s.classList.remove('active');
-        s.style.removeProperty('display');
-      }
-    });
-    if (step) {
-      step.classList.add('active');
-      step.style.display = 'block';
-    }
-  }
-  function showPayForm() {
-    showStep(modalPayForm);
-  }
-  function showQr() {
-    const nameEl = document.getElementById('pay-name');
-    const phoneEl = document.getElementById('pay-phone');
-    const tgEl = document.getElementById('pay-tg');
-    const emailEl = document.getElementById('pay-email');
-
-    if (!nameEl.value || !phoneEl.value || !tgEl.value || !emailEl.value) {
-      alert('Заполните все поля');
-      return;
-    }
-
-    showStep(modalQr);
-
-    const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
-    // ponytail: QR params synced with bot (app.py)
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(paymentLink) + '&color=C9A96E&bgcolor=0B0B0D&margin=0&qzone=1&radius=20';
-
-    const payLink = document.getElementById('modal-pay-link');
-    if (payLink) payLink.href = paymentLink;
-
-    const qrImg = document.getElementById('qr-code');
-    if (qrImg) qrImg.src = qrUrl;
-  }
-  function markPaid() {
-    const clientInfo = {
-      name: document.getElementById('pay-name')?.value || '',
-      phone: document.getElementById('pay-phone')?.value || '',
-      telegram: document.getElementById('pay-tg')?.value || '',
-      email: document.getElementById('pay-email')?.value || '',
-      order_id: window.pendingOrderId || '',
-      price: document.querySelector('.modal-step:where(#modal-qr) p')?.textContent.replace('Предоплата 50% — ', '') || '',
-    };
-    fetch('/api/payment_confirm', {
+if (form) {
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+    const data = Object.fromEntries(new FormData(form));
+    const btn = form.querySelector('.form-submit');
+    const note = form.querySelector('.form-note');
+    btn.disabled = true;
+    btn.textContent = 'Отправляем…';
+    fetch('/api/bot', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({action: 'payment_confirm', ...clientInfo}),
-    }).then(r => r.json()).then(d => {
-      if (d.ok) {
-        alert('Спасибо! Мы свяжемся с вами для подтверждения оплаты.');
-      } else {
-        alert('Ошибка подтверждения. Попробуйте снова.');
-      }
-    }).catch(() => {
-      alert('Ошибка связи. Попробуйте снова.');
-    }).finally(() => closePayModal());
-  }
-  window.closePayModal = closePayModal;
-  window.showPayForm = showPayForm;
-  window.showQr = showQr;
-  window.markPaid = markPaid;
-
-  if (form) {
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      if (!form.checkValidity()) { form.reportValidity(); return; }
-
-      const data = Object.fromEntries(new FormData(form));
-
-      const btn = form.querySelector('.form-submit');
-      const note = form.querySelector('.form-note');
-      const defaultNote = note.textContent;
-
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _form: data }),
+    }).then(async res => {
+      if (!res.ok) throw new Error();
+      const result = await res.json();
+      form.classList.add('sent');
       btn.disabled = true;
-      btn.textContent = 'Отправляем…';
-
-      fetch('/api/bot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ _form: data }),
-      }).then(async res => {
-        if (!res.ok) throw new Error();
-        const result = await res.json();
-
-        form.classList.add('sent');
-        btn.disabled = true;
-        btn.textContent = 'Заявка отправлена';
-        note.textContent = 'Ответим в течение 15 минут в рабочее время.';
-
-        // Pre-fill payment form with client data
-        const nameInput = document.getElementById('pay-name');
-        if (nameInput) nameInput.value = data.name || '';
-        const phoneInput = document.getElementById('pay-phone');
-        if (phoneInput) phoneInput.value = data.contact || '';
-
-        // Store order_id for markPaid()
-        if (result.order_id) {
-          window.pendingOrderId = result.order_id;
-        }
-
-        // Show modal with "Оплатить / Связаться"
-        setTimeout(() => showModal(), 300);
-
-        setTimeout(() => {
-          form.classList.remove('sent');
-          btn.disabled = false;
-          btn.textContent = 'Запустить NOIR OS';
-          note.textContent = defaultNote;
-        }, 8000);
-      }).catch(() => {
+      btn.textContent = 'Заявка отправлена';
+      note.textContent = 'Ответим в течение 15 минут в рабочее время.';
+      setTimeout(() => {
+        form.classList.remove('sent');
         btn.disabled = false;
         btn.textContent = 'Запустить NOIR OS';
-        note.textContent = 'Ошибка отправки. Попробуйте снова.';
-      });
+        note.textContent = 'Контакты никому не передаём. Никакого спема — только по делу.';
+      }, 8000);
+    }).catch(() => {
+      btn.disabled = false;
+      btn.textContent = 'Запустить NOIR OS';
+      note.textContent = 'Ошибка отправки. Попробуйте снова.';
     });
-  }
+  });
+}
 
-  /* ── Год в подвале ─────────────────────── */
+/* ── Год в подвале ─────────────────────── */
   const year = document.getElementById('year');
   if (year) year.textContent = new Date().getFullYear();
     /* ── Страховка раскрытия для Safari (bfcache + глюк IntersectionObserver) ── */
