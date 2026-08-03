@@ -1559,12 +1559,12 @@ def handle_callback(chat_id, data):
         pay_short = f"{SITE_URL}/pay" if PAYMENT_LINK else "https://t.me/noir_lab42"
         # ponytail: QR with gold border + NOIR label, same style as web
         import urllib.request as _req, io as _io
-        qr_raw = (
-            f"https://api.qrserver.com/v1/create-qr-code/"
-            f"?size=280x280&data={urllib.parse.quote(PAYMENT_QR or '')}"
-            "&color=C9A96E&bgcolor=0B0B0D&margin=0&qzone=1&radius=20"
+        qr_img = (
+            "https://quickchart.io/qr"
+            f"?text={urllib.parse.quote(PAYMENT_QR or '')}"
+            "&size=280&darkcolor=0B0B0D&lightcolor=C9A96E"
+            "&margin=2&caption=NOIR&caption_font_size=20"
         )
-        qr_img = qr_raw
         caption = (
             "▪️▫️▪️ NOIR OS ▫️▪️▪️\n\n"
             "Отсканируйте QR или нажмите кнопку\n"
