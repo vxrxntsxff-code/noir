@@ -23,7 +23,16 @@
   "redirects": [
     { "source": "/pay", "destination": "https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022", "permanent": false },
     { "source": "/index.html", "destination": "/", "permanent": true },
-    { "source": "/payment.html", "destination": "/payment", "permanent": true }
+    { "source": "/cases.html", "destination": "/cases", "permanent": true },
+    { "source": "/topdent.html", "destination": "/topdent", "permanent": true },
+    { "source": "/payment.html", "destination": "/payment", "permanent": true },
+    { "source": "/proposal.html", "destination": "/proposal", "permanent": true },
+    { "source": "/invoice.html", "destination": "/invoice", "permanent": true },
+    { "source": "/dogovor.html", "destination": "/dogovor", "permanent": true },
+    { "source": "/tech.html", "destination": "/tech", "permanent": true },
+    { "source": "/support.html", "destination": "/support", "permanent": true },
+    { "source": "/oferta.html", "destination": "/oferta", "permanent": true },
+    { "source": "/privacy.html", "destination": "/privacy", "permanent": true }
   ],
   "headers": [
     {
