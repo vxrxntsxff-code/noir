@@ -675,7 +675,7 @@
       <h3>Заявка принята</h3>
       <p style="margin-bottom:24px">Выберите, как продолжить:</p>
       <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="showPayForm()">Оплатить онлайн</button>
-       <button class="btn btn-ghost" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border-strong)" onclick="closePayModal()">Связаться с исполнителем</button>
+       <button class="btn btn-ghost" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border-strong)" onclick="window.open('https://t.me/noir_lab42', '_blank'); closePayModal()">Связаться с исполнителем</button>
     </div>
 
     <!-- Step 2: Payment form -->
@@ -709,7 +709,12 @@
       <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Отсканируйте QR-код или перейдите по ссылке</p>
 
       <div style="text-align:center;margin:24px 0">
-        <img id="qr-code" src="" alt="QR Code" style="width:200px;height:200px;border-radius:20px;background:#fff;padding:8px">
+        <div style="display:inline-block;border:2px solid #C9A96E;border-radius:16px;padding:12px;background:#0B0B0D">
+          <img id="qr-code" src="" alt="QR Code" style="width:280px;height:280px;border-radius:12px">
+        </div>
+        <div style="margin-top:12px;color:#C9A96E;font-family:'Golos Text',Arial,sans-serif;font-size:14px;font-weight:600">
+          NOIR
+        </div>
       </div>
 
        <a id="modal-pay-link" href="#" class="btn btn-primary" style="width:100%;margin-bottom:12px" target="_blank">Открыть Т-Банк</a>

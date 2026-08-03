@@ -190,7 +190,8 @@
     showStep(modalQr);
 
     const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(paymentLink);
+    // ponytail: QR params synced with bot (app.py)
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(paymentLink) + '&color=C9A96E&bgcolor=0B0B0D&margin=0&qzone=1&radius=20';
 
     const payLink = document.getElementById('modal-pay-link');
     if (payLink) payLink.href = paymentLink;

@@ -2034,7 +2034,6 @@ class handler(BaseHTTPRequestHandler):
                         f"Сумма: {client_data['price']}"
                     )
                     tg("sendMessage", {"chat_id": OWNER_ID, "text": msg})
-                    tg("sendMessage", {"chat_id": LEADS_CHAT_ID, "text": msg})
                 self._send(200, json.dumps({"ok": True}))
             else:
                 self._send(400, json.dumps({"error": "missing order_id"}))
