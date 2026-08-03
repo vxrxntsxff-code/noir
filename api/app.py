@@ -177,7 +177,7 @@ T = {
     "error_contract": (
         "Заявка принята.\n\n"
         "Данные получили. Ответим в течение 15 минут.\n\n"
-        "Связаться: https://t.me/noir_lab42"
+        "Связаться: https://t.me/noir_os"
     ),
     "state_lost": "Отправьте /start чтобы начать.",
 
@@ -327,7 +327,7 @@ def kb_skip():
 
 def kb_pay_start():
     return kb_inline([
-        [{"text": "Через Т-Банк", "url": PAYMENT_LINK or "https://t.me/noir_lab42"}],
+        [{"text": "Через Т-Банк", "url": PAYMENT_LINK or "https://t.me/noir_os"}],
         [{"text": "Показать QR", "callback_data": "pay:qr"},
          {"text": "Главное меню", "callback_data": "menu"}],
     ])
@@ -1556,7 +1556,7 @@ def handle_callback(chat_id, data):
                     o = projects[0]
                     order_info = f"\\n\\nВаш заказ: {o.get('name', o.get('package', '—'))}\\nПакет: {o.get('package', '—')}\\nСумма: {o.get('price', '—')} ₽\\nОплачено: {o.get('paid', '0')} ₽\\nОстаток: {o.get('remaining', '—')} ₽"
         # Short display link — actual URL in buttons
-        pay_short = f"{SITE_URL}/pay" if PAYMENT_LINK else "https://t.me/noir_lab42"
+        pay_short = f"{SITE_URL}/pay" if PAYMENT_LINK else "https://t.me/noir_os"
         # ponytail: QR with gold border + NOIR label, same style as web
         import urllib.request as _req, io as _io
         qr_img = (
