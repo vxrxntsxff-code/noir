@@ -473,6 +473,16 @@ def short_contract_url(params):
     return f"{SITE_URL}/dogovor?c={code}"
 
 
+def short_proposal_url(params):
+    """Generate a short proposal URL using a Redis-stored code."""
+    import secrets as _secrets
+    code = _secrets.token_urlsafe(8)[:8]
+    _redis("SET", f"noir:proposal:{code}",
+           json.dumps(params, ensure_ascii=False),
+           "EX", "2592000")
+    return f"{SITE_URL}/proposal?c={code}"
+
+
 def payment_url(order_id, amount=None, name=None):
     """Generate payment page URL with optional params."""
     qs = urllib.parse.urlencode({
@@ -1720,9 +1730,9 @@ def handle_callback(chat_id, data):
         st.setdefault("data", {})["pain"] = pain_map.get(sol_type, sol_type)
         st["data"]["level"] = level
         st["data"]["sol_type"] = sol_type
-        st["step"] = "name"
+        st["step"] = "site_ask"
         state_set(chat_id, st)
-        send(chat_id, T["screen_name"], reply_markup=kb_cancel())
+        send(chat_id, T["screen_site"], reply_markup=kb_site())
         return
 
     # ── Services ──
@@ -1857,7 +1867,11 @@ def _finish_qualification(chat_id, data):
 
     # Send proposal link to client
     pkg_key = level if service else level
-    proposal_url = f"{SITE_URL}/proposal?name={urllib.parse.quote(name)}&package={pkg_key}&price={PRICES_NUM.get(level, '29000')}"
+    proposal_url = short_proposal_url({
+        "name": name,
+        "package": pkg_key,
+        "price": PRICES_NUM.get(level, "29000"),
+    })
     send(chat_id, f"Ваше коммерческое предложение:\n{proposal_url}")
 
     send_lead(lead, lead_kb)
@@ -1971,6 +1985,15 @@ class handler(BaseHTTPRequestHandler):
         if path == "/api/contract" or path == "/contract":
             code = params.get("c", [""])[0]
             raw = _redis("GET", f"noir:contract:{code}") if code else None
+            if raw:
+                data = json.loads(raw)
+                self._send(200, json.dumps(data))
+            else:
+                self._send(404, json.dumps({"error": "not found"}))
+            return
+        if path == "/api/proposal" or path == "/proposal":
+            code = params.get("c", [""])[0]
+            raw = _redis("GET", f"noir:proposal:{code}") if code else None
             if raw:
                 data = json.loads(raw)
                 self._send(200, json.dumps(data))
