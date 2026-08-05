@@ -141,6 +141,7 @@
    <script>
      const params = new URLSearchParams(location.search);
      const order = params.get('order');
+     const PAYMENT_LINK = params.get('paylink') || 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
 
      function show(id) {
        document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
@@ -180,9 +181,8 @@
 
            // set payment link and QR
            const payLink = document.getElementById('pay-link');
-           const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
-           payLink.href = paymentLink;
-           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=432x432&data=' + encodeURIComponent(paymentLink);
+           payLink.href = PAYMENT_LINK;
+           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=432x432&data=' + encodeURIComponent(PAYMENT_LINK);
 
            show('view-payment');
          })
@@ -200,9 +200,8 @@
            document.getElementById('payment-desc').textContent = params.get('package') || 'NOIR OS';
            document.getElementById('order-id').textContent = order;
 
-           const paymentLink = 'https://www.tinkoff.ru/rm/r_SzKUZwgODe.kMlhwmbzwy/8yPZg94022';
-           document.getElementById('pay-link').href = paymentLink;
-           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=432x432&data=' + encodeURIComponent(paymentLink);
+           document.getElementById('pay-link').href = PAYMENT_LINK;
+           document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=432x432&data=' + encodeURIComponent(PAYMENT_LINK);
 
            show('view-payment');
          });

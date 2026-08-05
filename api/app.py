@@ -21,12 +21,27 @@ except Exception as _sheets_err:
     SPREADSHEET_ID = ""
     SHEETS = {}
 
+log = logging.getLogger("noir")
+log.setLevel(logging.INFO)
+if not log.handlers:
+    h = logging.StreamHandler()
+    h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    log.addHandler(h)
+
 # ── Config ───────────────────────────────────────────────
 BOT_TOKEN   = os.environ.get("BOT_TOKEN", "")
-OWNER_ID    = int(os.environ.get("OWNER_ID", "0"))
-SITE_URL    = os.environ.get("SITE_URL", "https://www.noiros.ru").rstrip("/")
+OWNER_ID    = int(os.environ.get("OWNER_ID", "0") or "0")
+if not OWNER_ID:
+    log.warning("OWNER_ID is not set — admin panel and fallbacks disabled")
+
 _raw        = os.environ.get("LEADS_CHAT_ID", "").strip()
 LEADS_CHAT_ID = int(_raw) if _raw and _raw.lstrip("-").isdigit() else OWNER_ID
+if LEADS_CHAT_ID == OWNER_ID and LEADS_CHAT_ID == 0:
+    log.warning("LEADS_CHAT_ID not configured and OWNER_ID=0 — lead messages will not be delivered")
+if LEADS_CHAT_ID == OWNER_ID and LEADS_CHAT_ID != 0:
+    log.info("LEADS_CHAT_ID falls back to OWNER_ID=%s", LEADS_CHAT_ID)
+
+SITE_URL    = os.environ.get("SITE_URL", "https://www.noiros.ru").rstrip("/")
 
 UPSTASH_URL = os.environ.get("UPSTASH_REDIS_REST_URL", "")
 UPSTASH_TOK = os.environ.get("UPSTASH_REDIS_REST_TOKEN", "")
@@ -51,13 +66,6 @@ SERVICES = {
     "ai":      {"name": "AI-ассистент",     "price": "60 000 – 120 000 ₽","num": "60000"},
     "payment": {"name": "Онлайн-оплата",    "price": "10 000 – 15 000 ₽", "num": "10000"},
 }
-
-log = logging.getLogger("noir")
-log.setLevel(logging.INFO)
-if not log.handlers:
-    h = logging.StreamHandler()
-    h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
-    log.addHandler(h)
 
 
 def now_kem():
@@ -309,7 +317,7 @@ def kb_filter():
 
 def kb_done():
     return kb_inline([
-        [{"text": "Написать в Telegram", "url": "https://t.me/vxrxntsxff"}],
+        [{"text": "Написать в Telegram", "url": "https://t.me/noir_os"}],
         [{"text": "В главное меню", "callback_data": "menu"}],
     ])
 
@@ -357,9 +365,10 @@ def kb_after_demo():
 
 def kb_lead(user_data):
     buttons = []
-    if user_data.get("telegram"):
+    tg = user_data.get("Telegram") or user_data.get("telegram") or ""
+    if tg and not tg.isdigit():
         buttons.append([{"text": "Написать в TG",
-                         "url": f"https://t.me/{user_data['telegram'].lstrip('@')}"}])
+                         "url": f"https://t.me/{tg.lstrip('@')}"}])
     elif user_data.get("phone"):
         buttons.append([{"text": "Позвонить", "url": f"tel:{user_data['phone']}"}])
     return buttons
@@ -908,12 +917,17 @@ def _restore_json(s):
             else:
                 return (val, pos)  # unquoted string
 
+    _ESCAPE_MAP = {
+        '"': '"', '\\': '\\', '/': '/', 'b': '\b', 'f': '\f',
+        'n': '\n', 'r': '\r', 't': '\t',
+    }
     def parse_string(s, pos):
         pos += 1  # skip opening "
         result = []
         while pos < len(s) and s[pos] != '"':
             if s[pos] == '\\' and pos + 1 < len(s):
-                result.append(s[pos+1])
+                ch = s[pos+1]
+                result.append(_ESCAPE_MAP.get(ch, ch))
                 pos += 2
             else:
                 result.append(s[pos])
@@ -1484,17 +1498,22 @@ def handle_callback(chat_id, data):
         result_kb = [
             [{"text": "Оставить заявку", "callback_data": "est:apply"}],
         ]
+        calc_order_id = None
         if PAYMENT_LINK:
-            order_id = create_order_id({"name": f"{chat_id}"})
-            pay_url = payment_url(order_id, total, "NOIR OS")
-            _redis("SET", f"noir:order:{order_id}",
+            calc_order_id = create_order_id({"name": f"{chat_id}"})
+            pay_url = payment_url(calc_order_id, total, "NOIR OS")
+            _redis("SET", f"noir:order:{calc_order_id}",
                    json.dumps({"client": str(chat_id), "price": str(total), "package": pkg_name or "Индивидуально",
-                                "status": "pending", "order_id": order_id}),
+                                "status": "pending", "order_id": calc_order_id}),
                    "EX", "604800")
             result_kb = [
                 [{"text": "Оплатить онлайн", "url": pay_url}],
                 [{"text": "Оставить заявку", "callback_data": "est:apply"}],
             ]
+        # Save order_id in state for pay:confirm
+        if calc_order_id:
+            calc_data["order_id"] = calc_order_id
+        state_set(chat_id, {"step": "est_result", "data": calc_data, "username": st.get("username", "")})
         result_kb.append([{"text": "Меню", "callback_data": "menu"}])
         send(chat_id, result_text, reply_markup=kb_inline(result_kb))
         return
@@ -1505,17 +1524,25 @@ def handle_callback(chat_id, data):
         d["goal"] = d.get("est_type", "all")
         st["step"] = "name"
         st["data"] = d
-        state_set(chat_id, st)
+        calc_order_id = d.get("order_id") or None
         calc_price = d.get("price", "")
+        pay_url = ""
         pay_hint = ""
-        if PAYMENT_LINK and calc_price:
-            order_id = create_order_id({"name": f"{chat_id}"})
-            pay_url = payment_url(order_id, calc_price, "NOIR OS")
-            _redis("SET", f"noir:order:{order_id}",
+        if PAYMENT_LINK and calc_price and not calc_order_id:
+            calc_order_id = create_order_id({"name": f"{chat_id}"})
+            pay_url = payment_url(calc_order_id, calc_price, "NOIR OS")
+            _redis("SET", f"noir:order:{calc_order_id}",
                    json.dumps({"client": str(chat_id), "price": calc_price, "package": d.get("package", "Индивидуально"),
-                                "status": "pending", "order_id": order_id}),
+                                "status": "pending", "order_id": calc_order_id}),
                    "EX", "604800")
             pay_hint = f"\nОплатить можно здесь: {pay_url}"
+        elif PAYMENT_LINK and calc_order_id and not pay_url:
+            pay_url = payment_url(calc_order_id, calc_price, "NOIR OS")
+            pay_hint = f"\nОплатить можно здесь: {pay_url}"
+        # Save order_id in state for pay:confirm
+        if calc_order_id:
+            d["order_id"] = calc_order_id
+        state_set(chat_id, {"step": "name", "data": d, "username": st.get("username", "")})
         send(chat_id, T["screen_name"] + pay_hint, reply_markup=kb_cancel())
         return
 
@@ -1582,9 +1609,11 @@ def handle_callback(chat_id, data):
         return
 
     if data == "pay:confirm":
-        _redis("SET", f"noir:pay:{st.get('order_id', chat_id)}",
-               json.dumps({"status": "pending", "telegram_id": chat_id, "username": st.get("username", "")}),
-               "EX", "604800")
+        order_id = st.get("order_id") or ""
+        if order_id:
+            _redis("SET", f"noir:pay:{order_id}",
+                   json.dumps({"status": "pending", "telegram_id": chat_id, "username": st.get("username", "")}),
+                   "EX", "604800")
         if OWNER_ID:
             tg("sendMessage", {"chat_id": OWNER_ID,
                                "text": f"Пользователь @{st.get('username', 'без_ник')} оплатил. Telegram: {chat_id}"})
@@ -1724,7 +1753,7 @@ def _finish_qualification(chat_id, data):
     dt = now_kem()
     date_str = dt.strftime("%d.%m.%Y")
     time_str = dt.strftime("%H:%M")
-    num = dt.strftime(f"%Y-%m-{random.randint(100,999)}")
+    num = dt.strftime("%Y%m%d%H%M%S")
 
     support_map = {"start": "1 месяц", "business": "2 месяца", "premium": "3 месяца"}
     support_months = support_map.get(level, "1 месяц")
@@ -1759,17 +1788,7 @@ def _finish_qualification(chat_id, data):
     lead_kb = [[{"text": "Договор клиента", "url": url}]]
     lead_kb += kb_lead(data)
 
-    state_del(chat_id)
-    tg("sendMessage", {
-        "chat_id": chat_id,
-        "text": T["done_confirm"],
-        "reply_markup": json.dumps(kb_done()),
-    })
-
-    send_lead(lead, lead_kb)
-    log.info("lead_created level=%s chat=%s username=%s email=%s", level, chat_id, data.get("telegram",""), data.get("email",""))
-
-    # Create order for payment
+    # Create order for payment — save with chat_id as key for pay:confirm fallback
     order_id = create_order_id(data)
     price_num = int(PRICES_NUM.get(level, "29000"))
     advance = price_num // 2
@@ -1787,9 +1806,18 @@ def _finish_qualification(chat_id, data):
                "order_id": order_id,
            }), "EX", "604800")
 
-    pay_url = payment_url(order_id, advance, name)
+    # Link order to chat_id for pay:confirm
+    _redis("SET", f"noir:chat_order:{chat_id}", order_id, "EX", "604800")
 
-    send(chat_id, "Заявка принята. Мы свяжемся с вами для подтверждения оплаты.", reply_markup=kb_main())
+    state_del(chat_id)
+    tg("sendMessage", {
+        "chat_id": chat_id,
+        "text": T["done_confirm"],
+        "reply_markup": json.dumps(kb_done()),
+    })
+
+    send_lead(lead, lead_kb)
+    log.info("lead_created level=%s chat=%s username=%s email=%s", level, chat_id, data.get("telegram",""), data.get("email",""))
 
     if sheets_lead:
         budget_str = PRICES.get(level, "")
@@ -1968,13 +1996,14 @@ class handler(BaseHTTPRequestHandler):
             return
         
         raw = self.rfile.read(length) if length else b"{}"
-        
+
+        raw_str = ""
         try:
             raw_str = raw.decode('utf-8') if isinstance(raw, bytes) else str(raw)
             body = json.loads(raw_str)
         except Exception as e:
             # Vercel strips JSON double-quotes from POST body — restore them
-            log.error("JSON parse fail, raw=%s", repr(raw_str[:200]))
+            log.error("JSON parse fail, raw=%s", repr(raw_str[:200] if raw_str else raw[:200]))
             try:
                 body = _restore_json(raw_str)
             except Exception as e2:
@@ -2083,7 +2112,6 @@ class handler(BaseHTTPRequestHandler):
                 else:
                     paid = proj.get("paid", "0")
                     remaining = price
-                data = {
                 data = {
                     "stage": stage,
                     "progress": progress,

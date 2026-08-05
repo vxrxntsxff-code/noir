@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GigaCodeAgentSettings">
+    <option name="autoApprovedCommands">
+      <list>
+        <Execute>
+          <option name="pattern" value="findstr /n &quot;order_id = create_order_id&quot; &quot;C:\Users\dimal\Documents\opencode project\test\api\app.py&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="powershell -Command &quot;Select-String -Path 'C:\Users\dimal\Documents\opencode project\test\api\app.py' -Pattern 'create_order_id' | Select-Object LineNumber,Line&quot;" />
+        </Execute>
+      </list>
+    </option>
+  </component>
+</project>

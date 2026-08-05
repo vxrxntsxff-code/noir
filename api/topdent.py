@@ -28,8 +28,31 @@ UPSTASH_URL = os.environ.get("TOPDENT_REDIS_URL", os.environ.get("UPSTASH_REDIS_
 UPSTASH_TOK = os.environ.get("TOPDENT_REDIS_TOKEN", os.environ.get("UPSTASH_REDIS_REST_TOKEN", ""))
 
 KEM = timezone(timedelta(hours=7))
-_state = {}
 _next_id = 1000
+
+
+def state_get(chat_id):
+    """Get booking state from Redis (survives serverless cold starts)."""
+    key = f"td:state:{chat_id}"
+    raw = _redis("GET", key)
+    if raw is not None:
+        try:
+            return json.loads(raw)
+        except Exception:
+            return None
+    return {}
+
+
+def state_set(chat_id, data):
+    """Save booking state to Redis with 1h TTL."""
+    key = f"td:state:{chat_id}"
+    payload = json.dumps(data, ensure_ascii=False)
+    _redis("SET", key, payload, "EX", "3600")
+
+
+def state_del(chat_id):
+    """Remove booking state from Redis."""
+    _redis("DEL", f"td:state:{chat_id}")
 
 # ── Telegram API ────────────────────────────────────
 def tg(method, data=None):
@@ -372,7 +395,7 @@ def msg_account(chat_id):
 
 # ── Handlers ────────────────────────────────────────
 def handle_start(chat_id):
-    _state.pop(chat_id, None)
+    state_del(chat_id)
     send(chat_id, msg_welcome(), kb_welcome())
 
 def handle_menu(chat_id):
@@ -384,7 +407,7 @@ def handle_callback(chat_id, data, msg_id=0):
     # ── Booking ──
     if parts[0] == "bk":
         if parts[1] == "start":
-            _state[chat_id] = {"step": "spec"}
+            state_set(chat_id, {"step": "spec"})
             text, kb = msg_booking_spec()
             send(chat_id, text, kb)
 
@@ -394,13 +417,13 @@ def handle_callback(chat_id, data, msg_id=0):
             if not doctors:
                 send(chat_id, "Временно нет свободных специалистов.")
                 return
-            _state[chat_id] = {"step": "doctor", "spec": spec_key, "doctor": doctors[0]}
+            state_set(chat_id, {"step": "doctor", "spec": spec_key, "doctor": doctors[0]})
             text, kb = msg_booking_doctor(spec_key)
             send(chat_id, text, kb)
 
         elif parts[1] == "doc" and len(parts) > 2:
             doc_id = parts[2]
-            st = _state.get(chat_id, {})
+            st = state_get(chat_id)
             spec_key = st.get("spec", "")
             doctor = None
             for d in DOCTORS.get(spec_key, []):
@@ -409,12 +432,12 @@ def handle_callback(chat_id, data, msg_id=0):
                     break
             if not doctor:
                 return
-            _state[chat_id] = {**st, "step": "date", "doctor": doctor}
+            state_set(chat_id, {**st, "step": "date", "doctor": doctor})
             text, kb = msg_booking_date()
             send(chat_id, text, kb)
 
         elif parts[1] == "date" and len(parts) > 2:
-            st = _state.get(chat_id, {})
+            st = state_get(chat_id)
             date_key = parts[2]
             try:
                 d = datetime.strptime(date_key, "%Y-%m-%d")
@@ -424,18 +447,18 @@ def handle_callback(chat_id, data, msg_id=0):
             is_today = (d.year == today.year and d.month == today.month and d.day == today.day)
             day_names = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"]
             date_label = d.strftime(f"%d.%m ({day_names[d.weekday()]})")
-            _state[chat_id] = {**st, "step": "time", "date": date_label}
+            state_set(chat_id, {**st, "step": "time", "date": date_label})
             text, kb = msg_booking_time(date_label, is_today)
             send(chat_id, text, kb)
 
         elif parts[1] == "time" and len(parts) > 2:
-            st = _state.get(chat_id, {})
+            st = state_get(chat_id)
             time_val = ":".join(parts[2:])
-            _state[chat_id] = {**st, "step": "name", "time": time_val}
+            state_set(chat_id, {**st, "step": "name", "time": time_val})
             send(chat_id, "Как к вам обратиться?")
 
         elif parts[1] == "confirm":
-            st = _state.get(chat_id, {})
+            st = state_get(chat_id)
             if st.get("step") != "confirm":
                 return
             global _next_id
@@ -472,7 +495,7 @@ def handle_callback(chat_id, data, msg_id=0):
                     doctor=appt['doctor'], service=appt['spec'],
                     date=appt['date'], time=appt['time'],
                 )
-            _state.pop(chat_id, None)
+            state_del(chat_id)
 
             # Treatment recommendations
             spec_key = st.get("spec", "")
@@ -483,15 +506,15 @@ def handle_callback(chat_id, data, msg_id=0):
                 send(chat_id, f"Рекомендации после визита ({spec_name}):\n\n{tips_text}")
 
         elif parts[1] == "cancel":
-            _state.pop(chat_id, None)
+            state_del(chat_id)
             send(chat_id, "Запись отменена.", kb_welcome())
 
         elif parts[1] == "back":
-            _state.pop(chat_id, None)
+            state_del(chat_id)
             send(chat_id, msg_welcome(), kb_welcome())
 
         elif parts[1] == "back_doc":
-            st = _state.get(chat_id, {})
+            st = state_get(chat_id)
             spec_key = st.get("spec", "")
             text, kb = msg_booking_doctor(spec_key)
             send(chat_id, text, kb)
@@ -503,7 +526,7 @@ def handle_callback(chat_id, data, msg_id=0):
     # ── FAQ ──
     elif parts[0] == "faq":
         if parts[1] == "start":
-            _state[chat_id] = {"step": "faq"}
+            state_set(chat_id, {"step": "faq"})
             text, kb = msg_faq_menu()
             if msg_id:
                 edit_message(chat_id, msg_id, text, kb)
@@ -523,7 +546,7 @@ def handle_callback(chat_id, data, msg_id=0):
     # ── Price ──
     elif parts[0] == "pr":
         if parts[1] == "start":
-            _state[chat_id] = {"step": "price"}
+            state_set(chat_id, {"step": "price"})
             text, kb = msg_price_menu()
             if msg_id:
                 edit_message(chat_id, msg_id, text, kb)
@@ -543,7 +566,7 @@ def handle_callback(chat_id, data, msg_id=0):
     # ── Account ──
     elif parts[0] == "ac":
         if parts[1] == "start":
-            _state[chat_id] = {"step": "account"}
+            state_set(chat_id, {"step": "account"})
             text, kb = msg_account(chat_id)
             send(chat_id, text, kb)
         elif parts[1] == "cancel" and len(parts) > 2:
@@ -558,10 +581,15 @@ def handle_callback(chat_id, data, msg_id=0):
                 send(chat_id, f"Запись на {removed['date']} · {removed['time']} отменена.", kb_welcome())
             else:
                 send(chat_id, "Запись не найдена.", kb_welcome())
-            _state.pop(chat_id, None)
+            state_del(chat_id)
+
+    # ── Global ──
+    if data == "menu:back":
+        handle_start(chat_id)
+        return
 
 def handle_text(chat_id, text):
-    st = _state.get(chat_id, {})
+    st = state_get(chat_id)
 
     # Symptom triage — check before state machine
     text_lower = text.lower()
@@ -589,7 +617,7 @@ def handle_text(chat_id, text):
         if len(name) < 2:
             send(chat_id, "Введите имя (минимум 2 символа).")
             return
-        _state[chat_id] = {**st, "step": "phone", "name": name}
+        state_set(chat_id, {**st, "step": "phone", "name": name})
         send(chat_id, "Введите номер телефона:")
 
     elif st.get("step") == "phone":
@@ -597,7 +625,7 @@ def handle_text(chat_id, text):
         if len(phone) < 6:
             send(chat_id, "Введите корректный номер телефона.")
             return
-        _state[chat_id] = {**st, "step": "confirm", "phone": phone}
+        state_set(chat_id, {**st, "step": "confirm", "phone": phone})
         spec_name = dict(SPECS).get(st.get("spec",""), st.get("spec",""))
         doctor_name = st.get("doctor",{}).get("name","")
         st_name = st.get("name","")

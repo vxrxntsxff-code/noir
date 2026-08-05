@@ -171,7 +171,7 @@ if (form) {
         form.classList.remove('sent');
         btn.disabled = false;
         btn.textContent = 'Запустить NOIR OS';
-        note.textContent = 'Контакты никому не передаём. Никакого спема — только по делу.';
+        note.textContent = 'Контакты никому не передаём. Никакого спама — только по делу.';
       }, 8000);
     }).catch(() => {
       btn.disabled = false;
