@@ -406,6 +406,20 @@ def get_username(chat_id):
     return ""
 
 
+def user_mention(chat_id, st):
+    """Get a user mention string for notifications."""
+    username = st.get("username", "")
+    if username:
+        return f"@{username}"
+    result = tg("getChat", {"chat_id": chat_id})
+    if result.get("ok"):
+        chat = result.get("result", {})
+        first_name = chat.get("first_name", "")
+        if first_name:
+            return f'<a href="tg://user?id={chat_id}">{first_name}</a>'
+    return f"ID {chat_id}"
+
+
 def send(chat_id, text, reply_markup=None, parse_mode=None):
     data = {"chat_id": chat_id, "text": text}
     if parse_mode:
@@ -417,7 +431,7 @@ def send(chat_id, text, reply_markup=None, parse_mode=None):
 
 def send_lead(text, buttons=None):
     markup = kb_inline(buttons) if buttons else None
-    msg = {"chat_id": LEADS_CHAT_ID, "text": text}
+    msg = {"chat_id": LEADS_CHAT_ID, "text": text, "parse_mode": "HTML"}
     if markup:
         msg["reply_markup"] = json.dumps(markup)
     log.info("send_lead → chat %s (len=%d)", LEADS_CHAT_ID, len(text))
@@ -1624,9 +1638,8 @@ def handle_callback(chat_id, data):
             _redis("SET", f"noir:pay:{order_id}",
                    json.dumps({"status": "pending", "telegram_id": chat_id, "username": st.get("username", "")}),
                    "EX", "604800")
-        if OWNER_ID:
-            tg("sendMessage", {"chat_id": OWNER_ID,
-                               "text": f"Пользователь @{st.get('username', 'без_ник')} оплатил. Telegram: {chat_id}"})
+        mention = user_mention(chat_id, st)
+        send_lead(f"Пользователь {mention} подтвердил оплату.\nЗаказ: {order_id or '—'}")
         send(chat_id, "Спасибо! Подтверждение оплаты отправлено администратору.", reply_markup=kb_main())
         return
 
