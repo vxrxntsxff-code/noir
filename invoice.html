@@ -86,6 +86,11 @@
 
   const num = p.get('num') || String(Date.now()).slice(-6);
   document.getElementById('invoice-num').textContent = num;
+
+  const advance = Math.floor(parseInt(cleanPrice || '0') / 2);
+  const advanceFormatted = advance > 0 ? advance.toLocaleString('ru-RU') + ' ₽' : '—';
+  const advanceEl = document.getElementById('advance-amount');
+  if (advanceEl) advanceEl.textContent = advanceFormatted;
 })();
 </script>
 </body>

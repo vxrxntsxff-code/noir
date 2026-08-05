@@ -716,9 +716,26 @@ def _do_admin_callback(chat_id, data, parts):
                 )
                 send(chat_id, text, reply_markup=kb_admin_project(rid))
                 return
-        send(chat_id, f"Проект #{rid} не найден")
-
-    elif data.startswith("admin:edit_name:"):
+def show_project(chat_id, rid):
+    """Show project details by row id."""
+    projects = _sheets_get_projects_all()
+    for proj in projects:
+        if str(proj.get("row", 0)) == rid:
+            stage_label = STAGE_LABELS.get(proj.get("stage",""), proj.get("stage","—"))
+            text = (
+                f"{proj.get('name','—')}\n"
+                f"Клиент: {proj.get('client','—')}\n"
+                f"Пакет: {proj.get('package','—')}\n"
+                f"Этап: {stage_label}\n"
+                f"Прогресс: {proj.get('progress','0')}%\n"
+                f"Цена: {proj.get('price','—')} ₽\n"
+                f"Оплачено: {proj.get('paid','0')} ₽\n"
+                f"Остаток: {proj.get('remaining','—')} ₽"
+            )
+            send(chat_id, text, reply_markup=kb_admin_project(rid))
+            return True
+    send(chat_id, f"Проект #{rid} не найден")
+    return False
         rid = parts[2]
         state_set(chat_id, {"admin_action": "edit_name", "project_id": rid})
         send(chat_id, "Новое название:", reply_markup=kb_cancel())
@@ -734,6 +751,8 @@ def _do_admin_callback(chat_id, data, parts):
         if sheets_update_project:
             ok = sheets_update_project_by_row(rid, "stage", label)
             send(chat_id, f"Этап → {label}" if ok else "Ошибка")
+            if ok:
+                show_project(chat_id, rid)
         else:
             send(chat_id, f"Этап → {label} (Sheets не подключены)")
 
@@ -780,6 +799,7 @@ def _do_admin_callback(chat_id, data, parts):
             return
         amount = price * int(pct) / 100
         _do_payment(chat_id, rid, proj, amount, f"Аванс {pct}%")
+        show_project(chat_id, rid)
 
     elif data.startswith("admin:close:"):
         rid = parts[2]
@@ -1826,6 +1846,7 @@ def _finish_qualification(chat_id, data):
         f"Телефон: {phone}\n"
         f"Telegram: {telegram or '—'}\n"
         f"Email: {email or '—'}\n"
+        f"Боль: {data.get('pain', '—')}\n"
         f"Ниша: {niche}\n"
         f"Город: {city}\n"
         f"Цель: {goal}\n"
@@ -1836,6 +1857,24 @@ def _finish_qualification(chat_id, data):
     )
     lead_kb = [[{"text": "Договор клиента", "url": short_url}]]
     lead_kb += kb_lead(data)
+
+    # Store contract data for dashboard
+    contract_data = {
+        "num": num,
+        "date": date_str,
+        "name": name,
+        "phone": phone,
+        "task": task_for_contract,
+        "price": price_for_contract,
+        "tg": data.get("telegram", ""),
+        "email": data.get("email", ""),
+        "city": data.get("city", ""),
+        "support": support_months,
+        "package": LABELS.get(level, "Бизнес"),
+    }
+    _redis("SET", f"noir:contract_data:{name}",
+           json.dumps(contract_data, ensure_ascii=False),
+           "EX", "2592000")
 
     # Create order for payment — save with chat_id as key for pay:confirm fallback
     order_id = create_order_id(data)
@@ -2169,20 +2208,47 @@ class handler(BaseHTTPRequestHandler):
                 status = proj.get("status", "awaiting")
                 progress = proj.get("progress", 0)
                 price = proj.get("price", "")
-                # ponytail: derive paid/remaining from status; only show "paid" when status=="paid"
+                paid = proj.get("paid", "0").replace(" ", "").replace("\xa0", "")
+                try:
+                    price_num = int(price.replace(" ", "").replace("\xa0", ""))
+                except (ValueError, AttributeError):
+                    price_num = 0
+                try:
+                    paid_num = int(paid)
+                except (ValueError, AttributeError):
+                    paid_num = 0
+                remaining_num = max(0, price_num - paid_num)
                 if status == "paid":
-                    paid, remaining = price, "0"
+                    paid_str, remaining_str = f"{price_num} ₽", "0 ₽"
                 else:
-                    paid = proj.get("paid", "0")
-                    remaining = price
+                    paid_str = f"{paid_num} ₽" if paid_num > 0 else "0 ₽"
+                    remaining_str = f"{remaining_num} ₽" if remaining_num > 0 else f"{price_num} ₽"
+
+                # Get contract data from Redis
+                contract_url = "/dogovor.html"
+                contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
+                if contract_raw:
+                    try:
+                        cdata = json.loads(contract_raw)
+                        contract_url = short_contract_url(cdata)
+                    except Exception:
+                        pass
+
+                # Get proposal URL
+                proposal_url = short_proposal_url({
+                    "name": client_name,
+                    "package": package.lower() if package else "start",
+                    "price": str(price_num) if price_num else "29000",
+                })
+
                 data = {
                     "stage": stage,
                     "progress": progress,
                     "project_name": project_name,
                     "package": package,
                     "price": price,
-                    "paid": paid,
-                    "remaining": remaining,
+                    "paid": paid_num,
+                    "remaining": remaining_num,
                 }
                 dashboard_data = {
                     "client_name": client_name,
@@ -2190,11 +2256,13 @@ class handler(BaseHTTPRequestHandler):
                     "package": package,
                     "stage": stage,
                     "progress": progress,
-                    "price": f"{price} ₽" if price else "—",
-                    # ponytail: only show paid if status is "paid"
-                    "paid": f"{paid} ₽" if paid and paid != "0" else "0 ₽",
-                    "remaining": f"{remaining} ₽" if remaining else "—",
-                    "docs": [{"name": "Договор", "url": "/dogovor.html"}],
+                    "price": f"{price_num} ₽" if price_num else "—",
+                    "paid": paid_str,
+                    "remaining": remaining_str,
+                    "docs": [
+                        {"name": "Договор", "url": contract_url},
+                        {"name": "Коммерческое предложение", "url": proposal_url},
+                    ],
                     "payments": [],
                     "updates": [],
                 }

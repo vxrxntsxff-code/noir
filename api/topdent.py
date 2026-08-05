@@ -715,19 +715,34 @@ class handler(BaseHTTPRequestHandler):
                                 "progress": proj.get("progress", data.get("progress", 0)),
                                 "price": f"{proj.get('price', '')} ₽" if proj.get("price") else data.get("price", "—"),
                                 "paid": f"{proj.get('paid', '0')} ₽" if proj.get("paid") and proj.get("paid") != "0" else "0 ₽",
-                                "remaining": proj.get("remaining", data.get("remaining", "—")),
                             })
+                        # Calculate remaining properly
+                        price_str = str(proj.get("price", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                        paid_str = str(proj.get("paid", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                        try:
+                            price_num = int(price_str) if price_str else 0
+                        except ValueError:
+                            price_num = 0
+                        try:
+                            paid_num = int(paid_str) if paid_str else 0
+                        except ValueError:
+                            paid_num = 0
+                        remaining_num = max(0, price_num - paid_num)
+                        data["remaining"] = f"{remaining_num} ₽" if remaining_num > 0 else f"{price_num} ₽"
+                        if "paid" not in data or data["paid"] == "0 ₽":
+                            data["paid"] = "0 ₽"
                         if events:
                             data["updates"] = [{"text": f"[{e['type']}] {e['description']}", "date": e["date"]} for e in reversed(events)]
                         if payments:
-                            data["payments"] = [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments]
+                            data["payments"] = [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments if p.get("status") != "Ожидает"]
                         pkg = data.get("package", "")
                         support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                         support_val = support_map.get(pkg, "1 мес")
                         if pkg:
                             data["docs"] = [
-                                {"name": "Договор", "url": f"/dogovor?project={data.get('project_name','')}&package={pkg}&price={data.get('price','')}&name={client_name}&phone={client.get('phone','') if client else ''}&tg={client.get('telegram','') if client else ''}&email={client.get('email','') if client else ''}&city={client.get('city','') if client else ''}&support={support_val}&payment=stages"},
-                                {"name": "Счёт на оплату", "url": f"/invoice?project={data.get('project_name','')}&price={data.get('price','')}&name={client_name}"},
+                                {"name": "Договор", "url": f"/dogovor?name={client_name}&phone={client.get('phone','') if client else ''}&task={proj.get('name','')}&price={proj.get('price','')}&date={datetime.now(KEM).strftime('%d.%m.%Y')}&tg={client.get('telegram','') if client else ''}&email={client.get('email','') if client else ''}&city={client.get('city','') if client else ''}&support={support_val}&payment=stages"},
+                                {"name": "Коммерческое предложение", "url": f"/proposal?name={client_name}&package={pkg.lower()}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
+                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
                             ]
                         _redis("SET", f"noir:dash:{token}",
                                json.dumps(data), "EX", 2592000)
