@@ -157,11 +157,13 @@ T = {
         "Поддержка 3 мес\n\n"
         "━━━━━━━━━━━━━━━\n\n"
         "<b>МОДУЛИ ОТДЕЛЬНО</b>\n\n"
-        "Сайт          35 000 ₽\n"
-        "Бот           20 000 ₽\n"
-        "CRM           45 000 ₽\n"
-        "AI-ассистент  60 000 ₽\n"
-        "Оплата        10 000 ₽\n\n"
+        "<code>"
+        "Сайт                 35 000 ₽\n"
+        "Бот                  20 000 ₽\n"
+        "CRM                  45 000 ₽\n"
+        "AI-ассистент         60 000 ₽\n"
+        "Оплата               10 000 ₽"
+        "</code>\n\n"
         "━━━━━━━━━━━━━━━\n\n"
         "Цены для первых 3 клиентов.\n"
         "Точную стоимость назову после разговора."
@@ -338,7 +340,7 @@ def kb_skip():
 
 def kb_pay_start():
     return kb_inline([
-        [{"text": "Через Т-Банк", "url": PAYMENT_LINK or "https://t.me/noir_os"}],
+        [{"text": "Через Т-Банк", "url": f"{SITE_URL}/pay"}],
         [{"text": "Показать QR", "callback_data": "pay:qr"},
          {"text": "Главное меню", "callback_data": "menu"}],
     ])
@@ -1595,7 +1597,7 @@ def handle_callback(chat_id, data):
                 if projects:
                     o = projects[0]
                     order_info = f"\n\nВаш заказ: {o.get('name', o.get('package', '—'))}\nПакет: {o.get('package', '—')}\nСумма: {o.get('price', '—')} ₽\nОплачено: {o.get('paid', '0')} ₽\nОстаток: {o.get('remaining', '—')} ₽"
-        msg = f"Оплата через Т-Банк или QR-код.\nСсылка: {SITE_URL}/pay" + order_info
+        msg = "Оплата через Т-Банк или QR-код." + order_info
         send(chat_id, msg, reply_markup=kb_pay_start())
         return
 
@@ -1620,8 +1622,7 @@ def handle_callback(chat_id, data):
         )
         caption = (
             "NOIR OS | Предоплата\n\n"
-            "Отсканируйте QR или нажмите кнопку\n"
-            f"Оплатить → https://www.noiros.ru/pay"
+            "Отсканируйте QR или нажмите кнопку"
             + order_info
         )
         if PAYMENT_LINK:
