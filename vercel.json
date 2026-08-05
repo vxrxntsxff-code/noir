@@ -133,6 +133,10 @@
       "permanent": true
     },
     {
+      "source": "/dogovor",
+      "destination": "/dogovor.html"
+    },
+    {
       "source": "/tech.html",
       "destination": "/tech",
       "permanent": true

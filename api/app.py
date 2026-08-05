@@ -444,6 +444,16 @@ def contract_url(params):
     return f"{SITE_URL}/dogovor.html?{qs}"
 
 
+def short_contract_url(params):
+    """Generate a short contract URL using a Redis-stored code."""
+    import secrets as _secrets
+    code = _secrets.token_urlsafe(8)[:8]
+    _redis("SET", f"noir:contract:{code}",
+           json.dumps(params, ensure_ascii=False),
+           "EX", "2592000")
+    return f"{SITE_URL}/dogovor?c={code}"
+
+
 def payment_url(order_id, amount=None, name=None):
     """Generate payment page URL with optional params."""
     qs = urllib.parse.urlencode({
@@ -1753,12 +1763,24 @@ def _finish_qualification(chat_id, data):
     dt = now_kem()
     date_str = dt.strftime("%d.%m.%Y")
     time_str = dt.strftime("%H:%M")
-    num = dt.strftime("%Y%m%d%H%M%S")
+    num = f"{dt.strftime('%y%m%d')}-{random.randint(1000,9999)}"
 
     support_map = {"start": "1 месяц", "business": "2 месяца", "premium": "3 месяца"}
     support_months = support_map.get(level, "1 месяц")
 
     url = contract_url({
+        "name": data.get("name", ""),
+        "phone": data.get("phone", ""),
+        "task": task_for_contract,
+        "price": price_for_contract,
+        "date": date_str,
+        "num": num,
+        "tg": data.get("telegram", ""),
+        "email": data.get("email", ""),
+        "city": data.get("city", ""),
+        "support": support_months,
+    })
+    short_url = short_contract_url({
         "name": data.get("name", ""),
         "phone": data.get("phone", ""),
         "task": task_for_contract,
@@ -1785,7 +1807,7 @@ def _finish_qualification(chat_id, data):
         f"Цена: {PRICES.get(level, '29 000')} ₽\n"
         f"{date_str} · {time_str} МСК"
     )
-    lead_kb = [[{"text": "Договор клиента", "url": url}]]
+    lead_kb = [[{"text": "Договор клиента", "url": short_url}]]
     lead_kb += kb_lead(data)
 
     # Create order for payment — save with chat_id as key for pay:confirm fallback
@@ -1819,6 +1841,8 @@ def _finish_qualification(chat_id, data):
     send_lead(lead, lead_kb)
     log.info("lead_created level=%s chat=%s username=%s email=%s", level, chat_id, data.get("telegram",""), data.get("email",""))
 
+    task = service if service else f"Пакет «{LABELS.get(level, 'Бизнес')}»"
+
     if sheets_lead:
         budget_str = PRICES.get(level, "")
         log.info("sheets_lead data: name=%s phone=%s tg=%s email=%s city=%s niche=%s budget=%s",
@@ -1832,52 +1856,37 @@ def _finish_qualification(chat_id, data):
             budget=budget_str,
         )
 
-        # Send detailed lead notification to owner/group, not to client
-        task = service if service else f"Пакет «{LABELS.get(level, 'Бизнес')}»"
-        lead_text = (
-            "Заявка принята\n\n"
-            f"ФИО: {data.get('name', '---')}\n"
-            f"Телефон: {data.get('phone', '---')}\n"
-            f"Telegram: {data.get('telegram', '---')}\n"
-            f"Email: {data.get('email', '---')}\n"
-            f"Город: {data.get('city', '---')}\n"
-            f"Ниша: {data.get('niche', '---')}\n\n"
-            f"Пакет: {LABELS.get(level, 'Бизнес')}\n"
-            f"Счёт: {price_num:,} ₽\n"
-            f"Аванс (50%): {advance:,} ₽\n\n"
-            f"Ссылка для оплаты: {pay_url}"
+    if sheets_project:
+        deadline_days = {"Старт": 21, "Бизнес": 30, "Премиум": 30}
+        deadline_dt = now_kem() + timedelta(days=deadline_days.get(level, 30))
+        sheets_project(
+            client=data.get("name", ""),
+            name=task,
+            package=LABELS.get(level, "Бизнес"),
+            stage="Бриф",
+            price=PRICES.get(level, ""),
+            deadline=deadline_dt.strftime("%d.%m.%Y"),
         )
-        send_lead(lead_text)
-        task = service if service else f"Пакет «{LABELS.get(level, 'Бизнес')}»"
-        if sheets_project:
-            deadline_days = {"Старт": 21, "Бизнес": 30, "Премиум": 30}
-            deadline_dt = now_kem() + timedelta(days=deadline_days.get(level, 30))
-            sheets_project(
-                client=data.get("name", ""),
-                name=task,
-                package=LABELS.get(level, "Бизнес"),
-                stage="Бриф",
-                price=PRICES.get(level, ""),
-                deadline=deadline_dt.strftime("%d.%m.%Y"),
-            )
-        if sheets_event:
-            sheets_event(
-                project=task,
-                client=data.get("name", ""),
-                type="Заявка",
-                description=f"Новая заявка — {LABELS.get(level, 'Бизнес')}",
-                importance="Высокая",
-            )
-        if sheets_payment:
-            sheets_payment(
-                project=task,
-                client=data.get("name", ""),
-                amount=str(int(PRICES.get(level, "0").replace(" ", "").replace("₽", "")) // 2),
-                type="Аванс",
-                status="Ожидает",
-                method="Перевод",
-                purpose="Предоплата",
-            )
+
+    if sheets_event:
+        sheets_event(
+            project=task,
+            client=data.get("name", ""),
+            type="Заявка",
+            description=f"Новая заявка — {LABELS.get(level, 'Бизнес')}",
+            importance="Высокая",
+        )
+
+    if sheets_payment:
+        sheets_payment(
+            project=task,
+            client=data.get("name", ""),
+            amount=str(int(PRICES.get(level, "0").replace(" ", "").replace("₽", "")) // 2),
+            type="Аванс",
+            status="Ожидает",
+            method="Перевод",
+            purpose="Предоплата",
+        )
 
 
 # ── Form from website ────────────────────────────────────
@@ -1936,6 +1945,15 @@ class handler(BaseHTTPRequestHandler):
         params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         if path == "/api/health" or path == "/health":
             self._send(200, "ok")
+            return
+        if path == "/api/contract" or path == "/contract":
+            code = params.get("c", [""])[0]
+            raw = _redis("GET", f"noir:contract:{code}") if code else None
+            if raw:
+                data = json.loads(raw)
+                self._send(200, json.dumps(data))
+            else:
+                self._send(404, json.dumps({"error": "not found"}))
             return
         if path == "/api/payment_status" or path == "/payment_status":
             order = params.get("order", [""])[0]

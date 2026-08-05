@@ -141,7 +141,7 @@
     document.getElementById('client-name').textContent = 'Для: ' + name;
     document.getElementById('pkg-name').textContent = p.name;
     document.getElementById('pkg-price').textContent = p.price;
-    document.getElementById('pkg-desc').textContent = p.desc;
+    document.getElementById('pkg-desc').innerHTML = p.desc.replace(/\n/g, '<br>');
     document.getElementById('total-amount').textContent = p.price;
     document.getElementById('doc-date').textContent = new Date().toLocaleDateString('ru-RU');
   </script>

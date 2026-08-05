@@ -195,7 +195,7 @@
       document.getElementById('progress-text').textContent = pct + '%';
 
       document.getElementById('payment-total').textContent = data.price || '—';
-      document.getElementById('payment-paid').textContent = data.paid && data.paid != '0' ? data.paid + ' ₽' : '—';
+      document.getElementById('payment-paid').textContent = data.paid && data.paid != '0' ? data.paid : '—';
       document.getElementById('payment-remaining').textContent = data.remaining || '—';
 
       const timeline = document.getElementById('timeline');
