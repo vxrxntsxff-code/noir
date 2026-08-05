@@ -81,6 +81,14 @@
     {
       "source": "/support",
       "destination": "/support.html"
+    },
+    {
+      "source": "/oferta",
+      "destination": "/oferta.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
     }
   ],
   "redirects": [
