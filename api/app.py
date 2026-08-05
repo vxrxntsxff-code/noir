@@ -1851,6 +1851,11 @@ def _finish_qualification(chat_id, data):
         "reply_markup": json.dumps(kb_done()),
     })
 
+    # Send proposal link to client
+    pkg_key = level if service else level
+    proposal_url = f"{SITE_URL}/proposal?name={urllib.parse.quote(name)}&package={pkg_key}&price={PRICES_NUM.get(level, '29000')}"
+    send(chat_id, f"Ваше коммерческое предложение:\n{proposal_url}")
+
     send_lead(lead, lead_kb)
     log.info("lead_created level=%s chat=%s username=%s email=%s", level, chat_id, data.get("telegram",""), data.get("email",""))
 

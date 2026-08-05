@@ -218,7 +218,14 @@
         li.innerHTML = `<span>${d.name}</span><a class="doc-link" href="${d.url}" target="_blank">Открыть</a>`;
         docs.appendChild(li);
       });
-      if (!data.docs || !data.docs.length) docs.innerHTML = '<div class="empty">Документов пока нет</div>';
+      if (!data.docs || !data.docs.length) docs.innerHTML = '';
+      const pkg = data.package || '';
+      const price = data.price || '';
+      const cname = data.client_name || '';
+      const proposalUrl = `/proposal?name=${encodeURIComponent(cname)}&package=${pkg.toLowerCase()}&price=${price.replace(/[^\d]/g, '')}`;
+      const li = document.createElement('li');
+      li.innerHTML = `<span>Коммерческое предложение</span><a class="doc-link" href="${proposalUrl}" target="_blank">Открыть</a>`;
+      docs.appendChild(li);
 
       const payments = document.getElementById('payments');
       payments.innerHTML = '';
