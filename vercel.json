@@ -136,11 +136,6 @@
       "permanent": true
     },
     {
-      "source": "/dogovor.html",
-      "destination": "/dogovor",
-      "permanent": true
-    },
-    {
       "source": "/dogovor",
       "destination": "/dogovor.html"
     },
