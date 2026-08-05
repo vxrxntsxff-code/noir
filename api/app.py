@@ -78,10 +78,10 @@ T = {
         "NOIR\n\n"
         "Не чат поддержки.\n"
         "Вход в проект цифровой студии.\n\n"
-        "Два слота в месяц.\n"
+        "Работаем с каждым проектом лично — от первого экрана до запуска.\n"
         "Начнём с цели."
     ),
-    "menu": "NOIR · Кемерово\n\nДва слота в месяц.",
+    "menu": "NOIR · Кемерово\n\nРаботаем с каждым проектом лично — от первого экрана до запуска.",
     "menu_hint": "Выберите действие",
 
     "eval_title": "ОЦЕНКА ПРОЕКТА",
@@ -1720,9 +1720,9 @@ def handle_callback(chat_id, data):
         st.setdefault("data", {})["pain"] = pain_map.get(sol_type, sol_type)
         st["data"]["level"] = level
         st["data"]["sol_type"] = sol_type
-        st["step"] = "goal"
+        st["step"] = "name"
         state_set(chat_id, st)
-        send(chat_id, T["screen_goal"], reply_markup=kb_goal())
+        send(chat_id, T["screen_name"], reply_markup=kb_cancel())
         return
 
     # ── Services ──
