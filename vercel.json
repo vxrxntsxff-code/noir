@@ -35,6 +35,10 @@
       "destination": "/api/app.py"
     },
     {
+      "source": "/api/contract",
+      "destination": "/api/app.py"
+    },
+    {
       "source": "/api/payment_status",
       "destination": "/api/app.py"
     },
