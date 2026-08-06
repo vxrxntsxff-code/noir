@@ -1230,10 +1230,13 @@ def _handle_text(chat_id, text, st, username=""):
 
     if step == "city":
         st["data"]["city"] = text
-        level = score(st["data"])
-        st["data"]["level"] = level
+        # Don't recalculate level if it was set by solution flow (e.g. "all" -> premium)
+        if not st["data"].get("sol_type"):
+            level = score(st["data"])
+            st["data"]["level"] = level
         st["step"] = "budget_show"
         state_set(chat_id, st)
+        level = st["data"].get("level", "business")
         text_msg = T["budget_prefix"].format(
             level=LABELS[level], price=PRICES[level], desc=pkg_desc(level)
         )
