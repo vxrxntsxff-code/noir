@@ -659,7 +659,7 @@ def _sheets_get_projects_all():
 def _do_payment(chat_id, rid, proj, amount, label):
     client_name = proj.get("client", "")
     project_name = proj.get("name", "")
-    sheets_payment(project=project_name, client=client_name, amount=str(int(amount)), type=label, status="Оплачен", method="Перевод")
+    sheets_payment(project=project_name, client=client_name, amount=str(int(amount)), type=label, status="Оплачен", method="Перевод", receipt="", purpose=label)
     paid_str = str(proj.get("paid", "0")).replace(" ", "").replace("\xa0", "")
     try:
         old_paid = float(paid_str)
@@ -1757,6 +1757,7 @@ def handle_callback(chat_id, data):
             return
         st.setdefault("data", {})["service"] = svc["name"]
         st["data"]["service_price"] = svc["num"]
+        st["data"]["package"] = svc_key
         st["step"] = "svc_name"
         state_set(chat_id, st)
         send(chat_id, T["svc_prefix"].format(name=svc["name"], price=svc["price"]), reply_markup=kb_cancel())
@@ -1980,12 +1981,18 @@ def _finish_qualification(chat_id, data):
     })
 
     # Send proposal link to client
-    pkg_key = level if service else level
-    proposal_url = short_proposal_url({
-        "name": name,
-        "package": pkg_key,
-        "price": PRICES_NUM.get(level, "29000"),
-    })
+    if service:
+        proposal_url = short_proposal_url({
+            "name": name,
+            "package": data.get("package", service),
+            "price": data.get("service_price", svc_price),
+        })
+    else:
+        proposal_url = short_proposal_url({
+            "name": name,
+            "package": level,
+            "price": PRICES_NUM.get(level, "29000"),
+        })
     send(chat_id, f"Ваше коммерческое предложение:\n{proposal_url}")
 
     send_lead(lead, lead_kb)

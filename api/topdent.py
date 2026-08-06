@@ -707,11 +707,19 @@ class handler(BaseHTTPRequestHandler):
                                 "Новый": "brief", "В работе": "development",
                             }
                             pkg = proj.get("package", "")
+                            raw_stage = proj.get("stage", "")
+                            display_stage = {
+                                "brief": "Бриф", "research": "Исследование", "design": "Дизайн",
+                                "development": "Разработка", "integrations": "Интеграции", "launch": "Запуск",
+                                "Бриф": "Бриф", "Исследование": "Исследование", "Дизайн": "Дизайн",
+                                "Разработка": "Разработка", "Интеграции": "Интеграции", "Запуск": "Запуск",
+                                "Новый": "Бриф", "В работе": "Разработка",
+                            }.get(raw_stage, raw_stage)
                             data.update({
                                 "client_name": client_name,
                                 "project_name": proj.get("name", data.get("project_name", "Проект")),
                                 "package": pkg,
-                                "stage": stage_map.get(proj.get("stage", ""), data.get("stage", "brief")),
+                                "stage": display_stage,
                                 "progress": proj.get("progress", data.get("progress", 0)),
                                 "price": f"{proj.get('price', '')} ₽" if proj.get("price") else data.get("price", "—"),
                                 "paid": f"{proj.get('paid', '0')} ₽" if proj.get("paid") and proj.get("paid") != "0" else "0 ₽",
@@ -872,13 +880,14 @@ class handler(BaseHTTPRequestHandler):
 
                 proj = projects[0] if projects else {}
 
-                stage_map = {
-                    "Бриф": "brief", "Исследование": "research",
-                    "Дизайн": "design", "Разработка": "development",
-                    "Интеграции": "integrations", "Запуск": "launch",
-                    "Новый": "brief", "В работе": "development",
-                }
-                stage = stage_map.get(proj.get("stage", ""), "brief")
+                raw_stage_s = proj.get("stage", "")
+                stage = {
+                    "brief": "Бриф", "research": "Исследование", "design": "Дизайн",
+                    "development": "Разработка", "integrations": "Интеграции", "launch": "Запуск",
+                    "Бриф": "Бриф", "Исследование": "Исследование", "Дизайн": "Дизайн",
+                    "Разработка": "Разработка", "Интеграции": "Интеграции", "Запуск": "Запуск",
+                    "Новый": "Бриф", "В работе": "Разработка",
+                }.get(raw_stage_s, raw_stage_s)
                 pkg = proj.get("package", "")
                 support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                 support_val = support_map.get(pkg, "1 мес")
