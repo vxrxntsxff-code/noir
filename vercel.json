@@ -40,7 +40,7 @@
     },
     {
       "source": "/proposal",
-      "destination": "/api/app.py"
+      "destination": "/proposal.html"
     },
     {
       "source": "/contract",

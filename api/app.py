@@ -716,6 +716,8 @@ def _do_admin_callback(chat_id, data, parts):
                 )
                 send(chat_id, text, reply_markup=kb_admin_project(rid))
                 return
+        send(chat_id, f"Проект #{rid} не найден")
+
 def show_project(chat_id, rid):
     """Show project details by row id."""
     projects = _sheets_get_projects_all()
@@ -736,15 +738,10 @@ def show_project(chat_id, rid):
             return True
     send(chat_id, f"Проект #{rid} не найден")
     return False
-        rid = parts[2]
-        state_set(chat_id, {"admin_action": "edit_name", "project_id": rid})
-        send(chat_id, "Новое название:", reply_markup=kb_cancel())
 
-    elif data.startswith("admin:edit_stage:"):
-        rid = parts[2]
-        send(chat_id, "Выберите этап:", reply_markup=kb_admin_stage_select(rid))
 
-    elif data.startswith("admin:set_stage:"):
+def _do_admin_callback(chat_id, data, parts):
+    if data == "admin:leads":
         rid = parts[2]
         stage = parts[3]
         label = STAGE_LABELS.get(stage, stage)
