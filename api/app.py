@@ -60,11 +60,11 @@ GOAL_RU  = {"leads": "Заявки и продажи", "trust": "Доверие 
 SITE_RU  = {"no": "Нет", "bad": "Есть, но не работает", "redesign": "Есть, нужен редизайн"}
 
 SERVICES = {
-    "landing": {"name": "Лендинг / сайт",  "price": "35 000 – 50 000 ₽", "num": "35000"},
-    "bot":     {"name": "Telegram-бот",     "price": "20 000 – 35 000 ₽", "num": "20000"},
-    "auto":    {"name": "Автоматизация",    "price": "45 000 – 80 000 ₽", "num": "45000"},
-    "ai":      {"name": "AI-ассистент",     "price": "60 000 – 120 000 ₽","num": "60000"},
-    "payment": {"name": "Онлайн-оплата",    "price": "10 000 – 15 000 ₽", "num": "10000"},
+    "landing": {"name": "Лендинг / сайт",  "price": "35 000 ₽", "num": "35000"},
+    "bot":     {"name": "Telegram-бот",     "price": "20 000 ₽", "num": "20000"},
+    "auto":    {"name": "Автоматизация",    "price": "45 000 ₽", "num": "45000"},
+    "ai":      {"name": "AI-ассистент",     "price": "60 000 ₽", "num": "60000"},
+    "payment": {"name": "Онлайн-оплата",    "price": "10 000 ₽", "num": "10000"},
 }
 
 
@@ -666,12 +666,23 @@ def _do_payment(chat_id, rid, proj, amount, label):
     except ValueError:
         old_paid = 0
     new_paid = old_paid + amount
-    price_str = str(proj.get("price", "0")).replace(" ", "").replace("\xa0", "")
+    price_str = str(proj.get("price", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
     try:
         price = float(price_str)
     except ValueError:
         price = 0
     remaining = max(0, price - new_paid)
+    # If price not in Sheets, try Redis (for modules)
+    if price == 0:
+        contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
+        if contract_raw:
+            try:
+                cdata = json.loads(contract_raw)
+                sp = str(cdata.get("service_price", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                if sp and sp != "0":
+                    price = float(sp)
+            except Exception:
+                pass
     sheets_update_project_by_row(rid, "paid", str(int(new_paid)))
     sheets_update_project_by_row(rid, "remaining", str(int(remaining)))
     if new_paid >= price:
@@ -740,15 +751,30 @@ def _do_admin_callback(chat_id, data, parts):
         for proj in projects:
             if str(proj.get("row", 0)) == rid:
                 stage_label = STAGE_LABELS.get(proj.get("stage",""), proj.get("stage","—"))
+                # Get price from Redis for modules
+                client_name_proj = proj.get("client", "")
+                price_val = proj.get("price", "")
+                if not price_val:
+                    contract_raw = _redis("GET", f"noir:contract_data:{client_name_proj}")
+                    if contract_raw:
+                        try:
+                            cdata = json.loads(contract_raw)
+                            sp = cdata.get("service_price", "")
+                            if sp:
+                                price_val = f"{int(sp):,} ₽".replace(",", " ")
+                        except Exception:
+                            pass
+                paid_val = proj.get("paid", "0").replace(" ", "").replace("\xa0", "").replace("₽", "")
+                remaining_val = proj.get("remaining", "—")
                 text = (
                     f"{proj.get('name','—')}\n"
                     f"Клиент: {proj.get('client','—')}\n"
                     f"Пакет: {proj.get('package','—')}\n"
                     f"Этап: {stage_label}\n"
                     f"Прогресс: {proj.get('progress','0')}%\n"
-                    f"Цена: {proj.get('price','—')} ₽\n"
-                    f"Оплачено: {proj.get('paid','0')} ₽\n"
-                    f"Остаток: {proj.get('remaining','—')} ₽"
+                    f"Цена: {price_val if price_val else '—'} ₽\n"
+                    f"Оплачено: {paid_val} ₽\n"
+                    f"Остаток: {remaining_val} ₽"
                 )
                 send(chat_id, text, reply_markup=kb_admin_project(rid))
                 return
@@ -760,15 +786,29 @@ def show_project(chat_id, rid):
     for proj in projects:
         if str(proj.get("row", 0)) == rid:
             stage_label = STAGE_LABELS.get(proj.get("stage",""), proj.get("stage","—"))
+            client_name_proj = proj.get("client", "")
+            price_val = proj.get("price", "")
+            if not price_val:
+                contract_raw = _redis("GET", f"noir:contract_data:{client_name_proj}")
+                if contract_raw:
+                    try:
+                        cdata = json.loads(contract_raw)
+                        sp = cdata.get("service_price", "")
+                        if sp:
+                            price_val = f"{int(sp):,} ₽".replace(",", " ")
+                    except Exception:
+                        pass
+            paid_val = proj.get("paid", "0").replace(" ", "").replace("\xa0", "").replace("₽", "")
+            remaining_val = proj.get("remaining", "—")
             text = (
                 f"{proj.get('name','—')}\n"
                 f"Клиент: {proj.get('client','—')}\n"
                 f"Пакет: {proj.get('package','—')}\n"
                 f"Этап: {stage_label}\n"
                 f"Прогресс: {proj.get('progress','0')}%\n"
-                f"Цена: {proj.get('price','—')} ₽\n"
-                f"Оплачено: {proj.get('paid','0')} ₽\n"
-                f"Остаток: {proj.get('remaining','—')} ₽"
+                f"Цена: {price_val if price_val else '—'} ₽\n"
+                f"Оплачено: {paid_val} ₽\n"
+                f"Остаток: {remaining_val} ₽"
             )
             send(chat_id, text, reply_markup=kb_admin_project(rid))
             return True
@@ -831,10 +871,24 @@ def _do_admin_actions(chat_id, data, parts):
         if not proj:
             send(chat_id, "Проект не найден")
             return
-        price_str = str(proj.get("price", "0")).replace(" ", "").replace("\xa0", "")
+        price_str = str(proj.get("price", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
         try:
             price = float(price_str)
         except ValueError:
+            price = 0
+        # If price not in Sheets, try Redis (for modules)
+        if price == 0:
+            client_name_pay = proj.get("client", "")
+            contract_raw = _redis("GET", f"noir:contract_data:{client_name_pay}")
+            if contract_raw:
+                try:
+                    cdata = json.loads(contract_raw)
+                    sp = str(cdata.get("service_price", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                    if sp and sp != "0":
+                        price = float(sp)
+                except Exception:
+                    pass
+        if price == 0:
             send(chat_id, "Цена не задана")
             return
         if pct == "custom":
@@ -1662,11 +1716,17 @@ def handle_callback(chat_id, data):
 
     # ── Dashboard ──
     if data == "dashboard:link":
-        import secrets
-        token = secrets.token_urlsafe(16)
+        import secrets as _secrets_dash
+        token = _secrets_dash.token_urlsafe(16)
         username = st.get("username", "")
+        # Find client by username (if already qualified)
+        client_name_dash = ""
+        if sheets_find_client:
+            client_dash = sheets_find_client(username)
+            if client_dash:
+                client_name_dash = client_dash.get("name", "")
         _redis("SET", f"noir:dash:{token}",
-               json.dumps({"chat_id": chat_id, "username": username}), "EX", 2592000)
+               json.dumps({"chat_id": chat_id, "username": username, "client_name": client_name_dash}), "EX", 2592000)
         url = f"{SITE_URL}/dashboard?token={token}"
         send(chat_id, T["dashboard_link"].format(url=url), reply_markup=kb_main())
         return
@@ -2019,6 +2079,9 @@ def _finish_qualification(chat_id, data):
 
     send(chat_id, f"{T['done_confirm']}\n\nВаше коммерческое предложение:\n{proposal_url}", reply_markup=kb_done())
 
+    # Update dash token with client_name so user can access dashboard
+    _redis("SET", f"noir:client_name:{chat_id}", name, "EX", "2592000")
+
     send_lead(lead, lead_kb)
     log.info("lead_created level=%s chat=%s username=%s email=%s", level, chat_id, data.get("telegram",""), data.get("email",""))
 
@@ -2040,14 +2103,15 @@ def _finish_qualification(chat_id, data):
     if sheets_project:
         deadline_days = {"Старт": 21, "Бизнес": 30, "Премиум": 30}
         deadline_dt = now_kem() + timedelta(days=deadline_days.get(level, 30))
+        mod_price_formatted = f"{int(svc_price):,} ₽".replace(",", " ") if svc_price and svc_price != "0" else ""
         sheets_project(
             client=data.get("name", ""),
             name=task,
             package=LABELS.get(level, "Бизнес") if not service else service,
             stage="Бриф",
-            price=PRICES.get(level, ""),
+            price=mod_price_formatted if service else PRICES.get(level, ""),
             deadline=deadline_dt.strftime("%d.%m.%Y"),
-            remaining=PRICES.get(level, ""),
+            remaining=mod_price_formatted if service else PRICES.get(level, ""),
         )
 
     if sheets_event:
