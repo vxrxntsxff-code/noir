@@ -1742,12 +1742,20 @@ def handle_callback(chat_id, data):
         import secrets as _secrets_dash
         token = _secrets_dash.token_urlsafe(16)
         username = st.get("username", "")
-        # Find client by username (if already qualified)
+        chat_id_str = str(chat_id)
+        # Find client by username or chat_id
         client_name_dash = ""
         if sheets_find_client:
             client_dash = sheets_find_client(username)
+            if not client_dash:
+                client_dash = sheets_find_client(chat_id_str)
             if client_dash:
                 client_name_dash = client_dash.get("name", "")
+        # Also try Redis mapping (set after qualification)
+        if not client_name_dash:
+            redis_cn = _redis("GET", f"noir:client_name:{chat_id}")
+            if redis_cn:
+                client_name_dash = redis_cn
         dash_data = {"chat_id": chat_id, "username": username, "client_name": client_name_dash}
         _redis("SET", f"noir:dash:{token}", json.dumps(dash_data), "EX", 2592000)
         _redis("SET", f"noir:token_by_chat:{chat_id}", token, "EX", "2592000")
