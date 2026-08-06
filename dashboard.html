@@ -200,7 +200,11 @@
 
       const timeline = document.getElementById('timeline');
       timeline.innerHTML = '';
-      const currentStage = data.stage || 'brief';
+      const stageToKey = {
+        'Бриф': 'brief', 'Исследование': 'research', 'Дизайн': 'design',
+        'Разработка': 'development', 'Интеграции': 'integrations', 'Запуск': 'launch',
+      };
+      const currentStage = stageToKey[data.stage] || data.stage || 'brief';
       let reached = false;
       STAGES.forEach(s => {
         const li = document.createElement('li');

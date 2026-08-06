@@ -788,7 +788,7 @@ def _do_admin_actions(chat_id, data, parts):
         label = parts[3] if len(parts) > 3 else ""
         stage_label = STAGE_LABELS.get(label, label)
         if sheets_update_project:
-            ok = sheets_update_project_by_row(rid, "stage", label)
+            ok = sheets_update_project_by_row(rid, "stage", stage_label)
             send(chat_id, f"Этап → {stage_label}" if ok else "Ошибка")
             if ok:
                 show_project(chat_id, rid)
@@ -1757,7 +1757,8 @@ def handle_callback(chat_id, data):
             return
         st.setdefault("data", {})["service"] = svc["name"]
         st["data"]["service_price"] = svc["num"]
-        st["data"]["package"] = svc_key
+        st["data"]["package"] = svc["name"]
+        st["data"]["level"] = "module"
         st["step"] = "svc_name"
         state_set(chat_id, st)
         send(chat_id, T["svc_prefix"].format(name=svc["name"], price=svc["price"]), reply_markup=kb_cancel())
@@ -1942,11 +1943,13 @@ def _finish_qualification(chat_id, data):
         "phone": phone,
         "task": task_for_contract,
         "price": price_for_contract,
+        "service": service,
+        "service_price": svc_price,
         "tg": data.get("telegram", ""),
         "email": data.get("email", ""),
         "city": data.get("city", ""),
-        "support": support_months,
-        "package": LABELS.get(level, "Бизнес"),
+        "support": "1 месяц" if service else support_months,
+        "package": LABELS.get(level, "Бизнес") if not service else service,
     }
     _redis("SET", f"noir:contract_data:{name}",
            json.dumps(contract_data, ensure_ascii=False),
@@ -1974,17 +1977,14 @@ def _finish_qualification(chat_id, data):
     _redis("SET", f"noir:chat_order:{chat_id}", order_id, "EX", "604800")
 
     state_del(chat_id)
-    tg("sendMessage", {
-        "chat_id": chat_id,
-        "text": T["done_confirm"],
-        "reply_markup": json.dumps(kb_done()),
-    })
 
     # Send proposal link to client
     if service:
+        mod_map = {"Лендинг / сайт": "landing", "Telegram-бот": "bot", "Автоматизация": "auto", "AI-ассистент": "ai", "Онлайн-оплата": "payment"}
+        pkg_key = mod_map.get(data.get("package", service), service)
         proposal_url = short_proposal_url({
             "name": name,
-            "package": data.get("package", service),
+            "package": pkg_key,
             "price": data.get("service_price", svc_price),
         })
     else:
@@ -1993,7 +1993,8 @@ def _finish_qualification(chat_id, data):
             "package": level,
             "price": PRICES_NUM.get(level, "29000"),
         })
-    send(chat_id, f"Ваше коммерческое предложение:\n{proposal_url}")
+
+    send(chat_id, f"{T['done_confirm']}\n\nВаше коммерческое предложение:\n{proposal_url}", reply_markup=kb_done())
 
     send_lead(lead, lead_kb)
     log.info("lead_created level=%s chat=%s username=%s email=%s", level, chat_id, data.get("telegram",""), data.get("email",""))
@@ -2019,11 +2020,13 @@ def _finish_qualification(chat_id, data):
         sheets_project(
             client=data.get("name", ""),
             name=task,
-            package=LABELS.get(level, "Бизнес"),
+            package=LABELS.get(level, "Бизнес") if not service else service,
             stage="Бриф",
             price=PRICES.get(level, ""),
             deadline=deadline_dt.strftime("%d.%m.%Y"),
             remaining=PRICES.get(level, ""),
+            service=service,
+            service_price=svc_price,
         )
 
     if sheets_event:
@@ -2036,13 +2039,15 @@ def _finish_qualification(chat_id, data):
         )
 
     if sheets_payment:
+        pay_amount = svc_price if service else PRICES.get(level, "0").replace(" ", "").replace("₽", "")
         sheets_payment(
             project=task,
             client=data.get("name", ""),
-            amount=str(int(PRICES.get(level, "0").replace(" ", "").replace("₽", "")) // 2),
+            amount=str(int(pay_amount) // 2) if pay_amount and pay_amount != "0" else "0",
             type="Аванс",
             status="Ожидает",
             method="Перевод",
+            receipt="",
             purpose="Предоплата",
         )
 

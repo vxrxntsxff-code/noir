@@ -226,6 +226,8 @@ def sheets_project(**kwargs):
         kwargs.get("price", ""),        # I: Цена
         kwargs.get("paid", "0"),        # J: Оплачено
         kwargs.get("remaining", ""),    # K: Остаток
+        kwargs.get("service", ""),      # L: Услуга (модуль)
+        kwargs.get("service_price", ""),# M: Цена услуги
     ]
     return _append_row(SHEETS["projects"], values) is not None
 
@@ -333,14 +335,14 @@ def sheets_get_projects(client_name):
     if not SPREADSHEET_ID:
         log.warning("sheets_get_projects: no SPREADSHEET_ID")
         return []
-    result = _sheets_api("GET", f"/values/{SHEETS['projects']}!A:K")
+    result = _sheets_api("GET", f"/values/{SHEETS['projects']}!A:M")
     if not result or "values" not in result:
         log.warning("sheets_get_projects: no data from Sheets")
         return []
     projects = []
     cn = client_name.strip().lower()
     for i, row in enumerate(result["values"]):
-        # Projects: A:Дата B:Клиент C:Название D:Пакет E:Статус F:Этап G:Прогресс H:Дедлайн I:Цена J:Оплачено K:Остаток
+        # Projects: A:Дата B:Клиент C:Название D:Пакет E:Статус F:Этап G:Прогресс H:Дедлайн I:Цена J:Оплачено K:Остаток L:Услуга M:Цена услуги
         if i == 0:
             continue  # skip header
         client_val = str(row[1]).strip().lower() if len(row) > 1 else ""
@@ -354,6 +356,8 @@ def sheets_get_projects(client_name):
                 "price": str(row[8]) if len(row) > 8 else "",
                 "paid": str(row[9]) if len(row) > 9 else "0",
                 "remaining": str(row[10]) if len(row) > 10 else "",
+                "service": str(row[11]) if len(row) > 11 else "",
+                "service_price": str(row[12]) if len(row) > 12 else "",
             })
     log.info("sheets_get_projects client='%s' found=%d", client_name, len(projects))
     return projects
@@ -363,12 +367,13 @@ def sheets_update_project(client_name, field, value):
     """Update a project field in Google Sheets."""
     if not SPREADSHEET_ID:
         return False
-    result = _sheets_api("GET", f"/values/{SHEETS['projects']}!A:K")
+    result = _sheets_api("GET", f"/values/{SHEETS['projects']}!A:M")
     if not result or "values" not in result:
         return False
     field_map = {
         "name": 2, "package": 3, "status": 4, "stage": 5,
         "progress": 6, "deadline": 7, "price": 8, "paid": 9, "remaining": 10,
+        "service": 11, "service_price": 12,
     }
     col_idx = field_map.get(field)
     if col_idx is None:
@@ -386,6 +391,7 @@ def sheets_update_project_by_row(row_str, field, value):
     field_map = {
         "name": 2, "package": 3, "status": 4, "stage": 5,
         "progress": 6, "deadline": 7, "price": 8, "paid": 9, "remaining": 10,
+        "service": 11, "service_price": 12,
     }
     col_idx = field_map.get(field)
     if col_idx is None:

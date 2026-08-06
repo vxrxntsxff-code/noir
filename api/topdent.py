@@ -747,46 +747,57 @@ class handler(BaseHTTPRequestHandler):
                         if payments:
                             data["payments"] = [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments if p.get("status") != "Ожидает"]
                         pkg = data.get("package", "")
-                        # Map Russian package names to English for URLs
+                        import secrets as _secrets
+                        contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
+                        cdata = {}
+                        if contract_raw:
+                            try:
+                                cdata = json.loads(contract_raw)
+                            except Exception:
+                                pass
+                        invoice_num = cdata.get("num", "")
+                        invoice_date = cdata.get("date", "")
+                        service = cdata.get("service", "")
+                        service_price = cdata.get("service_price", "")
+                        if not invoice_num:
+                            invoice_num = now_kem().strftime("%Y-%m-") + str(random.randint(100, 999))
+                        if not invoice_date:
+                            invoice_date = now_kem().strftime('%d.%m.%Y')
+                        # Use service_price for modules, package price for systems
+                        display_price = service_price if service_price else proj.get('price','').replace(' ','').replace('₽','')
+                        if not display_price:
+                            display_price = '29000'
+                        # Map package for proposal URL
+                        mod_map_reverse = {"Лендинг / сайт": "landing", "Telegram-бот": "bot", "Автоматизация": "auto", "AI-ассистент": "ai", "Онлайн-оплата": "payment"}
                         pkg_map = {"Старт": "start", "Бизнес": "business", "Премиум": "premium"}
-                        pkg_en = pkg_map.get(pkg, pkg.lower()) if pkg else "start"
+                        if service:
+                            pkg_en = mod_map_reverse.get(service, "start")
+                        else:
+                            pkg_en = pkg_map.get(pkg, pkg.lower()) if pkg else "start"
                         support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                         support_val = support_map.get(pkg, "1 мес")
-                        if pkg:
-                            import secrets as _secrets
-                            contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
-                            invoice_num = ""
-                            invoice_date = ""
-                            if contract_raw:
-                                try:
-                                    cdata = json.loads(contract_raw)
-                                    invoice_num = cdata.get("num", "")
-                                    invoice_date = cdata.get("date", "")
-                                except Exception:
-                                    pass
-                            if not invoice_num:
-                                invoice_num = now_kem().strftime("%Y-%m-") + str(random.randint(100, 999))
-                            if not invoice_date:
-                                invoice_date = now_kem().strftime('%d.%m.%Y')
+                        if pkg or service:
                             contract_code = _secrets.token_urlsafe(8)[:8]
                             _redis("SET", f"noir:contract:{contract_code}", json.dumps({
                                 "name": client_name, "phone": client.get('phone','') if client else '',
-                                "task": proj.get('name',''), "price": proj.get('price',''),
+                                "task": service if service else proj.get('name',''),
+                                "price": display_price,
                                 "date": invoice_date, "num": invoice_num,
                                 "tg": client.get('telegram','') if client else '',
                                 "email": client.get('email','') if client else '',
                                 "city": client.get('city','') if client else '',
-                                "support": support_val, "package": pkg,
+                                "support": "1 мес" if service else support_val,
+                                "package": pkg,
                             }, ensure_ascii=False), "EX", 2592000)
                             proposal_code = _secrets.token_urlsafe(8)[:8]
                             _redis("SET", f"noir:proposal:{proposal_code}", json.dumps({
                                 "name": client_name, "package": pkg_en,
-                                "price": proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000',
+                                "price": display_price,
                             }, ensure_ascii=False), "EX", 2592000)
                             data["docs"] = [
                                 {"name": "Договор", "url": f"/dogovor?c={contract_code}"},
                                 {"name": "Коммерческое предложение", "url": f"/proposal?c={proposal_code}"},
-                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}&num={invoice_num}&date={invoice_date}"},
+                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={display_price}&num={invoice_num}&date={invoice_date}"},
                             ]
                         _redis("SET", f"noir:dash:{token}",
                                json.dumps(data), "EX", 2592000)
@@ -889,6 +900,7 @@ class handler(BaseHTTPRequestHandler):
                     "Новый": "Бриф", "В работе": "Разработка",
                 }.get(raw_stage_s, raw_stage_s)
                 pkg = proj.get("package", "")
+                service = proj.get("service", "")
                 support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                 support_val = support_map.get(pkg, "1 мес")
                 client_name = client["name"] or login
@@ -908,32 +920,50 @@ class handler(BaseHTTPRequestHandler):
                     "updates": [{"text": e['description'], "date": e["date"]} for e in reversed(events)] if events else [{"text": "Вы вошли в кабинет", "date": "Сейчас"}],
                 }
 
-                if pkg:
+                if pkg or service:
                     contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
-                    invoice_num = ""
-                    invoice_date = ""
+                    cdata = {}
                     if contract_raw:
                         try:
                             cdata = json.loads(contract_raw)
-                            invoice_num = cdata.get("num", "")
-                            invoice_date = cdata.get("date", "")
                         except Exception:
                             pass
+                    invoice_num = cdata.get("num", "")
+                    invoice_date = cdata.get("date", "")
+                    service_c = cdata.get("service", "")
+                    service_price_c = cdata.get("service_price", "")
                     if not invoice_num:
                         invoice_num = now_kem().strftime("%Y-%m-") + str(random.randint(100, 999))
                     if not invoice_date:
                         invoice_date = now_kem().strftime('%d.%m.%Y')
+                    display_price = service_price_c if service_price_c else price_val.replace(' ','').replace('₽','')
+                    if not display_price:
+                        display_price = '29000'
+                    mod_map_reverse = {"Лендинг / сайт": "landing", "Telegram-бот": "bot", "Автоматизация": "auto", "AI-ассистент": "ai", "Онлайн-оплата": "payment"}
+                    pkg_map = {"Старт": "start", "Бизнес": "business", "Премиум": "premium"}
+                    if service_c:
+                        pkg_en = mod_map_reverse.get(service_c, "start")
+                    else:
+                        pkg_en = pkg_map.get(pkg, pkg.lower()) if pkg else "start"
                     contract_code = secrets.token_urlsafe(8)[:8]
                     _redis("SET", f"noir:contract:{contract_code}", json.dumps({
                         "name": client_name, "phone": client.get('phone',''),
-                        "task": proj.get('name',''), "price": price_val,
+                        "task": service_c if service_c else proj.get('name',''),
+                        "price": display_price,
                         "date": invoice_date, "num": invoice_num,
                         "tg": client.get('telegram',''), "email": client.get('email',''),
-                        "city": client.get('city',''), "support": support_val, "package": pkg,
+                        "city": client.get('city',''),
+                        "support": "1 мес" if service_c else support_val,
+                        "package": pkg,
+                    }, ensure_ascii=False), "EX", 2592000)
+                    proposal_code = secrets.token_urlsafe(8)[:8]
+                    _redis("SET", f"noir:proposal:{proposal_code}", json.dumps({
+                        "name": client_name, "package": pkg_en, "price": display_price,
                     }, ensure_ascii=False), "EX", 2592000)
                     dashboard_data["docs"] = [
                         {"name": "Договор", "url": f"/dogovor?c={contract_code}"},
-                        {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={price_val}&name={client_name}&num={invoice_num}&date={invoice_date}"},
+                        {"name": "Коммерческое предложение", "url": f"/proposal?c={proposal_code}"},
+                        {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={display_price}&name={client_name}&num={invoice_num}&date={invoice_date}"},
                     ]
 
                 token = secrets.token_urlsafe(16)
