@@ -1743,15 +1743,14 @@ def handle_callback(chat_id, data):
         token = _secrets_dash.token_urlsafe(16)
         username = st.get("username", "")
         chat_id_str = str(chat_id)
-        # Find client by username or chat_id
+        # Find client by username, chat_id, or Redis
         client_name_dash = ""
         if sheets_find_client:
-            client_dash = sheets_find_client(username)
+            client_dash = sheets_find_client(username) if username else None
             if not client_dash:
                 client_dash = sheets_find_client(chat_id_str)
             if client_dash:
                 client_name_dash = client_dash.get("name", "")
-        # Also try Redis mapping (set after qualification)
         if not client_name_dash:
             redis_cn = _redis("GET", f"noir:client_name:{chat_id}")
             if redis_cn:
