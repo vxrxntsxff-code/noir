@@ -1807,7 +1807,7 @@ def _finish_qualification(chat_id, data):
     dt = now_kem()
     date_str = dt.strftime("%d.%m.%Y")
     time_str = dt.strftime("%H:%M")
-    num = f"{dt.strftime('%y%m%d')}-{random.randint(1000,9999)}"
+    num = dt.strftime("%Y%m%d%H%M%S")
 
     support_map = {"start": "1 месяц", "business": "2 месяца", "premium": "3 месяца"}
     support_months = support_map.get(level, "1 месяц")
@@ -1852,7 +1852,7 @@ def _finish_qualification(chat_id, data):
         f"Цена: {PRICES.get(level, '29 000')} ₽\n"
         f"{date_str} · {time_str} МСК"
     )
-    lead_kb = [[{"text": "Договор клиента", "url": short_url}]]
+    lead_kb = [[{"text": "Договор клиента", "url": url}]]
     lead_kb += kb_lead(data)
 
     # Store contract data for dashboard
@@ -2222,19 +2222,21 @@ class handler(BaseHTTPRequestHandler):
                     remaining_str = f"{remaining_num} ₽" if remaining_num > 0 else f"{price_num} ₽"
 
                 # Get contract data from Redis
-                contract_url = "/dogovor.html"
+                contract_link = "/dogovor.html"
                 contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
                 if contract_raw:
                     try:
                         cdata = json.loads(contract_raw)
-                        contract_url = short_contract_url(cdata)
+                        contract_link = contract_url(cdata)
                     except Exception:
                         pass
 
                 # Get proposal URL
+                pkg_map = {"Старт": "start", "Бизнес": "business", "Премиум": "premium"}
+                pkg_en = pkg_map.get(package, package.lower()) if package else "start"
                 proposal_url = short_proposal_url({
                     "name": client_name,
-                    "package": package.lower() if package else "start",
+                    "package": pkg_en,
                     "price": str(price_num) if price_num else "29000",
                 })
 
@@ -2257,7 +2259,7 @@ class handler(BaseHTTPRequestHandler):
                     "paid": paid_str,
                     "remaining": remaining_str,
                     "docs": [
-                        {"name": "Договор", "url": contract_url},
+                        {"name": "Договор", "url": contract_link},
                         {"name": "Коммерческое предложение", "url": proposal_url},
                     ],
                     "payments": [],

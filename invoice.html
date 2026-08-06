@@ -55,7 +55,11 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 32px;font-size:11pt;line-height:1.8">
         <div><strong>Получатель:</strong> Ленгардт Дмитрий Евгеньевич</div>
         <div><strong>ИНН:</strong> 420544798477</div>
+        <div><strong>Банк:</strong> АО "ТБанк"</div>
         <div><strong>Статус:</strong> Самозанятый (НПД)</div>
+        <div><strong>Расчётный счёт:</strong> 408017810700070649501</div>
+        <div><strong>БИК:</strong> 044525974</div>
+        <div><strong>Корр. счёт:</strong> 30101810145250000974</div>
         <div><strong>Налог:</strong> Чек через «Мой налог» (422-ФЗ)</div>
       </div>
     </div>
@@ -84,7 +88,7 @@
   document.getElementById('service-name').textContent = pkg ? `Разработка сайта · «${pkg}»` : project;
   document.getElementById('invoice-date').textContent = new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'});
 
-  const num = p.get('num') || String(Date.now()).slice(-6);
+  const num = p.get('num') || String(Math.floor(Math.random() * 900000) + 100000);
   document.getElementById('invoice-num').textContent = num;
 
   const advance = Math.floor(parseInt(cleanPrice || '0') / 2);

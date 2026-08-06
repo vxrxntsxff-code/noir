@@ -454,6 +454,7 @@ def sheets_get_payments(client_name):
                 "date": str(row[0]) if len(row) > 0 else "",
                 "amount": str(row[3]) if len(row) > 3 else "",
                 "type": str(row[4]) if len(row) > 4 else "",
+                "status": str(row[5]) if len(row) > 5 else "",
                 "method": str(row[6]) if len(row) > 6 else "",
             })
     return payments

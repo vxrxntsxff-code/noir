@@ -728,7 +728,10 @@ class handler(BaseHTTPRequestHandler):
                         except ValueError:
                             paid_num = 0
                         remaining_num = max(0, price_num - paid_num)
-                        data["remaining"] = f"{remaining_num} ₽" if remaining_num > 0 else f"{price_num} ₽"
+                        if remaining_num > 0:
+                            data["remaining"] = f"{remaining_num} ₽"
+                        else:
+                            data["remaining"] = f"{price_num} ₽" if price_num > 0 else "0 ₽"
                         if "paid" not in data or data["paid"] == "0 ₽":
                             data["paid"] = "0 ₽"
                         if events:
@@ -736,12 +739,15 @@ class handler(BaseHTTPRequestHandler):
                         if payments:
                             data["payments"] = [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments if p.get("status") != "Ожидает"]
                         pkg = data.get("package", "")
+                        # Map Russian package names to English for URLs
+                        pkg_map = {"Старт": "start", "Бизнес": "business", "Премиум": "premium"}
+                        pkg_en = pkg_map.get(pkg, pkg.lower()) if pkg else "start"
                         support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                         support_val = support_map.get(pkg, "1 мес")
                         if pkg:
                             data["docs"] = [
                                 {"name": "Договор", "url": f"/dogovor?name={client_name}&phone={client.get('phone','') if client else ''}&task={proj.get('name','')}&price={proj.get('price','')}&date={datetime.now(KEM).strftime('%d.%m.%Y')}&tg={client.get('telegram','') if client else ''}&email={client.get('email','') if client else ''}&city={client.get('city','') if client else ''}&support={support_val}&payment=stages"},
-                                {"name": "Коммерческое предложение", "url": f"/proposal?name={client_name}&package={pkg.lower()}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
+                                {"name": "Коммерческое предложение", "url": f"/proposal?name={client_name}&package={pkg_en}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
                                 {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
                             ]
                         _redis("SET", f"noir:dash:{token}",
