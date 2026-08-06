@@ -1,4 +1,4 @@
-# NOIR TopDent Dashboard API v3.6
+# NOIR TopDent Dashboard API v3.7 - token persistence fix
 import os, sys, json, urllib.request, urllib.parse, logging, traceback, random
 from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler
