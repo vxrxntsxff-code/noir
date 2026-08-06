@@ -1750,7 +1750,6 @@ def handle_callback(chat_id, data):
                 client_name_dash = client_dash.get("name", "")
         dash_data = {"chat_id": chat_id, "username": username, "client_name": client_name_dash}
         _redis("SET", f"noir:dash:{token}", json.dumps(dash_data), "EX", 2592000)
-        # Store token by chat_id for later update after qualification
         _redis("SET", f"noir:token_by_chat:{chat_id}", token, "EX", "2592000")
         url = f"{SITE_URL}/dashboard?token={token}"
         send(chat_id, T["dashboard_link"].format(url=url), reply_markup=kb_main())
