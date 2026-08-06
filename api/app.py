@@ -245,10 +245,9 @@ def kb_main():
          {"text": "Подобрать решение", "callback_data": "menu:sol"}],
         [{"text": "Прайс-лист", "callback_data": "menu:price"},
          {"text": "Работы", "callback_data": "menu:works"}],
-        [         {"text": "Калькулятор", "callback_data": "estimator:start"},
-         {"text": "Кабинет", "callback_data": "dashboard:link"}],
-        [{"text": "Оплата", "callback_data": "pay:start"},
-         {"text": "Оставить заявку", "callback_data": "flow:start"}],
+        [{"text": "Кабинет", "callback_data": "dashboard:link"},
+         {"text": "Оплата", "callback_data": "pay:start"}],
+        [{"text": "Оставить заявку", "callback_data": "flow:choice"}],
     ])
 
 
@@ -302,6 +301,25 @@ def kb_services():
          {"text": "AI-ассистент", "callback_data": "svc:ai"}],
         [{"text": "Онлайн-оплата", "callback_data": "svc:payment"}],
         [{"text": "Назад", "callback_data": "menu"}],
+    ])
+
+
+def kb_flow_choice():
+    return kb_inline([
+        [{"text": "Модуль", "callback_data": "flow:type:module"},
+         {"text": "Система", "callback_data": "flow:type:system"}],
+        [{"text": "Назад", "callback_data": "menu"}],
+    ])
+
+
+def kb_modules():
+    return kb_inline([
+        [{"text": "Модуль «Сайт» — 35 000 ₽", "callback_data": "flow:svc:landing"},
+         {"text": "Модуль «Бот» — 20 000 ₽", "callback_data": "flow:svc:bot"}],
+        [{"text": "Модуль «CRM» — 45 000 ₽", "callback_data": "flow:svc:auto"},
+         {"text": "Модуль «AI» — 60 000 ₽", "callback_data": "flow:svc:ai"}],
+        [{"text": "Модуль «Оплата» — 10 000 ₽", "callback_data": "flow:svc:payment"}],
+        [{"text": "Назад", "callback_data": "flow:choice"}],
     ])
 
 
@@ -359,7 +377,7 @@ def kb_pay_back():
 
 def kb_after_eval():
     return kb_inline([
-        [{"text": "Оставить заявку", "callback_data": "flow:start"}],
+        [{"text": "Оставить заявку", "callback_data": "flow:choice"}],
         [{"text": "В главное меню", "callback_data": "menu"}],
     ])
 
@@ -367,7 +385,7 @@ def kb_after_eval():
 def kb_after_demo():
     return kb_inline([
         [{"text": "Показать демо", "url": f"{SITE_URL}/topdent.html"}],
-        [{"text": "Оставить заявку", "callback_data": "flow:start"}],
+        [{"text": "Оставить заявку", "callback_data": "flow:choice"}],
         [{"text": "В главное меню", "callback_data": "menu"}],
     ])
 
@@ -676,6 +694,9 @@ def _handle_admin_callback(chat_id, data):
 
 
 def _do_admin_callback(chat_id, data, parts):
+    if data == "admin":
+        handle_admin(chat_id)
+        return
     if data == "admin:leads":
         leads = _sheets_get_clients()
         log.info("ADMIN_LEADS count=%d", len(leads))
@@ -758,7 +779,11 @@ def show_project(chat_id, rid):
 def _do_admin_actions(chat_id, data, parts):
     if chat_id != OWNER_ID:
         return
-    if data.startswith("admin:set_stage:"):
+    if data.startswith("admin:edit_stage:"):
+        rid = parts[2]
+        send(chat_id, "Выберите этап:", reply_markup=kb_admin_stage_select(rid))
+
+    elif data.startswith("admin:set_stage:"):
         rid = parts[2]
         label = parts[3] if len(parts) > 3 else ""
         stage_label = STAGE_LABELS.get(label, label)
@@ -778,7 +803,7 @@ def _do_admin_actions(chat_id, data, parts):
     elif data.startswith("admin:edit_name:"):
         rid = parts[2]
         state_set(chat_id, {"admin_action": "edit_name", "project_id": rid})
-        send(chat_id, "Новое название:", reply_markup=kb_cancel())
+        send(chat_id, "Новое название:", reply_markup=kb_admin_cancel())
 
     elif data.startswith("admin:edit_price:"):
         rid = parts[2]
@@ -1712,9 +1737,29 @@ def handle_callback(chat_id, data):
         return
 
     # ── Qualification flow ──
-    if data == "flow:start":
+    if data == "flow:choice":
+        send(chat_id, "Что хотите заказать?", reply_markup=kb_flow_choice())
+        return
+
+    if data == "flow:type:module":
+        send(chat_id, "Выберите модуль:", reply_markup=kb_modules())
+        return
+
+    if data == "flow:type:system":
         state_set(chat_id, {"step": "goal", "data": {}, "username": st.get("username", "")})
         send(chat_id, T["screen_goal"], reply_markup=kb_goal())
+        return
+
+    if data.startswith("flow:svc:"):
+        svc_key = data[9:]
+        svc = SERVICES.get(svc_key)
+        if not svc:
+            return
+        st.setdefault("data", {})["service"] = svc["name"]
+        st["data"]["service_price"] = svc["num"]
+        st["step"] = "svc_name"
+        state_set(chat_id, st)
+        send(chat_id, T["svc_prefix"].format(name=svc["name"], price=svc["price"]), reply_markup=kb_cancel())
         return
 
     if data.startswith("goal:"):

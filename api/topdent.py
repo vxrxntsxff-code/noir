@@ -735,7 +735,7 @@ class handler(BaseHTTPRequestHandler):
                         if "paid" not in data or data["paid"] == "0 ₽":
                             data["paid"] = "0 ₽"
                         if events:
-                            data["updates"] = [{"text": f"[{e['type']}] {e['description']}", "date": e["date"]} for e in reversed(events)]
+                            data["updates"] = [{"text": e['description'], "date": e["date"]} for e in reversed(events)]
                         if payments:
                             data["payments"] = [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments if p.get("status") != "Ожидает"]
                         pkg = data.get("package", "")
@@ -895,24 +895,36 @@ class handler(BaseHTTPRequestHandler):
                     "paid": f"{proj.get('paid', '0')} ₽",
                     "remaining": proj.get("remaining", "—"),
                     "docs": [] if not pkg else [],
-                    "payments": [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments] if payments else [],
-                    "updates": [{"text": f"[{e['type']}] {e['description']}", "date": e["date"]} for e in reversed(events)] if events else [{"text": "Вы вошли в кабинет", "date": "Сейчас"}],
+                    "payments": [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments if p.get("status") != "Ожидает"] if payments else [],
+                    "updates": [{"text": e['description'], "date": e["date"]} for e in reversed(events)] if events else [{"text": "Вы вошли в кабинет", "date": "Сейчас"}],
                 }
 
                 if pkg:
-                    contract_num = now_kem().strftime("%Y-%m-") + str(random.randint(100, 999))
-                    contract_date = now_kem().strftime('%d.%m.%Y')
+                    contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
+                    invoice_num = ""
+                    invoice_date = ""
+                    if contract_raw:
+                        try:
+                            cdata = json.loads(contract_raw)
+                            invoice_num = cdata.get("num", "")
+                            invoice_date = cdata.get("date", "")
+                        except Exception:
+                            pass
+                    if not invoice_num:
+                        invoice_num = now_kem().strftime("%Y-%m-") + str(random.randint(100, 999))
+                    if not invoice_date:
+                        invoice_date = now_kem().strftime('%d.%m.%Y')
                     contract_code = secrets.token_urlsafe(8)[:8]
                     _redis("SET", f"noir:contract:{contract_code}", json.dumps({
                         "name": client_name, "phone": client.get('phone',''),
                         "task": proj.get('name',''), "price": price_val,
-                        "date": contract_date, "num": contract_num,
+                        "date": invoice_date, "num": invoice_num,
                         "tg": client.get('telegram',''), "email": client.get('email',''),
                         "city": client.get('city',''), "support": support_val, "package": pkg,
                     }, ensure_ascii=False), "EX", 2592000)
                     dashboard_data["docs"] = [
                         {"name": "Договор", "url": f"/dogovor?c={contract_code}"},
-                        {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={price_val}&name={client_name}&num={contract_num}&date={contract_date}"},
+                        {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={price_val}&name={client_name}&num={invoice_num}&date={invoice_date}"},
                     ]
 
                 token = secrets.token_urlsafe(16)
