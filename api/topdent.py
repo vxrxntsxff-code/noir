@@ -922,15 +922,34 @@ class handler(BaseHTTPRequestHandler):
                 redis_price_post = cdata_post.get("service_price", "")
                 display_price_post = redis_price_post if redis_price_post else price_val
 
+                # Format remaining with ₽
+                remaining_raw_post = str(proj.get("remaining", "")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                paid_raw_post = str(proj.get("paid", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                try:
+                    remaining_num_post = int(remaining_raw_post) if remaining_raw_post else 0
+                except ValueError:
+                    remaining_num_post = 0
+                try:
+                    paid_num_post = int(paid_raw_post) if paid_raw_post else 0
+                except ValueError:
+                    paid_num_post = 0
+                try:
+                    price_num_post = int(str(display_price_post).replace(" ", "").replace("\xa0", "").replace("₽", "")) if display_price_post else 0
+                except ValueError:
+                    price_num_post = 0
+                remaining_calc_post = max(0, price_num_post - paid_num_post)
+                remaining_fmt_post = f"{remaining_calc_post:,} ₽".replace(",", " ") if remaining_calc_post > 0 else f"{remaining_num_post:,} ₽".replace(",", " ")
+                paid_fmt_post = f"{paid_num_post:,} ₽".replace(",", " ")
+                price_fmt_post = f"{price_num_post:,} ₽".replace(",", " ") if price_num_post > 0 else "—"
                 dashboard_data = {
                     "client_name": client_name,
                     "project_name": proj.get("name", "Проект"),
                     "package": pkg,
                     "stage": stage,
                     "progress": proj.get("progress", 0),
-                    "price": f"{display_price_post} ₽" if display_price_post else "—",
-                    "paid": f"{proj.get('paid', '0')} ₽",
-                    "remaining": proj.get("remaining", "—"),
+                    "price": price_fmt_post,
+                    "paid": paid_fmt_post,
+                    "remaining": remaining_fmt_post,
                     "docs": [] if not pkg else [],
                     "payments": [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments if p.get("status") != "Ожидает"] if payments else [],
                     "updates": [{"text": e['description'], "date": e["date"]} for e in reversed(events)] if events else [{"text": "Вы вошли в кабинет", "date": "Сейчас"}],
