@@ -578,22 +578,27 @@ def _sheets_get_clients():
         return []
     clients = []
     for i, row in enumerate(result["values"][1:], start=2):
-        name_val = str(row[0]).strip() if len(row) > 0 else ""
-        phone_val = str(row[1]).strip() if len(row) > 1 else ""
-        if name_val or phone_val:
-            clients.append({
-                "row": i,
-                "name": name_val,
-                "phone": phone_val,
-                "telegram": str(row[2]) if len(row) > 2 else "",
-                "email": str(row[3]) if len(row) > 3 else "",
-                "city": str(row[4]) if len(row) > 4 else "",
-                "niche": str(row[5]) if len(row) > 5 else "",
-                "budget": str(row[6]) if len(row) > 6 else "",
-                "source": str(row[7]) if len(row) > 7 else "",
-                "status": str(row[8]) if len(row) > 8 else "Новый",
-                "date": str(row[9]) if len(row) > 9 else "",
-            })
+        if not row:
+            continue
+        try:
+            name_val = str(row[0]).strip() if len(row) > 0 else ""
+            phone_val = str(row[1]).strip() if len(row) > 1 else ""
+            if name_val or phone_val:
+                clients.append({
+                    "row": i,
+                    "name": name_val,
+                    "phone": phone_val,
+                    "telegram": str(row[2]) if len(row) > 2 else "",
+                    "email": str(row[3]) if len(row) > 3 else "",
+                    "city": str(row[4]) if len(row) > 4 else "",
+                    "niche": str(row[5]) if len(row) > 5 else "",
+                    "budget": str(row[6]) if len(row) > 6 else "",
+                    "source": str(row[7]) if len(row) > 7 else "",
+                    "status": str(row[8]) if len(row) > 8 else "Новый",
+                    "date": str(row[9]) if len(row) > 9 else "",
+                })
+        except (IndexError, TypeError):
+            continue
     return clients
 
 
@@ -606,21 +611,26 @@ def _sheets_get_projects_all():
         return []
     projects = []
     for i, row in enumerate(result["values"][1:], start=2):
-        client_val = str(row[1]).strip() if len(row) > 1 else ""
-        if client_val:
-            projects.append({
-                "row": i,
-                "client": client_val,
-                "name": str(row[2]) if len(row) > 2 else "",
-                "package": str(row[3]) if len(row) > 3 else "",
-                "status": str(row[4]) if len(row) > 4 else "",
-                "stage": str(row[5]) if len(row) > 5 else "",
-                "progress": str(row[6]) if len(row) > 6 else "0",
-                "deadline": str(row[7]) if len(row) > 7 else "",
-                "price": str(row[8]) if len(row) > 8 else "",
-                "paid": str(row[9]) if len(row) > 9 else "0",
-                "remaining": str(row[10]) if len(row) > 10 else "",
-            })
+        if not row:
+            continue
+        try:
+            client_val = str(row[1]).strip() if len(row) > 1 else ""
+            if client_val:
+                projects.append({
+                    "row": i,
+                    "client": client_val,
+                    "name": str(row[2]) if len(row) > 2 else "",
+                    "package": str(row[3]) if len(row) > 3 else "",
+                    "status": str(row[4]) if len(row) > 4 else "",
+                    "stage": str(row[5]) if len(row) > 5 else "",
+                    "progress": str(row[6]) if len(row) > 6 else "0",
+                    "deadline": str(row[7]) if len(row) > 7 else "",
+                    "price": str(row[8]) if len(row) > 8 else "",
+                    "paid": str(row[9]) if len(row) > 9 else "0",
+                    "remaining": str(row[10]) if len(row) > 10 else "",
+                })
+        except (IndexError, TypeError):
+            continue
     return projects
 
 
@@ -655,6 +665,7 @@ def _handle_admin_callback(chat_id, data):
 
     try:
         _do_admin_callback(chat_id, data, parts)
+        _do_admin_actions(chat_id, data, parts)
     except Exception as e:
         log.error("ADMIN_CALLBACK ERROR data=%s: %s\n%s", data, e, traceback.format_exc())
         send(chat_id, f"Ошибка: {e}")
@@ -740,11 +751,10 @@ def show_project(chat_id, rid):
     return False
 
 
-def _do_admin_callback(chat_id, data, parts):
-    if data == "admin:leads":
-        rid = parts[2]
-        stage = parts[3]
-        label = STAGE_LABELS.get(stage, stage)
+def _do_admin_actions(chat_id, data, parts):
+    if chat_id != OWNER_ID:
+        return
+    if data.startswith("admin:set_stage:"):
         if sheets_update_project:
             ok = sheets_update_project_by_row(rid, "stage", label)
             send(chat_id, f"Этап → {label}" if ok else "Ошибка")
