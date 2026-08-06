@@ -681,12 +681,12 @@ class handler(BaseHTTPRequestHandler):
             token = params.get("token", [""])[0]
             raw = _redis("GET", f"noir:dash:{token}") if token else None
             if raw:
-                data = json.loads(raw)
-                # Always read fresh from Sheets
+                cached = json.loads(raw)
+                # Always rebuild data fresh from Sheets
                 try:
                     from sheets import sheets_find_client, sheets_get_projects, sheets_get_events, sheets_get_payments
-                    client_name = data.get("client_name", "")
-                    username_d = data.get("username", "")
+                    client_name = cached.get("client_name", "")
+                    username_d = cached.get("username", "")
                     client = None
                     if username_d:
                         client = sheets_find_client(username_d)
@@ -720,10 +720,10 @@ class handler(BaseHTTPRequestHandler):
                             display_price = redis_price if redis_price else proj.get('price', '')
                             data.update({
                                 "client_name": client_name,
-                                "project_name": proj.get("name", data.get("project_name", "Проект")),
+                                "project_name": proj.get("name", "Проект"),
                                 "package": pkg,
                                 "stage": display_stage,
-                                "progress": proj.get("progress", data.get("progress", 0)),
+                                "progress": proj.get("progress", 0),
                                 "price": f"{display_price} ₽" if display_price else data.get("price", "—"),
                                 "paid": f"{proj.get('paid', '0')} ₽" if proj.get("paid") and proj.get("paid") != "0" else "0 ₽",
                             })
