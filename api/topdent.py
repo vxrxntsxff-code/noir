@@ -745,10 +745,31 @@ class handler(BaseHTTPRequestHandler):
                         support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                         support_val = support_map.get(pkg, "1 мес")
                         if pkg:
+                            # Get contract data from Redis
+                            import urllib.parse as _up
+                            contract_url = "/dogovor.html"
+                            contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
+                            if contract_raw:
+                                try:
+                                    cdata = json.loads(contract_raw)
+                                    qs = _up.urlencode({k: v for k, v in cdata.items() if v})
+                                    contract_url = f"/dogovor?{qs}"
+                                except Exception:
+                                    pass
+                            # Get contract data for invoice number and date
+                            invoice_num = ""
+                            invoice_date = ""
+                            if contract_raw:
+                                try:
+                                    cdata = json.loads(contract_raw)
+                                    invoice_num = cdata.get("num", "")
+                                    invoice_date = cdata.get("date", "")
+                                except Exception:
+                                    pass
                             data["docs"] = [
-                                {"name": "Договор", "url": f"/dogovor?name={client_name}&phone={client.get('phone','') if client else ''}&task={proj.get('name','')}&price={proj.get('price','')}&date={datetime.now(KEM).strftime('%d.%m.%Y')}&tg={client.get('telegram','') if client else ''}&email={client.get('email','') if client else ''}&city={client.get('city','') if client else ''}&support={support_val}&payment=stages"},
+                                {"name": "Договор", "url": contract_url},
                                 {"name": "Коммерческое предложение", "url": f"/proposal?name={client_name}&package={pkg_en}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
-                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
+                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}&num={invoice_num}&date={invoice_date}"},
                             ]
                         _redis("SET", f"noir:dash:{token}",
                                json.dumps(data), "EX", 2592000)

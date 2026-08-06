@@ -331,6 +331,10 @@ def kb_cancel():
     return kb_inline([[{"text": "Отмена", "callback_data": "menu"}]])
 
 
+def kb_admin_cancel():
+    return kb_inline([[{"text": "← Назад", "callback_data": "admin"}]])
+
+
 def kb_skip():
     return kb_inline([
         [{"text": "Пропустить", "callback_data": "skip"},
@@ -755,6 +759,9 @@ def _do_admin_actions(chat_id, data, parts):
     if chat_id != OWNER_ID:
         return
     if data.startswith("admin:set_stage:"):
+        rid = parts[2]
+        stage = parts[3]
+        label = STAGE_LABELS.get(stage, stage)
         if sheets_update_project:
             ok = sheets_update_project_by_row(rid, "stage", label)
             send(chat_id, f"Этап → {label}" if ok else "Ошибка")
@@ -766,17 +773,17 @@ def _do_admin_actions(chat_id, data, parts):
     elif data.startswith("admin:edit_progress:"):
         rid = parts[2]
         state_set(chat_id, {"admin_action": "edit_progress", "project_id": rid})
-        send(chat_id, "Прогресс (0-100):", reply_markup=kb_cancel())
+        send(chat_id, "Прогресс (0-100):", reply_markup=kb_admin_cancel())
 
     elif data.startswith("admin:edit_price:"):
         rid = parts[2]
         state_set(chat_id, {"admin_action": "edit_price", "project_id": rid})
-        send(chat_id, "Новая цена:", reply_markup=kb_cancel())
+        send(chat_id, "Новая цена:", reply_markup=kb_admin_cancel())
 
     elif data.startswith("admin:add_update:"):
         rid = parts[2]
         state_set(chat_id, {"admin_action": "add_update", "project_id": rid})
-        send(chat_id, "Текст обновления:", reply_markup=kb_cancel())
+        send(chat_id, "Текст обновления:", reply_markup=kb_admin_cancel())
 
     elif data.startswith("admin:pay_ask:"):
         rid = parts[2]
@@ -802,7 +809,7 @@ def _do_admin_actions(chat_id, data, parts):
             return
         if pct == "custom":
             state_set(chat_id, {"admin_action": "pay_custom", "project_id": rid, "price": price})
-            send(chat_id, "Сумма оплаты:", reply_markup=kb_cancel())
+            send(chat_id, "Сумма оплаты:", reply_markup=kb_admin_cancel())
             return
         amount = price * int(pct) / 100
         _do_payment(chat_id, rid, proj, amount, f"Аванс {pct}%")
@@ -909,7 +916,7 @@ def _do_admin_actions(chat_id, data, parts):
     elif parts[1] == "msg" and len(parts) > 2:
         rid = parts[2]
         state_set(chat_id, {"admin_action": "send_to_client", "project_id": rid})
-        send(chat_id, "Текст сообщения:", reply_markup=kb_cancel())
+        send(chat_id, "Текст сообщения:", reply_markup=kb_admin_cancel())
 
 
 def pkg_desc(level):
@@ -1820,7 +1827,7 @@ def _finish_qualification(chat_id, data):
     dt = now_kem()
     date_str = dt.strftime("%d.%m.%Y")
     time_str = dt.strftime("%H:%M")
-    num = dt.strftime("%Y%m%d%H%M%S")
+    num = dt.strftime(f"%Y-%m-{random.randint(100,999)}")
 
     support_map = {"start": "1 месяц", "business": "2 месяца", "premium": "3 месяца"}
     support_months = support_map.get(level, "1 месяц")
@@ -1951,6 +1958,7 @@ def _finish_qualification(chat_id, data):
             stage="Бриф",
             price=PRICES.get(level, ""),
             deadline=deadline_dt.strftime("%d.%m.%Y"),
+            remaining=PRICES.get(level, ""),
         )
 
     if sheets_event:

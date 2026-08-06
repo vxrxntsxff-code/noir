@@ -105,9 +105,9 @@
     <div class="section-title">Условия</div>
     <div style="font-size:10pt;color:#444;line-height:1.8">
       • Оплата: 50% аванс, 50% при запуске<br>
-      • Сроки: 10–15 рабочих дней<br>
+      • Сроки: <span id="timeline-text">2–3 недели</span><br>
       • Гарантия: 30 дней после запуска<br>
-      • Поддержка: 14 дней бесплатно после запуска
+      • Поддержка: <span id="support-text">1 месяц</span> бесплатно после запуска
     </div>
   </div>
 
@@ -131,6 +131,7 @@
 
     const packages = {
       start: {name:'Пакет «Старт»', price:'29 000 ₽', desc:'Лендинг до 5 экранов · мобильная адаптация\nФорма заявки · SEO-базовая настройка\nДоговор · чек НПД',
+        support:'1 месяц', timeline:'2–3 недели',
         stages:[
           {n:'1', t:'Бриф и анализ', d:'2–3 дня'},
           {n:'2', t:'Дизайн', d:'4–6 дней'},
@@ -139,6 +140,7 @@
           {n:'5', t:'Запуск', d:'1–2 дня'},
         ]},
       business: {name:'Пакет «Бизнес»', price:'59 000 ₽', desc:'Лендинг до 8 экранов / сайт до 5 страниц · CRM-интеграция\nОнлайн-запись · Аналитика · SEO\nДоговор · чек НПД',
+        support:'2 месяца', timeline:'до месяца',
         stages:[
           {n:'1', t:'Бриф и анализ', d:'2–4 дня'},
           {n:'2', t:'Дизайн', d:'5–8 дней'},
@@ -147,6 +149,7 @@
           {n:'5', t:'Запуск', d:'2–3 дня'},
         ]},
       premium: {name:'Пакет «Премиум»', price:'112 000 ₽', desc:'Полная цифровая система\nБот + сайт + CRM + аналитика\nДоговор · чек НПД',
+        support:'3 месяца', timeline:'от месяца',
         stages:[
           {n:'1', t:'Бриф и исследование', d:'3–5 дней'},
           {n:'2', t:'Дизайн и прототип', d:'7–10 дней'},
@@ -168,6 +171,12 @@
       document.getElementById('pkg-desc').innerHTML = p.desc.replace(/\n/g, '<br>');
       document.getElementById('total-amount').textContent = p.price;
       document.getElementById('doc-date').textContent = new Date().toLocaleDateString('ru-RU');
+
+      // Update support and timeline based on package
+      const supportEl = document.getElementById('support-text');
+      if (supportEl) supportEl.textContent = p.support || '1 месяц';
+      const timelineEl = document.getElementById('timeline-text');
+      if (timelineEl) timelineEl.textContent = p.timeline || '2–3 недели';
 
       const stagesEl = document.getElementById('stages-list');
       if (stagesEl && p.stages) {
