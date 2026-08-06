@@ -745,15 +745,26 @@ class handler(BaseHTTPRequestHandler):
                         support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                         support_val = support_map.get(pkg, "1 мес")
                         if pkg:
-                            dt_now = now_kem()
-                            contract_num = dt_now.strftime("%y%m%d-") + str(random.randint(1000, 9999))
-                            contract_date = dt_now.strftime('%d.%m.%Y')
                             import secrets as _secrets
+                            contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
+                            invoice_num = ""
+                            invoice_date = ""
+                            if contract_raw:
+                                try:
+                                    cdata = json.loads(contract_raw)
+                                    invoice_num = cdata.get("num", "")
+                                    invoice_date = cdata.get("date", "")
+                                except Exception:
+                                    pass
+                            if not invoice_num:
+                                invoice_num = now_kem().strftime("%Y-%m-") + str(random.randint(100, 999))
+                            if not invoice_date:
+                                invoice_date = now_kem().strftime('%d.%m.%Y')
                             contract_code = _secrets.token_urlsafe(8)[:8]
                             _redis("SET", f"noir:contract:{contract_code}", json.dumps({
                                 "name": client_name, "phone": client.get('phone','') if client else '',
                                 "task": proj.get('name',''), "price": proj.get('price',''),
-                                "date": contract_date, "num": contract_num,
+                                "date": invoice_date, "num": invoice_num,
                                 "tg": client.get('telegram','') if client else '',
                                 "email": client.get('email','') if client else '',
                                 "city": client.get('city','') if client else '',
@@ -767,7 +778,7 @@ class handler(BaseHTTPRequestHandler):
                             data["docs"] = [
                                 {"name": "Договор", "url": f"/dogovor?c={contract_code}"},
                                 {"name": "Коммерческое предложение", "url": f"/proposal?c={proposal_code}"},
-                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}&num={contract_num}&date={contract_date}"},
+                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}&num={invoice_num}&date={invoice_date}"},
                             ]
                         _redis("SET", f"noir:dash:{token}",
                                json.dumps(data), "EX", 2592000)
@@ -874,16 +885,6 @@ class handler(BaseHTTPRequestHandler):
                 client_name = client["name"] or login
                 price_val = proj.get("price", "")
 
-                import secrets as _secrets
-                contract_num = now_kem().strftime("%y%m%d-") + str(random.randint(1000, 9999))
-                contract_code = _secrets.token_urlsafe(8)[:8]
-                _redis("SET", f"noir:contract:{contract_code}", json.dumps({
-                    "name": client_name, "phone": client.get('phone',''),
-                    "task": proj.get('name',''), "price": price_val,
-                    "date": now_kem().strftime('%d.%m.%Y'), "num": contract_num,
-                    "tg": client.get('telegram',''), "email": client.get('email',''),
-                    "city": client.get('city',''), "support": support_val, "package": pkg,
-                }, ensure_ascii=False), "EX", 2592000)
                 dashboard_data = {
                     "client_name": client_name,
                     "project_name": proj.get("name", "Проект"),
@@ -893,11 +894,26 @@ class handler(BaseHTTPRequestHandler):
                     "price": f"{price_val} ₽" if price_val else "—",
                     "paid": f"{proj.get('paid', '0')} ₽",
                     "remaining": proj.get("remaining", "—"),
-                    "docs": [{"name": "Договор", "url": f"/dogovor?c={contract_code}"},
-                             {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={price_val}&name={client_name}&num={contract_num}&date={now_kem().strftime('%d.%m.%Y')}"}] if pkg else [],
+                    "docs": [] if not pkg else [],
                     "payments": [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments] if payments else [],
                     "updates": [{"text": f"[{e['type']}] {e['description']}", "date": e["date"]} for e in reversed(events)] if events else [{"text": "Вы вошли в кабинет", "date": "Сейчас"}],
                 }
+
+                if pkg:
+                    contract_num = now_kem().strftime("%Y-%m-") + str(random.randint(100, 999))
+                    contract_date = now_kem().strftime('%d.%m.%Y')
+                    contract_code = secrets.token_urlsafe(8)[:8]
+                    _redis("SET", f"noir:contract:{contract_code}", json.dumps({
+                        "name": client_name, "phone": client.get('phone',''),
+                        "task": proj.get('name',''), "price": price_val,
+                        "date": contract_date, "num": contract_num,
+                        "tg": client.get('telegram',''), "email": client.get('email',''),
+                        "city": client.get('city',''), "support": support_val, "package": pkg,
+                    }, ensure_ascii=False), "EX", 2592000)
+                    dashboard_data["docs"] = [
+                        {"name": "Договор", "url": f"/dogovor?c={contract_code}"},
+                        {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={price_val}&name={client_name}&num={contract_num}&date={contract_date}"},
+                    ]
 
                 token = secrets.token_urlsafe(16)
                 _redis("SET", f"noir:dash:{token}",
