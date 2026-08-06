@@ -1748,8 +1748,10 @@ def handle_callback(chat_id, data):
             client_dash = sheets_find_client(username)
             if client_dash:
                 client_name_dash = client_dash.get("name", "")
-        _redis("SET", f"noir:dash:{token}",
-               json.dumps({"chat_id": chat_id, "username": username, "client_name": client_name_dash}), "EX", 2592000)
+        dash_data = {"chat_id": chat_id, "username": username, "client_name": client_name_dash}
+        _redis("SET", f"noir:dash:{token}", json.dumps(dash_data), "EX", 2592000)
+        # Store token by chat_id for later update after qualification
+        _redis("SET", f"noir:token_by_chat:{chat_id}", token, "EX", "2592000")
         url = f"{SITE_URL}/dashboard?token={token}"
         send(chat_id, T["dashboard_link"].format(url=url), reply_markup=kb_main())
         return
@@ -2104,6 +2106,17 @@ def _finish_qualification(chat_id, data):
 
     # Update dash token with client_name so user can access dashboard
     _redis("SET", f"noir:client_name:{chat_id}", name, "EX", "2592000")
+    # Also update any existing dash token for this chat_id
+    existing_token = _redis("GET", f"noir:token_by_chat:{chat_id}")
+    if existing_token:
+        token_data = _redis("GET", f"noir:dash:{existing_token}")
+        if token_data:
+            try:
+                td = json.loads(token_data)
+                td["client_name"] = name
+                _redis("SET", f"noir:dash:{existing_token}", json.dumps(td, ensure_ascii=False), "EX", "2592000")
+            except Exception:
+                pass
 
     send_lead(lead, lead_kb)
     log.info("lead_created level=%s chat=%s username=%s email=%s", level, chat_id, data.get("telegram",""), data.get("email",""))
