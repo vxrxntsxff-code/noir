@@ -695,12 +695,15 @@ class handler(BaseHTTPRequestHandler):
                         client_name = client["name"]
                     if not client and client_name:
                         client = sheets_find_client(client_name)
-                    # Fallback: try Redis mapping (chat_id → client_name)
-                    if not client_name and chat_id_d:
+                    # Fallback: try Redis mapping (chat_id → client_name) if still no client
+                    if not client and chat_id_d:
                         redis_client = _redis("GET", f"noir:client_name:{chat_id_d}")
                         if redis_client:
                             client_name = redis_client
                             client = sheets_find_client(client_name)
+                    # Also try by client_name from token if still no client
+                    if not client and client_name:
+                        client = sheets_find_client(client_name)
                     if client_name:
                         projects = sheets_get_projects(client_name)
                         events = sheets_get_events(client_name)
