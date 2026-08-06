@@ -1918,7 +1918,7 @@ def _finish_qualification(chat_id, data):
     })
 
     lead = (
-        f"{T['done_lead'].format(level=LABELS.get(level, 'Бизнес'))}\n\n"
+        f"{T['done_lead'].format(level=service if service else LABELS.get(level, 'Бизнес'))}\n\n"
         f"ФИО: {name}\n"
         f"Телефон: {phone}\n"
         f"Telegram: {telegram or '—'}\n"
@@ -1929,7 +1929,7 @@ def _finish_qualification(chat_id, data):
         f"Цель: {goal}\n"
         f"Сайт: {site}\n"
         f"Услуга: {task_for_contract}\n\n"
-        f"Цена: {PRICES.get(level, '29 000')} ₽\n"
+        f"Цена: {svc_price if service else PRICES.get(level, '29 000')} ₽\n"
         f"{date_str} · {time_str} МСК"
     )
     lead_kb = [[{"text": "Договор клиента", "url": url}]]
@@ -2025,8 +2025,6 @@ def _finish_qualification(chat_id, data):
             price=PRICES.get(level, ""),
             deadline=deadline_dt.strftime("%d.%m.%Y"),
             remaining=PRICES.get(level, ""),
-            service=service,
-            service_price=svc_price,
         )
 
     if sheets_event:
@@ -2034,7 +2032,7 @@ def _finish_qualification(chat_id, data):
             project=task,
             client=data.get("name", ""),
             type="Заявка",
-            description=f"Новая заявка — {LABELS.get(level, 'Бизнес')}",
+            description=f"Новая заявка — {service if service else LABELS.get(level, 'Бизнес')}",
             importance="Высокая",
         )
 
