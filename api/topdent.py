@@ -725,33 +725,32 @@ class handler(BaseHTTPRequestHandler):
                             # Use service_price from Redis for modules
                             redis_price = cdata.get("service_price", "")
                             display_price = redis_price if redis_price else proj.get('price', '')
+                            # Calculate remaining properly
+                            price_str = str(display_price or "0").replace(" ", "").replace("\xa0", "").replace("₽", "")
+                            paid_str = str(proj.get("paid", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                            try:
+                                price_num = int(price_str) if price_str else 0
+                            except ValueError:
+                                price_num = 0
+                            try:
+                                paid_num = int(paid_str) if paid_str else 0
+                            except ValueError:
+                                paid_num = 0
+                            remaining_num = max(0, price_num - paid_num)
+                            # Format with spaces: 35 000 ₽
+                            price_fmt = f"{price_num:,} ₽".replace(",", " ")
+                            remaining_fmt = f"{remaining_num:,} ₽".replace(",", " ")
+                            paid_fmt = f"{paid_num:,} ₽".replace(",", " ")
                             data.update({
                                 "client_name": client_name,
                                 "project_name": proj.get("name", "Проект"),
                                 "package": pkg,
                                 "stage": display_stage,
                                 "progress": proj.get("progress", 0),
-                                "price": f"{display_price} ₽" if display_price else data.get("price", "—"),
-                                "paid": f"{proj.get('paid', '0')} ₽" if proj.get("paid") and proj.get("paid") != "0" else "0 ₽",
+                                "price": price_fmt,
+                                "paid": paid_fmt,
+                                "remaining": remaining_fmt,
                             })
-                        # Calculate remaining properly
-                        price_str = str(display_price or "0").replace(" ", "").replace("\xa0", "").replace("₽", "")
-                        paid_str = str(proj.get("paid", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
-                        try:
-                            price_num = int(price_str) if price_str else 0
-                        except ValueError:
-                            price_num = 0
-                        try:
-                            paid_num = int(paid_str) if paid_str else 0
-                        except ValueError:
-                            paid_num = 0
-                        remaining_num = max(0, price_num - paid_num)
-                        if remaining_num > 0:
-                            data["remaining"] = f"{remaining_num} ₽"
-                        else:
-                            data["remaining"] = f"{price_num} ₽" if price_num > 0 else "0 ₽"
-                        if "paid" not in data or data["paid"] == "0 ₽":
-                            data["paid"] = "0 ₽"
                         if events:
                             data["updates"] = [{"text": e['description'], "date": e["date"]} for e in reversed(events)]
                         if payments:

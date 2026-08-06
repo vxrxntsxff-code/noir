@@ -125,7 +125,7 @@ T = {
         "Исправляем? → /start"
     ),
 
-    "svc_prefix": "Услуга: {name}\nОриентир: {price}\n\nОпишите задачу кратко:",
+    "svc_prefix": "Услуга: {name}\nЦена: {price}\n\nОпишите задачу кратко:",
     "budget_prefix": (
         "УРОВЕНЬ · {level}\n\n"
         "Цена: {price} ₽\n"
@@ -751,30 +751,41 @@ def _do_admin_callback(chat_id, data, parts):
         for proj in projects:
             if str(proj.get("row", 0)) == rid:
                 stage_label = STAGE_LABELS.get(proj.get("stage",""), proj.get("stage","—"))
-                # Get price from Redis for modules
                 client_name_proj = proj.get("client", "")
-                price_val = proj.get("price", "")
-                if not price_val:
+                price_val = str(proj.get("price", "")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                if not price_val or price_val == "0":
                     contract_raw = _redis("GET", f"noir:contract_data:{client_name_proj}")
                     if contract_raw:
                         try:
                             cdata = json.loads(contract_raw)
                             sp = cdata.get("service_price", "")
                             if sp:
-                                price_val = f"{int(sp):,} ₽".replace(",", " ")
+                                price_val = str(int(sp))
                         except Exception:
                             pass
-                paid_val = proj.get("paid", "0").replace(" ", "").replace("\xa0", "").replace("₽", "")
-                remaining_val = proj.get("remaining", "—")
+                try:
+                    price_fmt = f"{int(price_val):,} ₽".replace(",", " ") if price_val and price_val != "0" else "—"
+                except ValueError:
+                    price_fmt = "—"
+                paid_val = str(proj.get("paid", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                try:
+                    paid_fmt = f"{int(paid_val):,} ₽".replace(",", " ")
+                except ValueError:
+                    paid_fmt = "0 ₽"
+                remaining_raw = str(proj.get("remaining", "")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                try:
+                    remaining_fmt = f"{int(remaining_raw):,} ₽".replace(",", " ") if remaining_raw and remaining_raw != "0" else "—"
+                except ValueError:
+                    remaining_fmt = "—"
                 text = (
                     f"{proj.get('name','—')}\n"
                     f"Клиент: {proj.get('client','—')}\n"
                     f"Пакет: {proj.get('package','—')}\n"
                     f"Этап: {stage_label}\n"
                     f"Прогресс: {proj.get('progress','0')}%\n"
-                    f"Цена: {price_val if price_val else '—'} ₽\n"
-                    f"Оплачено: {paid_val} ₽\n"
-                    f"Остаток: {remaining_val} ₽"
+                    f"Цена: {price_fmt}\n"
+                    f"Оплачено: {paid_fmt}\n"
+                    f"Остаток: {remaining_fmt}"
                 )
                 send(chat_id, text, reply_markup=kb_admin_project(rid))
                 return
@@ -787,28 +798,40 @@ def show_project(chat_id, rid):
         if str(proj.get("row", 0)) == rid:
             stage_label = STAGE_LABELS.get(proj.get("stage",""), proj.get("stage","—"))
             client_name_proj = proj.get("client", "")
-            price_val = proj.get("price", "")
-            if not price_val:
+            price_val = str(proj.get("price", "")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+            if not price_val or price_val == "0":
                 contract_raw = _redis("GET", f"noir:contract_data:{client_name_proj}")
                 if contract_raw:
                     try:
                         cdata = json.loads(contract_raw)
                         sp = cdata.get("service_price", "")
                         if sp:
-                            price_val = f"{int(sp):,} ₽".replace(",", " ")
+                            price_val = str(int(sp))
                     except Exception:
                         pass
-            paid_val = proj.get("paid", "0").replace(" ", "").replace("\xa0", "").replace("₽", "")
-            remaining_val = proj.get("remaining", "—")
+            try:
+                price_fmt = f"{int(price_val):,} ₽".replace(",", " ") if price_val and price_val != "0" else "—"
+            except ValueError:
+                price_fmt = "—"
+            paid_val = str(proj.get("paid", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+            try:
+                paid_fmt = f"{int(paid_val):,} ₽".replace(",", " ")
+            except ValueError:
+                paid_fmt = "0 ₽"
+            remaining_raw = str(proj.get("remaining", "")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+            try:
+                remaining_fmt = f"{int(remaining_raw):,} ₽".replace(",", " ") if remaining_raw and remaining_raw != "0" else "—"
+            except ValueError:
+                remaining_fmt = "—"
             text = (
                 f"{proj.get('name','—')}\n"
                 f"Клиент: {proj.get('client','—')}\n"
                 f"Пакет: {proj.get('package','—')}\n"
                 f"Этап: {stage_label}\n"
                 f"Прогресс: {proj.get('progress','0')}%\n"
-                f"Цена: {price_val if price_val else '—'} ₽\n"
-                f"Оплачено: {paid_val} ₽\n"
-                f"Остаток: {remaining_val} ₽"
+                f"Цена: {price_fmt}\n"
+                f"Оплачено: {paid_fmt}\n"
+                f"Остаток: {remaining_fmt}"
             )
             send(chat_id, text, reply_markup=kb_admin_project(rid))
             return True
@@ -2088,7 +2111,7 @@ def _finish_qualification(chat_id, data):
     task = service if service else f"Пакет «{LABELS.get(level, 'Бизнес')}»"
 
     if sheets_lead:
-        budget_str = PRICES.get(level, "")
+        budget_str = f"{int(svc_price):,} ₽".replace(",", " ") if service else PRICES.get(level, "")
         log.info("sheets_lead data: name=%s phone=%s tg=%s email=%s city=%s niche=%s budget=%s",
                  data.get("name",""), data.get("phone",""), data.get("telegram",""),
                  data.get("email",""), data.get("city",""), data.get("niche",""), budget_str)
@@ -2102,7 +2125,8 @@ def _finish_qualification(chat_id, data):
 
     if sheets_project:
         deadline_days = {"Старт": 21, "Бизнес": 30, "Премиум": 30}
-        deadline_dt = now_kem() + timedelta(days=deadline_days.get(level, 30))
+        deadline_d = 21 if service else deadline_days.get(level, 30)
+        deadline_dt = now_kem() + timedelta(days=deadline_d)
         mod_price_formatted = f"{int(svc_price):,} ₽".replace(",", " ") if svc_price and svc_price != "0" else ""
         sheets_project(
             client=data.get("name", ""),
