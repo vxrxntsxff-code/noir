@@ -1935,7 +1935,7 @@ def _finish_qualification(chat_id, data):
     lead_kb = [[{"text": "Договор клиента", "url": url}]]
     lead_kb += kb_lead(data)
 
-    # Store contract data for dashboard
+    # Store contract data + static URL for dashboard
     contract_data = {
         "num": num,
         "date": date_str,
@@ -1954,6 +1954,29 @@ def _finish_qualification(chat_id, data):
     _redis("SET", f"noir:contract_data:{name}",
            json.dumps(contract_data, ensure_ascii=False),
            "EX", "2592000")
+    # Store static contract + invoice query strings (immutable after creation)
+    import urllib.parse as _up
+    contract_qs = _up.urlencode({
+        "name": name,
+        "phone": phone,
+        "task": task_for_contract,
+        "price": price_for_contract,
+        "date": date_str,
+        "num": num,
+        "tg": data.get("telegram", ""),
+        "email": data.get("email", ""),
+        "city": data.get("city", ""),
+        "support": "1 месяц" if service else support_months,
+    })
+    _redis("SET", f"noir:contract_qs:{name}", contract_qs, "EX", "2592000")
+    invoice_qs = _up.urlencode({
+        "name": name,
+        "project": task_for_contract,
+        "price": price_for_contract,
+        "num": num,
+        "date": date_str,
+    })
+    _redis("SET", f"noir:invoice_qs:{name}", invoice_qs, "EX", "2592000")
 
     # Create order for payment — save with chat_id as key for pay:confirm fallback
     order_id = create_order_id(data)

@@ -715,17 +715,20 @@ class handler(BaseHTTPRequestHandler):
                                 "Разработка": "Разработка", "Интеграции": "Интеграции", "Запуск": "Запуск",
                                 "Новый": "Бриф", "В работе": "Разработка",
                             }.get(raw_stage, raw_stage)
+                            # Use service_price from Redis for modules
+                            redis_price = cdata.get("service_price", "")
+                            display_price = redis_price if redis_price else proj.get('price', '')
                             data.update({
                                 "client_name": client_name,
                                 "project_name": proj.get("name", data.get("project_name", "Проект")),
                                 "package": pkg,
                                 "stage": display_stage,
                                 "progress": proj.get("progress", data.get("progress", 0)),
-                                "price": f"{proj.get('price', '')} ₽" if proj.get("price") else data.get("price", "—"),
+                                "price": f"{display_price} ₽" if display_price else data.get("price", "—"),
                                 "paid": f"{proj.get('paid', '0')} ₽" if proj.get("paid") and proj.get("paid") != "0" else "0 ₽",
                             })
                         # Calculate remaining properly
-                        price_str = str(proj.get("price", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
+                        price_str = str(display_price or "0").replace(" ", "").replace("\xa0", "").replace("₽", "")
                         paid_str = str(proj.get("paid", "0")).replace(" ", "").replace("\xa0", "").replace("₽", "")
                         try:
                             price_num = int(price_str) if price_str else 0
@@ -776,27 +779,26 @@ class handler(BaseHTTPRequestHandler):
                         support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                         support_val = support_map.get(pkg, "1 мес")
                         if pkg or service:
-                            contract_qs = _up.urlencode({
-                                "name": client_name,
-                                "phone": client.get('phone','') if client else '',
-                                "task": service if service else proj.get('name',''),
-                                "price": display_price,
-                                "date": invoice_date,
-                                "num": invoice_num,
-                                "tg": client.get('telegram','') if client else '',
-                                "email": client.get('email','') if client else '',
-                                "city": client.get('city','') if client else '',
-                                "support": "1 мес" if service else support_val,
-                            })
+                            # Use static contract/invoice URLs from Redis (immutable after bot creates lead)
+                            static_contract_qs = _redis("GET", f"noir:contract_qs:{client_name}")
+                            static_invoice_qs = _redis("GET", f"noir:invoice_qs:{client_name}")
+                            if static_contract_qs:
+                                contract_url = f"/dogovor.html?{static_contract_qs}"
+                            else:
+                                contract_url = f"/dogovor.html?{_up.urlencode({'name': client_name, 'phone': client.get('phone','') if client else '', 'task': service if service else proj.get('name',''), 'price': display_price, 'date': invoice_date, 'num': invoice_num, 'tg': client.get('telegram','') if client else '', 'email': client.get('email','') if client else '', 'city': client.get('city','') if client else '', 'support': '1 мес' if service else support_val})}"
+                            if static_invoice_qs:
+                                invoice_url = f"/invoice?{static_invoice_qs}"
+                            else:
+                                invoice_url = f"/invoice?name={client_name}&project={proj.get('name','')}&price={display_price}&num={invoice_num}&date={invoice_date}"
                             proposal_code = _secrets.token_urlsafe(8)[:8]
                             _redis("SET", f"noir:proposal:{proposal_code}", json.dumps({
                                 "name": client_name, "package": pkg_en,
                                 "price": display_price,
                             }, ensure_ascii=False), "EX", 2592000)
                             data["docs"] = [
-                                {"name": "Договор", "url": f"/dogovor.html?{contract_qs}"},
+                                {"name": "Договор", "url": contract_url},
                                 {"name": "Коммерческое предложение", "url": f"/proposal?c={proposal_code}"},
-                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={display_price}&num={invoice_num}&date={invoice_date}"},
+                                {"name": "Счёт на оплату", "url": invoice_url},
                             ]
                         _redis("SET", f"noir:dash:{token}",
                                json.dumps(data), "EX", 2592000)
@@ -903,6 +905,16 @@ class handler(BaseHTTPRequestHandler):
                 support_val = support_map.get(pkg, "1 мес")
                 client_name = client["name"] or login
                 price_val = proj.get("price", "")
+                # Use service_price from Redis for modules
+                contract_raw_post = _redis("GET", f"noir:contract_data:{client_name}")
+                cdata_post = {}
+                if contract_raw_post:
+                    try:
+                        cdata_post = json.loads(contract_raw_post)
+                    except Exception:
+                        pass
+                redis_price_post = cdata_post.get("service_price", "")
+                display_price_post = redis_price_post if redis_price_post else price_val
 
                 dashboard_data = {
                     "client_name": client_name,
@@ -910,7 +922,7 @@ class handler(BaseHTTPRequestHandler):
                     "package": pkg,
                     "stage": stage,
                     "progress": proj.get("progress", 0),
-                    "price": f"{price_val} ₽" if price_val else "—",
+                    "price": f"{display_price_post} ₽" if display_price_post else "—",
                     "paid": f"{proj.get('paid', '0')} ₽",
                     "remaining": proj.get("remaining", "—"),
                     "docs": [] if not pkg else [],
@@ -918,18 +930,11 @@ class handler(BaseHTTPRequestHandler):
                     "updates": [{"text": e['description'], "date": e["date"]} for e in reversed(events)] if events else [{"text": "Вы вошли в кабинет", "date": "Сейчас"}],
                 }
 
-                if pkg or service:
-                    contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
-                    cdata = {}
-                    if contract_raw:
-                        try:
-                            cdata = json.loads(contract_raw)
-                        except Exception:
-                            pass
-                    invoice_num = cdata.get("num", "")
-                    invoice_date = cdata.get("date", "")
-                    service_c = cdata.get("service", "")
-                    service_price_c = cdata.get("service_price", "")
+                if pkg or cdata_post.get("service", ""):
+                    invoice_num = cdata_post.get("num", "")
+                    invoice_date = cdata_post.get("date", "")
+                    service_c = cdata_post.get("service", "")
+                    service_price_c = cdata_post.get("service_price", "")
                     if not invoice_num:
                         invoice_num = now_kem().strftime("%Y-%m-") + str(random.randint(100, 999))
                     if not invoice_date:
@@ -943,27 +948,26 @@ class handler(BaseHTTPRequestHandler):
                         pkg_en = mod_map_reverse.get(service_c, "start")
                     else:
                         pkg_en = pkg_map.get(pkg, pkg.lower()) if pkg else "start"
+                    # Use static URLs from Redis (immutable after bot creates lead)
+                    static_contract_qs = _redis("GET", f"noir:contract_qs:{client_name}")
+                    static_invoice_qs = _redis("GET", f"noir:invoice_qs:{client_name}")
                     import urllib.parse as _up
-                    contract_qs = _up.urlencode({
-                        "name": client_name,
-                        "phone": client.get('phone','') if client else '',
-                        "task": service_c if service_c else proj.get('name',''),
-                        "price": display_price,
-                        "date": invoice_date,
-                        "num": invoice_num,
-                        "tg": client.get('telegram','') if client else '',
-                        "email": client.get('email','') if client else '',
-                        "city": client.get('city','') if client else '',
-                        "support": "1 мес" if service_c else support_val,
-                    })
+                    if static_contract_qs:
+                        contract_url = f"/dogovor.html?{static_contract_qs}"
+                    else:
+                        contract_url = f"/dogovor.html?{_up.urlencode({'name': client_name, 'phone': client.get('phone','') if client else '', 'task': service_c if service_c else proj.get('name',''), 'price': display_price, 'date': invoice_date, 'num': invoice_num, 'tg': client.get('telegram','') if client else '', 'email': client.get('email','') if client else '', 'city': client.get('city','') if client else '', 'support': '1 мес' if service_c else support_val})}"
+                    if static_invoice_qs:
+                        invoice_url = f"/invoice?{static_invoice_qs}"
+                    else:
+                        invoice_url = f"/invoice?project={proj.get('name','')}&price={display_price}&name={client_name}&num={invoice_num}&date={invoice_date}"
                     proposal_code = secrets.token_urlsafe(8)[:8]
                     _redis("SET", f"noir:proposal:{proposal_code}", json.dumps({
                         "name": client_name, "package": pkg_en, "price": display_price,
                     }, ensure_ascii=False), "EX", 2592000)
                     dashboard_data["docs"] = [
-                        {"name": "Договор", "url": f"/dogovor.html?{contract_qs}"},
+                        {"name": "Договор", "url": contract_url},
                         {"name": "Коммерческое предложение", "url": f"/proposal?c={proposal_code}"},
-                        {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={display_price}&name={client_name}&num={invoice_num}&date={invoice_date}"},
+                        {"name": "Счёт на оплату", "url": invoice_url},
                     ]
 
                 token = secrets.token_urlsafe(16)
