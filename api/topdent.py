@@ -1,4 +1,4 @@
-import os, sys, json, urllib.request, urllib.parse, logging, traceback
+import os, sys, json, urllib.request, urllib.parse, logging, traceback, random
 from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler
 
@@ -745,10 +745,29 @@ class handler(BaseHTTPRequestHandler):
                         support_map = {"Старт": "1 мес", "Бизнес": "2 мес", "Премиум": "3 мес"}
                         support_val = support_map.get(pkg, "1 мес")
                         if pkg:
+                            dt_now = now_kem()
+                            contract_num = dt_now.strftime("%y%m%d-") + str(random.randint(1000, 9999))
+                            contract_date = dt_now.strftime('%d.%m.%Y')
+                            import secrets as _secrets
+                            contract_code = _secrets.token_urlsafe(8)[:8]
+                            _redis("SET", f"noir:contract:{contract_code}", json.dumps({
+                                "name": client_name, "phone": client.get('phone','') if client else '',
+                                "task": proj.get('name',''), "price": proj.get('price',''),
+                                "date": contract_date, "num": contract_num,
+                                "tg": client.get('telegram','') if client else '',
+                                "email": client.get('email','') if client else '',
+                                "city": client.get('city','') if client else '',
+                                "support": support_val, "package": pkg,
+                            }, ensure_ascii=False), "EX", 2592000)
+                            proposal_code = _secrets.token_urlsafe(8)[:8]
+                            _redis("SET", f"noir:proposal:{proposal_code}", json.dumps({
+                                "name": client_name, "package": pkg_en,
+                                "price": proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000',
+                            }, ensure_ascii=False), "EX", 2592000)
                             data["docs"] = [
-                                {"name": "Договор", "url": f"/dogovor?name={client_name}&phone={client.get('phone','') if client else ''}&task={proj.get('name','')}&price={proj.get('price','')}&date={datetime.now(KEM).strftime('%d.%m.%Y')}&tg={client.get('telegram','') if client else ''}&email={client.get('email','') if client else ''}&city={client.get('city','') if client else ''}&support={support_val}&payment=stages"},
-                                {"name": "Коммерческое предложение", "url": f"/proposal?name={client_name}&package={pkg_en}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
-                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}"},
+                                {"name": "Договор", "url": f"/dogovor?c={contract_code}"},
+                                {"name": "Коммерческое предложение", "url": f"/proposal?c={proposal_code}"},
+                                {"name": "Счёт на оплату", "url": f"/invoice?name={client_name}&project={proj.get('name','')}&price={proj.get('price','').replace(' ','').replace('₽','') if proj.get('price') else '29000'}&num={contract_num}&date={contract_date}"},
                             ]
                         _redis("SET", f"noir:dash:{token}",
                                json.dumps(data), "EX", 2592000)
@@ -855,6 +874,16 @@ class handler(BaseHTTPRequestHandler):
                 client_name = client["name"] or login
                 price_val = proj.get("price", "")
 
+                import secrets as _secrets
+                contract_num = now_kem().strftime("%y%m%d-") + str(random.randint(1000, 9999))
+                contract_code = _secrets.token_urlsafe(8)[:8]
+                _redis("SET", f"noir:contract:{contract_code}", json.dumps({
+                    "name": client_name, "phone": client.get('phone',''),
+                    "task": proj.get('name',''), "price": price_val,
+                    "date": now_kem().strftime('%d.%m.%Y'), "num": contract_num,
+                    "tg": client.get('telegram',''), "email": client.get('email',''),
+                    "city": client.get('city',''), "support": support_val, "package": pkg,
+                }, ensure_ascii=False), "EX", 2592000)
                 dashboard_data = {
                     "client_name": client_name,
                     "project_name": proj.get("name", "Проект"),
@@ -864,8 +893,8 @@ class handler(BaseHTTPRequestHandler):
                     "price": f"{price_val} ₽" if price_val else "—",
                     "paid": f"{proj.get('paid', '0')} ₽",
                     "remaining": proj.get("remaining", "—"),
-                    "docs": [{"name": "Договор", "url": f"/dogovor?project={proj.get('name','')}&package={pkg}&price={price_val}&name={client_name}&phone={client.get('phone','')}&tg={client.get('telegram','')}&email={client.get('email','')}&city={client.get('city','')}&support={support_val}&payment=stages"},
-                             {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={price_val}&name={client_name}"}] if pkg else [],
+                    "docs": [{"name": "Договор", "url": f"/dogovor?c={contract_code}"},
+                             {"name": "Счёт на оплату", "url": f"/invoice?project={proj.get('name','')}&price={price_val}&name={client_name}&num={contract_num}&date={now_kem().strftime('%d.%m.%Y')}"}] if pkg else [],
                     "payments": [{"date": p["date"], "amount": f"{p['amount']} ₽", "method": p["type"]} for p in payments] if payments else [],
                     "updates": [{"text": f"[{e['type']}] {e['description']}", "date": e["date"]} for e in reversed(events)] if events else [{"text": "Вы вошли в кабинет", "date": "Сейчас"}],
                 }

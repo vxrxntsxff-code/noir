@@ -158,8 +158,11 @@
 
     function fillForm(data) {
       const name = data.name || params.get('name') || 'Клиент';
-      const pkg = data.package || params.get('package') || 'start';
+      let pkg = data.package || params.get('package') || 'start';
       const price = data.price || params.get('price') || '29000';
+
+      const pkgMap = {'Старт': 'start', 'Бизнес': 'business', 'Премиум': 'premium'};
+      pkg = pkgMap[pkg] || pkg;
 
       const p = packages[pkg] || packages.start;
       document.getElementById('client-name').textContent = 'Для: ' + name;

@@ -370,7 +370,7 @@ def kb_after_demo():
 
 def kb_lead(user_data):
     buttons = []
-    tg = user_data.get("Telegram") or user_data.get("telegram") or ""
+    tg = user_data.get("Telegram") or user_data.get("telegram") or user_data.get("telegram") or ""
     if tg and not tg.isdigit():
         buttons.append([{"text": "Написать в TG",
                          "url": f"https://t.me/{tg.lstrip('@')}"}])
@@ -755,18 +755,26 @@ def _do_admin_actions(chat_id, data, parts):
     if chat_id != OWNER_ID:
         return
     if data.startswith("admin:set_stage:"):
+        rid = parts[2]
+        label = parts[3] if len(parts) > 3 else ""
+        stage_label = STAGE_LABELS.get(label, label)
         if sheets_update_project:
             ok = sheets_update_project_by_row(rid, "stage", label)
-            send(chat_id, f"Этап → {label}" if ok else "Ошибка")
+            send(chat_id, f"Этап → {stage_label}" if ok else "Ошибка")
             if ok:
                 show_project(chat_id, rid)
         else:
-            send(chat_id, f"Этап → {label} (Sheets не подключены)")
+            send(chat_id, f"Этап → {stage_label} (Sheets не подключены)")
 
     elif data.startswith("admin:edit_progress:"):
         rid = parts[2]
         state_set(chat_id, {"admin_action": "edit_progress", "project_id": rid})
         send(chat_id, "Прогресс (0-100):", reply_markup=kb_cancel())
+
+    elif data.startswith("admin:edit_name:"):
+        rid = parts[2]
+        state_set(chat_id, {"admin_action": "edit_name", "project_id": rid})
+        send(chat_id, "Новое название:", reply_markup=kb_cancel())
 
     elif data.startswith("admin:edit_price:"):
         rid = parts[2]
@@ -1108,6 +1116,8 @@ def score(data):
         return "premium"
     if site == "redesign":
         return "business"
+    if site == "no" and goal in ("leads", "time"):
+        return "start"
     return "business"
 
 
@@ -1159,12 +1169,18 @@ def _handle_text(chat_id, text, st, username=""):
         if admin_action == "edit_name" and sheets_update_project_by_row:
             ok = sheets_update_project_by_row(rid, "name", text)
             send(chat_id, f"Название → {text}" if ok else "Ошибка")
+            if ok:
+                show_project(chat_id, rid)
         elif admin_action == "edit_progress" and sheets_update_project_by_row:
             ok = sheets_update_project_by_row(rid, "progress", text)
             send(chat_id, f"Прогресс → {text}%" if ok else "Ошибка")
+            if ok:
+                show_project(chat_id, rid)
         elif admin_action == "edit_price" and sheets_update_project_by_row:
             ok = sheets_update_project_by_row(rid, "price", text)
             send(chat_id, f"Цена → {text} ₽" if ok else "Ошибка")
+            if ok:
+                show_project(chat_id, rid)
         elif admin_action == "add_update" and sheets_add_update:
             ok = sheets_add_update(client_name or rid, text)
             send(chat_id, "Обновление добавлено" if ok else "Ошибка")
@@ -1817,7 +1833,7 @@ def _finish_qualification(chat_id, data):
     dt = now_kem()
     date_str = dt.strftime("%d.%m.%Y")
     time_str = dt.strftime("%H:%M")
-    num = dt.strftime("%Y%m%d%H%M%S")
+    num = dt.strftime("%y%m%d-") + str(random.randint(1000, 9999))
 
     support_map = {"start": "1 месяц", "business": "2 месяца", "premium": "3 месяца"}
     support_months = support_map.get(level, "1 месяц")

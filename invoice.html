@@ -86,10 +86,10 @@
   document.getElementById('item-price').textContent = formatted;
   document.getElementById('total-price').textContent = formatted;
   document.getElementById('service-name').textContent = pkg ? `Разработка сайта · «${pkg}»` : project;
-  document.getElementById('invoice-date').textContent = new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'});
+   document.getElementById('invoice-date').textContent = p.get('date') || new Date().toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'});
 
-  const num = p.get('num') || String(Math.floor(Math.random() * 900000) + 100000);
-  document.getElementById('invoice-num').textContent = num;
+   const num = p.get('num') || String(Math.floor(Math.random() * 900000) + 100000);
+   document.getElementById('invoice-num').textContent = num;
 
   const advance = Math.floor(parseInt(cleanPrice || '0') / 2);
   const advanceFormatted = advance > 0 ? advance.toLocaleString('ru-RU') + ' ₽' : '—';
