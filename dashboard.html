@@ -167,7 +167,12 @@
 
   <script>
     const params = new URLSearchParams(location.search);
-    const token = params.get('token') || params.get('t');
+    const urlToken = params.get('token') || params.get('t');
+    // Persist token in localStorage for refresh survival
+    if (urlToken) {
+      localStorage.setItem('noir_token', urlToken);
+    }
+    const token = urlToken || localStorage.getItem('noir_token');
 
     const STAGES = [
       {key:'brief', label:'Бриф'},
