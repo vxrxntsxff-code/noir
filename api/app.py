@@ -518,7 +518,7 @@ def payment_url(order_id, amount=None, name=None):
 def create_order_id(data):
     """Generate a unique order ID from client data."""
     import random as _r
-    date_str = now_kem().strftime("%Y%m%d")
+    date_str = now_kem().strftime("%d.%m.%Y")
     rand = _r.randint(100, 999)
     name_part = (data.get("name") or "client").replace(" ", "").lower()[:4]
     return f"NOIR-{date_str}-{name_part}-{rand}"
