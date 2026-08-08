@@ -263,7 +263,8 @@ def kb_goal():
 def kb_site():
     return kb_inline([
         [{"text": "Нет", "callback_data": "site:no"},
-         {"text": "Есть, но не работает", "callback_data": "site:bad"}],
+         {"text": "Есть", "callback_data": "site:exists"}],
+        [{"text": "Есть, но не работает", "callback_data": "site:bad"}],
         [{"text": "Есть, нужен редизайн", "callback_data": "site:redesign"}],
     ])
 
@@ -1222,6 +1223,8 @@ def score(data):
     if goal == "all":
         return "premium"
     if site == "redesign":
+        return "business"
+    if site == "exists":
         return "business"
     if site == "no" and goal in ("leads", "time"):
         return "start"
