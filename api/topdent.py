@@ -690,18 +690,22 @@ class handler(BaseHTTPRequestHandler):
                     username_d = cached.get("username", "")
                     chat_id_d = cached.get("chat_id", "")
                     client = None
-                    if username_d:
-                        client = sheets_find_client(username_d)
-                    if client and not client_name:
-                        client_name = client["name"]
-                    if not client and client_name:
+                    # Try multiple lookup methods
+                    if client_name:
                         client = sheets_find_client(client_name)
-                    # Fallback: try Redis mapping (chat_id → client_name)
-                    if not client_name and chat_id_d:
+                    if not client and username_d:
+                        client = sheets_find_client(username_d)
+                        if client:
+                            client_name = client["name"]
+                    if not client and chat_id_d:
                         redis_client = _redis("GET", f"noir:client_name:{chat_id_d}")
                         if redis_client:
                             client_name = redis_client
                             client = sheets_find_client(client_name)
+                    if not client and not client_name and chat_id_d:
+                        client = sheets_find_client(str(chat_id_d))
+                        if client:
+                            client_name = client["name"]
                     if client_name:
                         projects = sheets_get_projects(client_name)
                         events = sheets_get_events(client_name)
