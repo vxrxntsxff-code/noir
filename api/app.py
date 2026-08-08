@@ -857,6 +857,7 @@ def _do_admin_actions(chat_id, data, parts):
                 show_project(chat_id, rid)
         else:
             send(chat_id, f"Этап → {stage_label} (Sheets не подключены)")
+        # ponytail: stage stored as Russian label for dashboard display
 
     elif data.startswith("admin:edit_progress:"):
         rid = parts[2]
