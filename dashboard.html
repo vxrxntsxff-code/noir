@@ -215,51 +215,53 @@
       document.getElementById('payment-paid').textContent = data.paid && data.paid != '0' ? data.paid : '—';
       document.getElementById('payment-remaining').textContent = data.remaining || '—';
 
-      const timeline = document.getElementById('timeline');
-      timeline.innerHTML = '';
-      const stageToKey = {
-        'Бриф': 'brief', 'Исследование': 'research', 'Дизайн': 'design',
-        'Разработка': 'development', 'Интеграции': 'integrations', 'Запуск': 'launch',
-      };
-      const currentStage = stageToKey[data.stage] || data.stage || 'brief';
-      let reached = false;
-      STAGES.forEach(s => {
-        const li = document.createElement('li');
-        let dotClass = 'dot-pending';
-        if (!reached && s.key !== currentStage) dotClass = 'dot-done';
-        if (s.key === currentStage) { dotClass = 'dot-current'; reached = true; }
-        li.innerHTML = `<span class="dot ${dotClass}"></span><span class="label">${s.label}</span>`;
-        timeline.appendChild(li);
-      });
+       // Helper: escape HTML to prevent XSS
+       function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
-      const docs = document.getElementById('docs');
-      docs.innerHTML = '';
-      (data.docs || []).forEach(d => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${d.name}</span><a class="doc-link" href="${d.url}" target="_blank">Открыть</a>`;
-        docs.appendChild(li);
-      });
-      // ponytail: proposal link is always included in data.docs from API
+       const timeline = document.getElementById('timeline');
+       timeline.innerHTML = '';
+       const stageToKey = {
+         'Бриф': 'brief', 'Исследование': 'research', 'Дизайн': 'design',
+         'Разработка': 'development', 'Интеграции': 'integrations', 'Запуск': 'launch',
+       };
+       const currentStage = stageToKey[data.stage] || data.stage || 'brief';
+       let reached = false;
+       STAGES.forEach(s => {
+         const li = document.createElement('li');
+         let dotClass = 'dot-pending';
+         if (!reached && s.key !== currentStage) dotClass = 'dot-done';
+         if (s.key === currentStage) { dotClass = 'dot-current'; reached = true; }
+         li.innerHTML = `<span class="dot ${dotClass}"></span><span class="label">${esc(s.label)}</span>`;
+         timeline.appendChild(li);
+       });
 
-      const payments = document.getElementById('payments');
-      payments.innerHTML = '';
-      (data.payments || []).forEach(p => {
-        const row = document.createElement('div');
-        row.className = 'payment-row';
-        row.innerHTML = `<span>${p.date}<br><span style="color:var(--muted);font-size:12px">${p.method}</span></span><span class="payment-amount">${p.amount}</span>`;
-        payments.appendChild(row);
-      });
-      if (!data.payments || !data.payments.length) payments.innerHTML = '<div class="empty">Оплат пока нет</div>';
+       const docs = document.getElementById('docs');
+       docs.innerHTML = '';
+       (data.docs || []).forEach(d => {
+         const li = document.createElement('li');
+         li.innerHTML = `<span>${esc(d.name)}</span><a class="doc-link" href="${esc(d.url)}" target="_blank">Открыть</a>`;
+         docs.appendChild(li);
+       });
 
-      const updates = document.getElementById('updates');
-      updates.innerHTML = '';
-      (data.updates || []).forEach(u => {
-        const row = document.createElement('div');
-        row.style.cssText = 'padding:12px 0;border-bottom:1px solid var(--border);font-size:14px';
-        row.innerHTML = `<div>${u.text}</div><div style="color:var(--muted);font-size:12px;margin-top:4px">${u.date}</div>`;
-        updates.appendChild(row);
-      });
-      if (!data.updates || !data.updates.length) updates.innerHTML = '<div class="empty">Обновлений пока нет</div>';
+       const payments = document.getElementById('payments');
+       payments.innerHTML = '';
+       (data.payments || []).forEach(p => {
+         const row = document.createElement('div');
+         row.className = 'payment-row';
+         row.innerHTML = `<span>${esc(p.date)}<br><span style="color:var(--muted);font-size:12px">${esc(p.method)}</span></span><span class="payment-amount">${esc(p.amount)}</span>`;
+         payments.appendChild(row);
+       });
+       if (!data.payments || !data.payments.length) payments.innerHTML = '<div class="empty">Оплат пока нет</div>';
+
+       const updates = document.getElementById('updates');
+       updates.innerHTML = '';
+       (data.updates || []).forEach(u => {
+         const row = document.createElement('div');
+         row.style.cssText = 'padding:12px 0;border-bottom:1px solid var(--border);font-size:14px';
+         row.innerHTML = `<div>${esc(u.text)}</div><div style="color:var(--muted);font-size:12px;margin-top:4px">${esc(u.date)}</div>`;
+         updates.appendChild(row);
+       });
+       if (!data.updates || !data.updates.length) updates.innerHTML = '<div class="empty">Обновлений пока нет</div>';
     }
 
     if (token) {
