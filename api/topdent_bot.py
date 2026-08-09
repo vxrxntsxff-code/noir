@@ -354,7 +354,7 @@ class handler(BaseHTTPRequestHandler):
                     handle_start(chat_id)
                 else:
                     handle_text(chat_id, text)
-            self._send(200, "ok")
+            self._send(200, json.dumps({"ok": True, "handler": "topdent_bot_v37"}))
         except Exception as e:
             log.error("handler error: %s", e)
             self._send(500, json.dumps({"error": "Internal error"}))
