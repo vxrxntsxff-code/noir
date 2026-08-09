@@ -97,11 +97,36 @@ def _now():
     return datetime.now(KEM).strftime("%d.%m.%Y %H:%M")
 
 
+def _get_sheets():
+    """Get list of sheets in the spreadsheet."""
+    result = _sheets_api("GET", "")
+    if result:
+        return [s.get("properties", {}).get("title", "") for s in result.get("sheets", [])]
+    return []
+
+
 def topdent_booking(name, phone, doctor, service, date, time_str):
     """Add a booking row to TopDent spreadsheet."""
-    log.info("topdent_bookING CALLED: name=%s phone=%s doctor=%s service=%s date=%s time=%s",
+    log.info("topdent_booking CALLED: name=%s phone=%s doctor=%s service=%s date=%s time=%s",
              name, phone, doctor, service, date, time_str)
     log.info("topdent_booking SPREADSHEET_ID=%s SA_JSON_SET=%s", SPREADSHEET_ID, bool(SA_JSON))
+
+    # Find the right sheet - try common names
+    sheets = _get_sheets()
+    log.info("topdent_booking available sheets: %s", sheets)
+
+    sheet_name = None
+    for candidate in ["Bookings", "Бронирования", "Записи", "Sheet1", "Лист1"]:
+        if candidate in sheets:
+            sheet_name = candidate
+            break
+    if not sheet_name and sheets:
+        sheet_name = sheets[0]  # Use first sheet
+    if not sheet_name:
+        sheet_name = "Sheet1"  # Fallback
+
+    log.info("topdent_booking using sheet: %s", sheet_name)
+
     values = [
         _now(),
         name,
@@ -114,11 +139,11 @@ def topdent_booking(name, phone, doctor, service, date, time_str):
     ]
     result = _sheets_api(
         "POST",
-        "/values/Bookings!A:H:append?valueInputOption=USER_ENTERED",
+        f"/values/{sheet_name}!A:H:append?valueInputOption=USER_ENTERED",
         {"values": [values]}
     )
     if result:
-        log.info("topdent_booking OK: %s %s", name, phone)
+        log.info("topdent_booking OK: %s %s -> sheet '%s'", name, phone, sheet_name)
     else:
-        log.error("topdent_booking FAIL: %s %s (check if sheet 'Bookings' exists and SA has access)", name, phone)
+        log.error("topdent_booking FAIL: %s %s (sheet '%s', check SA access)", name, phone, sheet_name)
     return result is not None
