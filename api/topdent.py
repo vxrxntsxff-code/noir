@@ -1008,7 +1008,7 @@ class handler(BaseHTTPRequestHandler):
 
             msg = body.get("message") or body.get("callback_query")
             if not msg:
-                self._send(200, "ok")
+                self._send(200, json.dumps({"ok": True, "handler": "topdent_orig"}))
                 return
 
             if "callback_query" in body:
@@ -1016,7 +1016,7 @@ class handler(BaseHTTPRequestHandler):
                 chat_id = cb["message"]["chat"]["id"]
                 chat_type = cb["message"]["chat"].get("type", "private")
                 if chat_type != "private":
-                    self._send(200, "ok")
+                    self._send(200, json.dumps({"ok": True, "handler": "topdent_orig"}))
                     return
                 tg("answerCallbackQuery", {"callback_query_id": cb["id"]})
                 handle_callback(chat_id, cb["data"], cb["message"]["message_id"])
@@ -1024,7 +1024,7 @@ class handler(BaseHTTPRequestHandler):
                 chat_id = msg["chat"]["id"]
                 chat_type = msg["chat"].get("type", "private")
                 if chat_type != "private":
-                    self._send(200, "ok")
+                    self._send(200, json.dumps({"ok": True, "handler": "topdent_orig"}))
                     return
                 text = msg.get("text", "")
                 if text == "/start" or text == "/menu":
@@ -1032,7 +1032,7 @@ class handler(BaseHTTPRequestHandler):
                 else:
                     handle_text(chat_id, text)
 
-            self._send(200, "ok")
+            self._send(200, json.dumps({"ok": True, "handler": "topdent_orig"}))
         except Exception as e:
             log.error("handler error: %s\n%s", e, traceback.format_exc())
             self._send(500, json.dumps({"error": "Internal error"}))
