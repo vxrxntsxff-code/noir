@@ -490,12 +490,13 @@ def handle_callback(chat_id, data, msg_id=0):
             if OWNER_TG:
                 tg("sendMessage", {"chat_id": OWNER_TG, "text": lead})
 
-            if sheets_booking:
-                sheets_booking(
-                    name=appt['name'], phone=appt['phone'],
-                    doctor=appt['doctor'], service=appt['spec'],
-                    date=appt['date'], time=appt['time'],
-                )
+            # ponytail: disabled - bookings now go to TopDent table via topdent_bot.py
+            # if sheets_booking:
+            #     sheets_booking(
+            #         name=appt['name'], phone=appt['phone'],
+            #         doctor=appt['doctor'], service=appt['spec'],
+            #         date=appt['date'], time=appt['time'],
+            #     )
             state_del(chat_id)
 
             # Treatment recommendations
