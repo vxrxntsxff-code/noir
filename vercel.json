@@ -56,7 +56,7 @@
     },
     {
       "source": "/api/topdent",
-      "destination": "/api/topdent.py"
+      "destination": "/api/topdent_bot.py"
     },
     {
       "source": "/api/dashboard",
