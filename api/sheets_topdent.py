@@ -99,6 +99,9 @@ def _now():
 
 def topdent_booking(name, phone, doctor, service, date, time_str):
     """Add a booking row to TopDent spreadsheet."""
+    log.info("topdent_bookING CALLED: name=%s phone=%s doctor=%s service=%s date=%s time=%s",
+             name, phone, doctor, service, date, time_str)
+    log.info("topdent_booking SPREADSHEET_ID=%s SA_JSON_SET=%s", SPREADSHEET_ID, bool(SA_JSON))
     values = [
         _now(),
         name,
@@ -117,5 +120,5 @@ def topdent_booking(name, phone, doctor, service, date, time_str):
     if result:
         log.info("topdent_booking OK: %s %s", name, phone)
     else:
-        log.error("topdent_booking FAIL: %s %s", name, phone)
+        log.error("topdent_booking FAIL: %s %s (check if sheet 'Bookings' exists and SA has access)", name, phone)
     return result is not None
