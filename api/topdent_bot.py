@@ -5,6 +5,11 @@ from http.server import BaseHTTPRequestHandler
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+try:
+    from sheets_topdent import topdent_booking
+except ImportError:
+    topdent_booking = None
+
 log = logging.getLogger("topdent_bot")
 log.setLevel(logging.INFO)
 if not log.handlers:
@@ -240,6 +245,18 @@ def handle_callback(chat_id, data, msg_id=0):
         st = state_get(chat_id)
         if st.get("step") != "confirm":
             return
+        # Save booking to TopDent spreadsheet
+        if topdent_booking:
+            spec_name = dict(SPECS).get(st.get("spec",""), st.get("spec",""))
+            doctor_name = st.get("doctor",{}).get("name","") if isinstance(st.get("doctor"), dict) else ""
+            topdent_booking(
+                name=st.get("name",""),
+                phone=st.get("phone",""),
+                doctor=doctor_name,
+                service=spec_name,
+                date=st.get("date",""),
+                time_str=st.get("time",""),
+            )
         send(chat_id, "Запись подтверждена!\n\nМы ждём вас!", kb_welcome())
         state_del(chat_id)
     elif data == "bk:cancel":
