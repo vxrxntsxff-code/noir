@@ -143,9 +143,10 @@ def topdent_booking(name, phone, doctor, service, date, time_str):
         time_str,
         "Новый",
     ]
+    encoded_name = urllib.parse.quote(sheet_name)
     result = _sheets_api(
         "POST",
-        f"/values/{sheet_name}!A:H:append?valueInputOption=USER_ENTERED",
+        f"/values/{encoded_name}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",
         {"values": [values]}
     )
     if result:
