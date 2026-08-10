@@ -111,6 +111,10 @@ def topdent_booking(name, phone, doctor, service, date, time_str):
              name, phone, doctor, service, date, time_str)
     log.info("topdent_booking SPREADSHEET_ID=%s SA_JSON_SET=%s", SPREADSHEET_ID, bool(SA_JSON))
 
+    if not SA_JSON:
+        log.error("topdent_booking FAIL: GOOGLE_SA_JSON not configured")
+        return False
+
     # Find the right sheet - try common names
     sheets = _get_sheets()
     log.info("topdent_booking available sheets: %s", sheets)
@@ -121,9 +125,9 @@ def topdent_booking(name, phone, doctor, service, date, time_str):
             sheet_name = candidate
             break
     if not sheet_name and sheets:
-        sheet_name = sheets[0]  # Use first sheet
+        sheet_name = sheets[0]
     if not sheet_name:
-        sheet_name = "Sheet1"  # Fallback
+        sheet_name = "Sheet1"
 
     log.info("topdent_booking using sheet: %s", sheet_name)
 
@@ -145,5 +149,5 @@ def topdent_booking(name, phone, doctor, service, date, time_str):
     if result:
         log.info("topdent_booking OK: %s %s -> sheet '%s'", name, phone, sheet_name)
     else:
-        log.error("topdent_booking FAIL: %s %s (sheet '%s', check SA access)", name, phone, sheet_name)
+        log.error("topdent_booking FAIL: %s %s (sheet '%s')", name, phone, sheet_name)
     return result is not None
