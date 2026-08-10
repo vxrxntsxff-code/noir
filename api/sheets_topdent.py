@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 
 log = logging.getLogger("sheets_topdent")
 
-SA_JSON = os.environ.get("GOOGLE_SA_JSON", "")
+SA_JSON = os.environ.get("TOPDENT_GOOGLE_SA_JSON") or os.environ.get("GOOGLE_SA_JSON", "")
 SPREADSHEET_ID = os.environ.get("TOPDENT_SHEET_ID", "15pUGJTy5HQDhXGhXxy5N3_S3Jm0U4TFRcj3pNKP75wE")
 
 KEM = timezone(timedelta(hours=7))
@@ -120,14 +120,14 @@ def topdent_booking(name, phone, doctor, service, date, time_str):
     log.info("topdent_booking available sheets: %s", sheets)
 
     sheet_name = None
-    for candidate in ["Bookings", "Бронирования", "Записи", "Sheet1", "Лист1"]:
+    for candidate in ["Лист1", "Sheet1", "Bookings", "Записи"]:
         if candidate in sheets:
             sheet_name = candidate
             break
     if not sheet_name and sheets:
         sheet_name = sheets[0]
     if not sheet_name:
-        sheet_name = "Sheet1"
+        sheet_name = "Лист1"
 
     log.info("topdent_booking using sheet: %s", sheet_name)
 
