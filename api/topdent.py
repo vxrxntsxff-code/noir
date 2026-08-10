@@ -520,9 +520,10 @@ def handle_callback(chat_id, data, msg_id=0):
             if OWNER_TG:
                 tg("sendMessage", {"chat_id": OWNER_TG, "text": lead})
 
-            # Write to TopDent sheet (demo: every confirmed booking goes here)
+            # Write to TopDent sheet
             try:
-                _td_row = [now_kem().strftime("%d.%m.%Y %H:%M"), appt.get('name',''), appt.get('phone',''), appt.get('spec',''), appt.get('doctor',''), appt.get('date',''), appt.get('time',''), "Новый"]
+                _now = now_kem()
+                _td_row = [_now.strftime("%d.%m.%Y"), _now.strftime("%H:%M"), appt.get('name',''), appt.get('phone',''), appt.get('spec',''), appt.get('doctor',''), appt.get('date',''), appt.get('time',''), "Новый"]
                 _td_token = _sheets_token()
                 if _td_token:
                     _td_url = f"https://sheets.googleapis.com/v4/spreadsheets/{os.environ.get('TOPDENT_SHEET_ID','15pUGJTy5HQDhXGhXxy5N3_S3Jm0U4TFRcj3pNKP75wE')}/values/{urllib.parse.quote('Лист1')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS"
