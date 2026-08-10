@@ -490,13 +490,16 @@ def handle_callback(chat_id, data, msg_id=0):
             if OWNER_TG:
                 tg("sendMessage", {"chat_id": OWNER_TG, "text": lead})
 
-            # ponytail: disabled - bookings now go to TopDent table via topdent_bot.py
-            # if sheets_booking:
-            #     sheets_booking(
-            #         name=appt['name'], phone=appt['phone'],
-            #         doctor=appt['doctor'], service=appt['spec'],
-            #         date=appt['date'], time=appt['time'],
-            #     )
+            # Write to TopDent table instead of NOIR
+            try:
+                from sheets_topdent import topdent_booking
+                topdent_booking(
+                    name=appt['name'], phone=appt['phone'],
+                    doctor=appt['doctor'], service=appt['spec'],
+                    date=appt['date'], time=appt['time'],
+                )
+            except Exception as e:
+                log.error("topdent_booking failed: %s", e)
             state_del(chat_id)
 
             # Treatment recommendations
