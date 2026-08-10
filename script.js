@@ -209,3 +209,113 @@ if (form) {
   // финальная страховка: через 2.5с раскрыть всё, что в экране
   setTimeout(revealInView, 2500);
 })();
+/* ═══════════════════════════════════════════
+   ORIGIN KIT АНИМАЦИИ — JS
+═══════════════════════════════════════════ */
+
+(function() {
+  'use strict';
+
+  /* 1. Text Reveal — оборачиваем слова в spans и показываем */
+  function initTextReveal() {
+    const elements = document.querySelectorAll('.text-reveal');
+    elements.forEach(el => {
+      const text = el.textContent;
+      el.innerHTML = text.split(' ').map(word => 
+        `<span style="display:inline-block;opacity:0;transform:translateY(110%);transition:transform 0.8s cubic-bezier(0.16,1,0.3,1),opacity 0.6s ease">${word}</span>`
+      ).join(' ');
+      setTimeout(() => {
+        el.querySelectorAll('span').forEach((span, i) => {
+          setTimeout(() => {
+            span.style.opacity = '1';
+            span.style.transform = 'none';
+          }, i * 80);
+        });
+      }, 300);
+    });
+  }
+
+  /* 2. Magnetic Button — кнопка следует за курсором */
+  function initMagneticButtons() {
+    const buttons = document.querySelectorAll('.magnetic-btn, .btn-primary, .btn-ghost');
+    buttons.forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px) scale(1.02)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = '';
+      });
+    });
+  }
+
+  /* 3. Smooth Parallax — фоновые элементы двигаются медленнее */
+  function initParallax() {
+    const elements = document.querySelectorAll('.parallax-slow');
+    if (!elements.length) return;
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrolled = window.scrollY;
+          elements.forEach(el => {
+            const speed = 0.3;
+            el.style.transform = `translateY(${scrolled * speed}px)`;
+          });
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  }
+
+  /* 4. Line Draw, Fade In Up, Stagger Children — появление при скролле */
+  function initScrollAnimations() {
+    const targets = document.querySelectorAll('.line-draw, .fade-in-up, .stagger-children');
+    if (!('IntersectionObserver' in window)) {
+      targets.forEach(el => el.classList.add('revealed'));
+      return;
+    }
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          en.target.classList.add('revealed');
+          observer.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.2 });
+    targets.forEach(el => observer.observe(el));
+  }
+
+  /* 5. Glow Pulse — добавляем класс к карточкам пакетов */
+  function initGlowPulse() {
+    document.querySelectorAll('.package-card.featured').forEach(el => {
+      el.classList.add('glow-pulse');
+    });
+  }
+
+  /* 6. Float — добавляем к декоративным элементам */
+  function initFloat() {
+    document.querySelectorAll('.board').forEach(el => {
+      el.classList.add('float');
+    });
+  }
+
+  /* Инициализация при загрузке */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  function init() {
+    initTextReveal();
+    initMagneticButtons();
+    initParallax();
+    initScrollAnimations();
+    initGlowPulse();
+    initFloat();
+  }
+})();

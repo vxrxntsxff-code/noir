@@ -785,3 +785,112 @@ main, #footer { position: relative; z-index: 1; }
   .marquee-track { animation: none !important; }
   .dot-live { animation: none !important; }
 }
+
+/* ═══════════════════════════════════════════
+   ORIGIN KIT АНИМАЦИИ
+═══════════════════════════════════════════ */
+
+/* 1. Text Reveal — плавное появление текста */
+.text-reveal {
+  overflow: hidden;
+}
+.text-reveal > span {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(110%);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+}
+.text-reveal.revealed > span {
+  opacity: 1;
+  transform: none;
+}
+
+/* 2. Gradient Shift — живой градиента на фоне */
+.gradient-shift {
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 3. Magnetic Button — магнитный эффект */
+.magnetic-btn {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.magnetic-btn:hover {
+  transform: scale(1.05);
+}
+
+/* 4. Smooth Parallax — параллакс при скролле */
+.parallax-slow {
+  transition: transform 0.1s linear;
+}
+
+/* 5. Counter Animation — плавный счётчик (уже есть, улучшаем) */
+[data-count] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 6. Line Draw — рисующаяся линия */
+.line-draw {
+  position: relative;
+  overflow: hidden;
+}
+.line-draw::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.line-draw.revealed::after {
+  width: 100%;
+}
+
+/* 7. Fade In Up — появление снизу вверх */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fade-in-up.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* 8. Stagger Children — последовательное появление детей */
+.stagger-children > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stagger-children.revealed > *:nth-child(1) { transition-delay: 0.05s; opacity: 1; transform: none; }
+.stagger-children.revealed > *:nth-child(2) { transition-delay: 0.1s; opacity: 1; transform: none; }
+.stagger-children.revealed > *:nth-child(3) { transition-delay: 0.15s; opacity: 1; transform: none; }
+.stagger-children.revealed > *:nth-child(4) { transition-delay: 0.2s; opacity: 1; transform: none; }
+.stagger-children.revealed > *:nth-child(5) { transition-delay: 0.25s; opacity: 1; transform: none; }
+.stagger-children.revealed > *:nth-child(6) { transition-delay: 0.3s; opacity: 1; transform: none; }
+
+/* 9. Glow Pulse — пульсирующее свечение */
+.glow-pulse {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(201, 169, 110, 0.1); }
+  50% { box-shadow: 0 0 40px rgba(201, 169, 110, 0.25); }
+}
+
+/* 10. Float — лёгкое парение */
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}

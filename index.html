@@ -177,22 +177,22 @@
 <main>
 
   <!-- ГЛАВНЫЙ ЭКРАН -->
-  <section id="hero">
+   <section id="hero" class="gradient-shift">
     <div class="container hero-grid">
       <div class="hero-copy">
         <div class="hero-tag" data-reveal>
           <span class="dot dot-live"></span>NOIR OS · Кемерово · работаем по всей России
         </div>
-        <h1 class="hero-title" data-reveal style="--d:.08s">
+        <h1 class="hero-title text-reveal" data-reveal style="--d:.08s">
           Операционная система <span class="accent">для вашего бизнеса</span>
         </h1>
-        <p class="hero-sub" data-reveal style="--d:.16s">
+        <p class="hero-sub fade-in-up" style="--d:.16s">
           Не «сайт + бот». А модульная система: трафик → заявка → CRM → продажа → аналитика.
           Каждый модуль работает сам. Вместе — работают на вас.
         </p>
-        <div class="hero-actions" data-reveal style="--d:.24s">
-          <a class="btn btn-primary" href="#services">Выбрать модули</a>
-          <a class="btn btn-ghost" href="#cases">Смотреть работы</a>
+        <div class="hero-actions fade-in-up" style="--d:.24s">
+          <a class="btn btn-primary magnetic-btn" href="#services">Выбрать модули</a>
+          <a class="btn btn-ghost magnetic-btn" href="#cases">Смотреть работы</a>
         </div>
         <div class="hero-stats" data-reveal style="--d:.32s">
           <div class="stat">
@@ -210,7 +210,7 @@
         </div>
       </div>
 
-      <aside class="board" data-reveal style="--d:.2s" aria-label="Статус NOIR">
+       <aside class="board parallax-slow" data-reveal style="--d:.2s" aria-label="Статус NOIR">
         <div class="board-head">
           <span class="board-label"><span class="dot dot-live"></span>На связи</span>
           <span class="board-id">NOIR · статус</span>
@@ -245,10 +245,10 @@
   <section id="problems">
     <div class="container split">
       <div class="split-left">
-        <div class="section-tag" data-reveal>Знакомо?</div>
-        <h2 class="section-title" data-reveal>Бизнес работает<br>вручную</h2>
-        <p class="section-lead" data-reveal>Без системы каждый рост — это боль. Новые клиенты = больше хаоса, а не денег.</p>
-        <a class="link-arrow" href="#services">Смотрите решение <span>→</span></a>
+        <div class="section-tag fade-in-up">Знакомо?</div>
+        <h2 class="section-title fade-in-up">Бизнес работает<br>вручную</h2>
+        <p class="section-lead fade-in-up">Без системы каждый рост — это боль. Новые клиенты = больше хаоса, а не денег.</p>
+        <a class="link-arrow fade-in-up" href="#services">Смотрите решение <span>→</span></a>
       </div>
       <div class="pain-list">
         <div class="pain" data-reveal>
@@ -276,13 +276,13 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="section-tag" data-reveal>Модули NOIR OS</div>
-          <h2 class="section-title" data-reveal>Каждый модуль —<br>часть системы</h2>
+          <div class="section-tag fade-in-up">Модули NOIR OS</div>
+          <h2 class="section-title fade-in-up">Каждый модуль —<br>часть системы</h2>
         </div>
-        <p class="section-lead" data-reveal>Соберите только то, что нужно. Добавляйте модули по мере роста.</p>
+        <p class="section-lead fade-in-up">Соберите только то, что нужно. Добавляйте модули по мере роста.</p>
       </div>
 
-      <div class="packages-grid">
+      <div class="packages-grid stagger-children">
         <div class="package-card" data-reveal>
           <div class="package-top">
             <h3 class="package-name">Старт</h3>
@@ -354,8 +354,8 @@
         <p>Любой модуль можно подключить отдельно — но в системе он работает эффективнее. Мы строим экосистему, а не точечные решения.</p>
       </div>
 
-       <div class="services-list">
-         <a class="service-row" href="#contact" data-reveal data-service="site">
+       <div class="services-list stagger-children">
+         <a class="service-row line-draw" href="#contact" data-reveal data-service="site">
            <span class="service-num">01</span>
            <span class="service-body">
              <span class="service-title">Модуль «Сайт»</span>
@@ -364,7 +364,7 @@
            <span class="service-meta"><span class="service-term">2-3 недели</span><span class="service-price">35 000 ₽</span></span>
            <span class="service-arrow" aria-hidden="true">→</span>
          </a>
-         <a class="service-row" href="#contact" data-reveal data-service="bot" style="--d:.06s">
+         <a class="service-row line-draw" href="#contact" data-reveal data-service="bot" style="--d:.06s">
            <span class="service-num">02</span>
            <span class="service-body">
              <span class="service-title">Модуль «Бот»</span>
@@ -373,7 +373,7 @@
            <span class="service-meta"><span class="service-term">1-2 недели</span><span class="service-price">20 000 ₽</span></span>
            <span class="service-arrow" aria-hidden="true">→</span>
          </a>
-         <a class="service-row" href="#contact" data-reveal data-service="crm" style="--d:.12s">
+         <a class="service-row line-draw" href="#contact" data-reveal data-service="crm" style="--d:.12s">
            <span class="service-num">03</span>
            <span class="service-body">
              <span class="service-title">Модуль «CRM»</span>
@@ -382,7 +382,7 @@
            <span class="service-meta"><span class="service-term">от 2 недель</span><span class="service-price">45 000 ₽</span></span>
            <span class="service-arrow" aria-hidden="true">→</span>
          </a>
-         <a class="service-row" href="#contact" data-reveal data-service="ai" style="--d:.18s">
+         <a class="service-row line-draw" href="#contact" data-reveal data-service="ai" style="--d:.18s">
            <span class="service-num">04</span>
            <span class="service-body">
              <span class="service-title">Модуль «AI»</span>
@@ -391,7 +391,7 @@
            <span class="service-meta"><span class="service-term">от 3 недель</span><span class="service-price">60 000 ₽</span></span>
            <span class="service-arrow" aria-hidden="true">→</span>
          </a>
-         <a class="service-row" href="#contact" data-reveal data-service="payment" style="--d:.24s">
+         <a class="service-row line-draw" href="#contact" data-reveal data-service="payment" style="--d:.24s">
            <span class="service-num">05</span>
            <span class="service-body">
              <span class="service-title">Модуль «Оплата»</span>
@@ -411,16 +411,16 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="section-tag" data-reveal>Портфолио</div>
-          <h2 class="section-title" data-reveal>Не обещаем —<br>показываем</h2>
+          <div class="section-tag fade-in-up">Портфолио</div>
+          <h2 class="section-title fade-in-up">Не обещаем —<br>показываем</h2>
         </div>
         <div class="section-head-right" data-reveal>
           <p class="section-lead">Каждый проект ниже — рабочий. Откройте и потрогайте сами.</p>
-          <a class="link-arrow" href="cases">Все кейсы <span>→</span></a>
+          <a class="link-arrow fade-in-up" href="cases">Все кейсы <span>→</span></a>
         </div>
       </div>
 
-      <div class="cases-grid">
+      <div class="cases-grid stagger-children">
         <article class="case-card featured" data-reveal>
           <div class="case-info">
             <div class="case-meta"><span class="case-cat">NOIR OS · собственный проект</span><span class="case-year">2026 · живьём</span></div>
@@ -473,10 +473,10 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="section-tag" data-reveal>Результат</div>
-         <h2 class="section-title" data-reveal>Что меняется<br>после запуска NOIR OS</h2>
+          <div class="section-tag fade-in-up">Результат</div>
+         <h2 class="section-title fade-in-up">Что меняется<br>после запуска NOIR OS</h2>
         </div>
-        <p class="section-lead" data-reveal>Не «красивый сайт», а другая механика бизнеса.</p>
+        <p class="section-lead fade-in-up">Не «красивый сайт», а другая механика бизнеса.</p>
       </div>
 
       <div class="ba-board" data-reveal>
@@ -514,12 +514,12 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="section-tag" data-reveal>Процесс</div>
-          <h2 class="section-title" data-reveal>Как запускаем NOIR OS</h2>
+          <div class="section-tag fade-in-up">Процесс</div>
+          <h2 class="section-title fade-in-up">Как запускаем NOIR OS</h2>
         </div>
-        <p class="section-lead" data-reveal>Без сюрпризов: вы видите систему на каждом этапе и знаете, что будет дальше.</p>
+        <p class="section-lead fade-in-up">Без сюрпризов: вы видите систему на каждом этапе и знаете, что будет дальше.</p>
       </div>
-      <div class="process-grid">
+      <div class="process-grid stagger-children">
         <div class="process-step" data-reveal>
           <div class="ghost" aria-hidden="true">01</div>
           <h3>Аудит</h3>
@@ -549,12 +549,12 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="section-tag" data-reveal>Гарантии</div>
-          <h2 class="section-title" data-reveal>Почему доверяют NOIR</h2>
+          <div class="section-tag fade-in-up">Гарантии</div>
+          <h2 class="section-title fade-in-up">Почему доверяют NOIR</h2>
         </div>
-        <p class="section-lead" data-reveal>Не слова, а условия, которые можно проверить до оплаты.</p>
+        <p class="section-lead fade-in-up">Не слова, а условия, которые можно проверить до оплаты.</p>
       </div>
-      <div class="trust-grid">
+      <div class="trust-grid stagger-children">
         <div class="trust-item" data-reveal>
           <span class="trust-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></span>
           <h3>Договор и фикс-цена</h3>
@@ -584,10 +584,10 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="section-tag" data-reveal>Вопросы</div>
-          <h2 class="section-title" data-reveal>Спрашивают до вас</h2>
+          <div class="section-tag fade-in-up">Вопросы</div>
+          <h2 class="section-title fade-in-up">Спрашивают до вас</h2>
         </div>
-        <p class="section-lead" data-reveal>Коротко о цене, сроках и документах. Остальное — на консультации.</p>
+        <p class="section-lead fade-in-up">Коротко о цене, сроках и документах. Остальное — на консультации.</p>
       </div>
       <div class="faq-list">
         <div class="faq-item" data-reveal>
@@ -622,9 +622,9 @@
   <section id="contact">
     <div class="container contact-grid">
       <div class="contact-info">
-        <div class="section-tag" data-reveal>Контакты</div>
-        <h2 class="section-title" data-reveal>Запустите<br>NOIR OS</h2>
-        <p class="section-lead" data-reveal>Расскажите о задаче — ответим в течение 15 минут в рабочее время. Зададим 2–3 вопроса и назовём вилку цены и сроков. Бесплатно и ни к чему не обязывает.</p>
+        <div class="section-tag fade-in-up">Контакты</div>
+        <h2 class="section-title fade-in-up">Запустите<br>NOIR OS</h2>
+        <p class="section-lead fade-in-up">Расскажите о задаче — ответим в течение 15 минут в рабочее время. Зададим 2–3 вопроса и назовём вилку цены и сроков. Бесплатно и ни к чему не обязывает.</p>
         <div class="contact-methods">
           <a class="method" href="https://t.me/noir_os" target="_blank" rel="noopener" data-reveal>
             <span class="method-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>
