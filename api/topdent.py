@@ -525,7 +525,7 @@ def handle_callback(chat_id, data, msg_id=0):
                 _td_row = [now_kem().strftime("%d.%m.%Y %H:%M"), appt.get('name',''), appt.get('phone',''), appt.get('spec',''), appt.get('doctor',''), appt.get('date',''), appt.get('time',''), "Новый"]
                 _td_token = _sheets_token()
                 if _td_token:
-                    _td_url = f"https://sheets.googleapis.com/v4/spreadsheets/{os.environ.get('TOPDENT_SHEET_ID','15pUGJTy5HQDhXGhXxy5N3_S3Jm0U4TFRcj3pNKP75wE')}/values/{urllib.parse.quote('Лист1')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS"
+                    _td_url = f"https://sheets.googleapis.com/v4/spreadsheets/{os.environ.get('TOPDENT_SHEET_ID','15pUGJTy5HQDhXGhXxy5N3_S3Jm0U4TFRcj3pNKP75wE')}/values/{urllib.parse.quote('Лист1')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS"
                     _td_data = json.dumps({"values": [_td_row]}).encode()
                     _td_req = urllib.request.Request(_td_url, data=_td_data, method="POST")
                     _td_req.add_header("Authorization", f"Bearer {_td_token}")
