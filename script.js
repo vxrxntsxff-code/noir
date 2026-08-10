@@ -235,18 +235,37 @@ if (form) {
     });
   }
 
-  /* 2. Magnetic Button — кнопка следует за курсором */
+  /* 2. Magnetic Button — плавное следование за курсором */
   function initMagneticButtons() {
-    const buttons = document.querySelectorAll('.magnetic-btn, .btn-primary, .btn-ghost');
+    const buttons = document.querySelectorAll('.btn-primary, .btn-ghost');
     buttons.forEach(btn => {
+      let raf = null;
+      let targetX = 0, targetY = 0;
+      let currentX = 0, currentY = 0;
+
+      function animate() {
+        currentX += (targetX - currentX) * 0.12;
+        currentY += (targetY - currentY) * 0.12;
+        if (Math.abs(currentX - targetX) > 0.1 || Math.abs(currentY - targetY) > 0.1) {
+          btn.style.transform = `translate(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px)`;
+          raf = requestAnimationFrame(animate);
+        } else {
+          btn.style.transform = '';
+          raf = null;
+        }
+      }
+
       btn.addEventListener('mousemove', e => {
         const rect = btn.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-        btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px) scale(1.02)`;
+        targetX = ((e.clientX - rect.left) / rect.width - 0.5) * rect.width * 0.18;
+        targetY = ((e.clientY - rect.top) / rect.height - 0.5) * rect.height * 0.18;
+        if (!raf) raf = requestAnimationFrame(animate);
       });
+
       btn.addEventListener('mouseleave', () => {
-        btn.style.transform = '';
+        targetX = 0;
+        targetY = 0;
+        if (!raf) raf = requestAnimationFrame(animate);
       });
     });
   }
