@@ -492,14 +492,18 @@ def handle_callback(chat_id, data, msg_id=0):
 
             # Write to TopDent table instead of NOIR
             try:
-                from sheets_topdent import topdent_booking
-                topdent_booking(
-                    name=appt['name'], phone=appt['phone'],
-                    doctor=appt['doctor'], service=appt['spec'],
-                    date=appt['date'], time=appt['time'],
+                sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+                from sheets_topdent import topdent_booking as _td_book
+                _td_book(
+                    name=appt.get('name',''), phone=appt.get('phone',''),
+                    doctor=appt.get('doctor',''), service=appt.get('spec',''),
+                    date=appt.get('date',''), time_str=appt.get('time',''),
                 )
+                log.info("TOPDENT BOOKING SENT: %s %s", appt.get('name',''), appt.get('phone',''))
             except Exception as e:
-                log.error("topdent_booking failed: %s", e)
+                log.error("TOPDENT BOOKING ERROR: %s", e)
+                import traceback
+                log.error(traceback.format_exc())
             state_del(chat_id)
 
             # Treatment recommendations
