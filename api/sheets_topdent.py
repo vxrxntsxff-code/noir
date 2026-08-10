@@ -79,7 +79,9 @@ def _sheets_api(method, path, body=None):
     token = _get_token()
     if not token:
         return None
-    url = f"https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}{path}"
+    # Encode path to handle Cyrillic sheet names (e.g. "Лист1")
+    encoded_path = urllib.parse.quote(path, safe="/:!?")
+    url = f"https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}{encoded_path}"
     data = json.dumps(body).encode() if body else None
     req = urllib.request.Request(url, data=data, method=method)
     req.add_header("Authorization", f"Bearer {token}")
