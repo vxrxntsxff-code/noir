@@ -87,7 +87,7 @@
       <span class="fill fill-wide" contenteditable="true">Ленгардт Дмитрий Евгеньевич</span>
       ИНН: <span class="fill" contenteditable="true">420544798477</span><br>
       Адрес: <span class="fill fill-wide" contenteditable="true">г. Кемерово, пр-т Шахтеров 90</span>
-      Телефон: <span class="fill" contenteditable="true">+7 951 592-26-18</span><br>
+      Телефон: <span class="fill" contenteditable="true">+7 913 412-67-84</span><br>
        Email: <span class="fill" contenteditable="true">dimalengardt87@gmail.com</span>
        <div class="sign-line" style="position:relative;display:inline-block;width:200px"><img src="signature_transparent.png" alt="подпись" style="height:36px;position:absolute;bottom:0;left:0"></div>
        <div style="font-size:9pt;color:var(--muted);margin-top:4px">подпись / расшифровка</div>
@@ -107,9 +107,6 @@
 
 <script>
 (function () {
-  // Предзаполнение из параметров ссылки:
-  // dogovor.html?name=...&phone=...&task=...&price=...&date=...&num=...&tg=...&email=...&city...
-  // или dogovor.html?c=SHORTCODE для короткой ссылки
   const p = new URLSearchParams(window.location.search);
   const shortCode = p.get('c');
 
@@ -165,8 +162,6 @@
 })();
 </script>
 <script>
-/* Страховка от «белой страницы» в Safari при переходе по ссылке.
-   Форсит перерисовку, когда документ пришёл из навигации / кэша. */
 (function () {
   function repaint() {
     var d = document.documentElement;
@@ -175,7 +170,6 @@
   }
   window.addEventListener('pageshow', repaint);
   window.addEventListener('load', repaint);
-  /* если Safari всё же схлопнул слой — чиним по первому скроллу/движению */
   var once = function () { repaint(); window.removeEventListener('scroll', once); };
   window.addEventListener('scroll', once, { passive: true });
 })();
