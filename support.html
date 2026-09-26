@@ -4,15 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Техническая поддержка — NOIR</title>
+<meta name="description" content="Условия технической поддержки после запуска проекта. Сроки, объём работ, порядок обращения.">
 <meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://www.noiros.ru/support">
 <link rel="stylesheet" href="legal.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
 </head>
 <body>
 
 <div class="doc-toolbar">
-  <a class="doc-btn" href="index.html">← На сайт</a>
-  <button class="doc-btn doc-btn-primary" onclick="window.print()">Скачать PDF / распечатать</button>
+  <a class="doc-btn" href="/">← На сайт</a>
+  <button class="doc-btn doc-btn-primary" id="printBtn">Скачать PDF / распечатать</button>
 </div>
 <p class="doc-note">Документ описывает условия технической поддержки после запуска проекта.</p>
 
@@ -23,7 +25,7 @@
     <div class="doc-brand-meta">Цифровая студия<br>г. Кемерово</div>
   </div>
 
-  <div class="doc-title">Техническая поддержка</div>
+  <h1 class="doc-title">Техническая поддержка</h1>
   <div class="doc-subtitle">Условия и порядок оказания</div>
   <div class="doc-place">г. Кемерово &nbsp;·&nbsp; <span class="fill" id="supp-date" contenteditable="true">«» 2026 г.</span></div>
 
@@ -95,36 +97,6 @@
   </div>
 </div></div>
 
-<script>
-(function () {
-  const p = new URLSearchParams(window.location.search);
-  const map = {
-    'supp-project': p.get('project'),
-    'supp-duration': p.get('duration'),
-    'supp-date': p.get('date'),
-    'supp-client': p.get('name'),
-    'supp-phone': p.get('phone'),
-    'supp-tg': p.get('tg'),
-    'supp-email': p.get('email'),
-  };
-  for (const [id, val] of Object.entries(map)) {
-    const el = document.getElementById(id);
-    if (el && val) el.textContent = val;
-  }
-})();
-</script>
-<script>
-(function () {
-  function repaint() {
-    var d = document.documentElement;
-    d.style.opacity = '0.999';
-    requestAnimationFrame(function () { d.style.opacity = ''; });
-  }
-  window.addEventListener('pageshow', repaint);
-  window.addEventListener('load', repaint);
-  var once = function () { repaint(); window.removeEventListener('scroll', once); };
-  window.addEventListener('scroll', once, { passive: true });
-})();
-</script>
+<script src="/support.js"></script>
 </body>
 </html>

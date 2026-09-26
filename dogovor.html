@@ -4,15 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Договор оказания услуг — NOIR</title>
+<meta name="description" content="Договор оказания услуг по разработке цифровых систем. Условия, сроки, порядок оплаты.">
 <meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://www.noiros.ru/dogovor">
 <link rel="stylesheet" href="legal.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
 </head>
 <body>
 
 <div class="doc-toolbar">
-  <a class="doc-btn" href="index.html">← На сайт</a>
-  <button class="doc-btn doc-btn-primary" onclick="window.print()">Скачать PDF / распечатать</button>
+  <a class="doc-btn" href="/">← На сайт</a>
+  <button class="doc-btn doc-btn-primary" id="printBtn">Скачать PDF / распечатать</button>
 </div>
 <p class="doc-note">Поля заполняются автоматически из ссылки, которую пришлёт бот. Их также можно вписать вручную (кликните по полю). Пустые поля оставлены для подписей.</p>
 
@@ -23,7 +25,7 @@
     <div class="doc-brand-meta">Цифровая студия<br>г. Кемерово</div>
   </div>
 
-  <div class="doc-title">Договор возмездного оказания услуг</div>
+  <h1 class="doc-title">Договор возмездного оказания услуг</h1>
   <div class="doc-subtitle">№ <span class="fill" id="deal-num" contenteditable="true">001</span></div>
   <div class="doc-place">г. Кемерово &nbsp;·&nbsp; <span class="fill" id="deal-date" contenteditable="true">«» 2026 г.</span></div>
 
@@ -105,74 +107,6 @@
 
 </div></div>
 
-<script>
-(function () {
-  const p = new URLSearchParams(window.location.search);
-  const shortCode = p.get('c');
-
-  function fillForm(data) {
-    const map = {
-      'client-name': data.name || p.get('name'),
-      'client-name-2': data.name || p.get('name'),
-      'client-phone': data.phone || p.get('phone'),
-      'client-phone-2': data.phone || p.get('phone'),
-      'client-task': data.task || p.get('task'),
-      'deal-price': data.price || p.get('price'),
-      'deal-date': data.date || p.get('date'),
-      'deal-num': data.num || p.get('num'),
-      'client-tg': data.tg || p.get('tg'),
-      'client-email': data.email || p.get('email'),
-      'client-city': data.city || p.get('city'),
-      'support-duration': data.support || p.get('support'),
-    };
-    for (const [id, val] of Object.entries(map)) {
-      const el = document.getElementById(id);
-      if (el && val) el.textContent = val;
-    }
-
-    var taskEl = document.getElementById('client-task');
-    if (taskEl && !taskEl.textContent.trim()) {
-      var pkg = ((data.package || p.get('package')) || '').toLowerCase();
-      var tasks = {
-        'старт': 'Разработка лендинга, Telegram-бот и подключение CRM',
-        'бизнес': 'Разработка сайта, Telegram-бот, подключение CRM и AI-ассистента',
-        'премиум': 'Разработка сайта, Telegram-бот, CRM, AI-ассистент и подключение онлайн-оплаты',
-      };
-      var fallback = 'Разработка цифровых продуктов для бизнеса';
-      taskEl.textContent = tasks[pkg] || fallback;
-    }
-
-    var payment = data.payment || p.get('payment');
-    var paymentEl = document.getElementById('deal-payment');
-    if (paymentEl && payment === 'full') {
-      paymentEl.innerHTML = 'Порядок оплаты: 100% &mdash; предоплата до начала работ.';
-    } else if (paymentEl && payment === 'stages') {
-      paymentEl.innerHTML = 'Порядок оплаты по этапам: 50% &mdash; предоплата до начала работ, 50% &mdash; после сдачи результата.';
-    }
-  }
-
-  if (shortCode) {
-    fetch('/api/contract?c=' + encodeURIComponent(shortCode))
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) fillForm(data); })
-      .catch(() => {});
-  } else {
-    fillForm({});
-  }
-})();
-</script>
-<script>
-(function () {
-  function repaint() {
-    var d = document.documentElement;
-    d.style.opacity = '0.999';
-    requestAnimationFrame(function () { d.style.opacity = ''; });
-  }
-  window.addEventListener('pageshow', repaint);
-  window.addEventListener('load', repaint);
-  var once = function () { repaint(); window.removeEventListener('scroll', once); };
-  window.addEventListener('scroll', once, { passive: true });
-})();
-</script>
+<script src="/dogovor.js"></script>
 </body>
 </html>

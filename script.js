@@ -25,15 +25,18 @@
 
   /* ── Шапка при скролле ─────────────────── */
   const nav = document.getElementById('nav');
-  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 24);
-  onScroll();
-  window.addEventListener('scroll', onScroll, { passive: true });
+  if (nav) {
+    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
 
   /* ── Мобильное меню ────────────────────── */
   const burger = document.getElementById('burger');
   const menu = document.getElementById('mobileMenu');
 
   function closeMenu() {
+    if (!menu || !burger) return;
     menu.classList.remove('open');
     burger.classList.remove('open');
     burger.setAttribute('aria-expanded', 'false');
@@ -41,15 +44,17 @@
     document.body.classList.remove('locked');
   }
 
-  burger.addEventListener('click', () => {
-    const open = menu.classList.toggle('open');
-    burger.classList.toggle('open', open);
-    burger.setAttribute('aria-expanded', String(open));
-    burger.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
-    document.body.classList.toggle('locked', open);
-  });
+  if (burger && menu) {
+    burger.addEventListener('click', () => {
+      const open = menu.classList.toggle('open');
+      burger.classList.toggle('open', open);
+      burger.setAttribute('aria-expanded', String(open));
+      burger.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+      document.body.classList.toggle('locked', open);
+    });
 
-  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+  }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
   /* ── Появление блоков при скролле ──────── */
@@ -102,13 +107,15 @@
   /* ── Аккордеон вопросов ────────────────── */
   document.querySelectorAll('.faq-item').forEach(item => {
     const btn = item.querySelector('.faq-q');
+    if (!btn) return;
     btn.addEventListener('click', () => {
       const open = item.classList.toggle('open');
       btn.setAttribute('aria-expanded', String(open));
       document.querySelectorAll('.faq-item.open').forEach(other => {
         if (other !== item) {
           other.classList.remove('open');
-          other.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+          const ob = other.querySelector('.faq-q');
+          if (ob) ob.setAttribute('aria-expanded', 'false');
         }
       });
     });
@@ -322,6 +329,18 @@ if (form) {
     });
   }
 
+  /* 7. Месяц набора — после 20-го числа показываем следующий месяц */
+  function initEnrollMonth() {
+    const el = document.getElementById('enrollTitle');
+    if (!el) return;
+    const months = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+      'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+    const now = new Date();
+    let m = now.getMonth();
+    if (now.getDate() >= 20) m = (m + 1) % 12;
+    el.textContent = 'Открыт набор на ' + months[m];
+  }
+
   /* Инициализация при загрузке */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
@@ -336,5 +355,6 @@ if (form) {
     initScrollAnimations();
     initGlowPulse();
     initFloat();
+    initEnrollMonth();
   }
 })();

@@ -4,14 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Политика конфиденциальности — NOIR</title>
+<meta name="description" content="Политика конфиденциальности и обработки персональных данных цифровой студии NOIR. Права субъектов, цели обработки, безопасность данных.">
+<link rel="canonical" href="https://www.noiros.ru/privacy">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Политика конфиденциальности — NOIR">
+<meta property="og:description" content="Политика конфиденциальности и обработки персональных данных цифровой студии NOIR.">
+<meta property="og:url" content="https://www.noiros.ru/privacy">
+<meta property="og:site_name" content="NOIR OS">
+<meta property="og:image" content="https://www.noiros.ru/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Политика конфиденциальности — NOIR">
+<meta name="twitter:description" content="Политика конфиденциальности и обработки персональных данных цифровой студии NOIR.">
+<meta name="twitter:image" content="https://www.noiros.ru/logo.png">
+<meta name="robots" content="index, follow">
 <link rel="stylesheet" href="legal.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
 </head>
 <body>
 
 <div class="doc-toolbar">
-  <a class="doc-btn" href="index.html">← На сайт</a>
-  <button class="doc-btn doc-btn-primary" onclick="window.print()">Скачать PDF / распечатать</button>
+  <a class="doc-btn" href="/">← На сайт</a>
+  <button class="doc-btn doc-btn-primary" id="printBtn">Скачать PDF / распечатать</button>
 </div>
 
 <div class="doc"><div class="doc-sheet">
@@ -21,7 +35,7 @@
     <div class="doc-brand-meta">Цифровая студия<br>г. Кемерово</div>
   </div>
 
-  <div class="doc-title">Политика конфиденциальности</div>
+  <h1 class="doc-title">Политика конфиденциальности</h1>
   <div class="doc-subtitle">и обработки персональных данных</div>
   <div class="doc-place">г. Кемерово &nbsp;·&nbsp; редакция от <span class="fill">01.08.2026</span></div>
 
@@ -98,18 +112,6 @@
   </div>
 
 </div></div>
-<script>
-(function () {
-  function repaint() {
-    var d = document.documentElement;
-    d.style.opacity = '0.999';
-    requestAnimationFrame(function () { d.style.opacity = ''; });
-  }
-  window.addEventListener('pageshow', repaint);
-  window.addEventListener('load', repaint);
-  var once = function () { repaint(); window.removeEventListener('scroll', once); };
-  window.addEventListener('scroll', once, { passive: true });
-})();
-</script>
+<script src="/safari-fix.js"></script>
 </body>
 </html>

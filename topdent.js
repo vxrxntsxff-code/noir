@@ -78,11 +78,16 @@
   /* ── Аккордеон ── */
   document.querySelectorAll('.faq-item').forEach(item => {
     const btn = item.querySelector('.faq-q');
+    if (!btn) return;
     btn.addEventListener('click', () => {
       const open = item.classList.toggle('open');
       btn.setAttribute('aria-expanded', String(open));
       document.querySelectorAll('.faq-item.open').forEach(o => {
-        if (o !== item) { o.classList.remove('open'); o.querySelector('.faq-q').setAttribute('aria-expanded', 'false'); }
+        if (o !== item) {
+          o.classList.remove('open');
+          const ob = o.querySelector('.faq-q');
+          if (ob) ob.setAttribute('aria-expanded', 'false');
+        }
       });
     });
   });
@@ -90,7 +95,7 @@
   /* ── Плавающая запись: показать после скролла, скрыть у формы ── */
   const floatCta = document.getElementById('floatCta');
   const bookSection = document.getElementById('book');
-  if (floatCta && 'IntersectionObserver' in window) {
+  if (floatCta && bookSection && 'IntersectionObserver' in window) {
     let nearForm = false;
     const bio = new IntersectionObserver(entries => {
       entries.forEach(en => { nearForm = en.isIntersecting; });
@@ -100,6 +105,8 @@
       const show = window.scrollY > 640 && !nearForm;
       floatCta.classList.toggle('show', show);
     }, { passive: true });
+  } else if (floatCta) {
+    floatCta.classList.add('show');
   }
 
   /* ── Форма ── */

@@ -4,15 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Счёт на оплату — NOIR</title>
+<meta name="description" content="Счёт на оплату услуг по разработке цифровых систем. Реквизиты и порядок оплаты.">
 <meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://www.noiros.ru/invoice">
 <link rel="stylesheet" href="legal.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
 </head>
 <body>
 
 <div class="doc-toolbar">
-  <a class="doc-btn" href="index.html">← На сайт</a>
-  <button class="doc-btn doc-btn-primary" onclick="window.print()">Скачать PDF / распечатать</button>
+  <a class="doc-btn" href="/">← На сайт</a>
+  <button class="doc-btn doc-btn-primary" id="printBtn">Скачать PDF / распечатать</button>
 </div>
 
 <div class="doc"><div class="doc-sheet">
@@ -22,7 +24,7 @@
     <div class="doc-brand-meta">Цифровая студия<br>г. Кемерово</div>
   </div>
 
-  <div class="doc-title">Счёт на оплату</div>
+  <h1 class="doc-title">Счёт на оплату</h1>
   <div class="doc-subtitle">№ <span class="fill" id="invoice-num" contenteditable="true">001</span></div>
   <div class="doc-place">г. Кемерово &nbsp;·&nbsp; <span class="fill" id="invoice-date" contenteditable="true"></span></div>
 
@@ -80,30 +82,6 @@
   <div style="font-size:9pt;color:var(--muted);margin-top:4px">подпись / расшифровка</div>
 </div>
 
-<script>
-(function () {
-  const p = new URLSearchParams(window.location.search);
-  const price = p.get('price') || '0';
-  const name = p.get('name') || '';
-  const project = p.get('project') || 'Разработка сайта';
-  const pkg = p.get('package') || '';
-
-  const cleanPrice = price.replace(/[^\d]/g, '');
-  const formatted = cleanPrice ? parseInt(cleanPrice).toLocaleString('ru-RU') + ' ₽' : '—';
-
-  document.getElementById('item-price').textContent = formatted;
-  document.getElementById('total-price').textContent = formatted;
-  document.getElementById('service-name').textContent = pkg ? `Разработка сайта · «${pkg}»` : project;
-   document.getElementById('invoice-date').textContent = p.get('date') || new Date().toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'});
-
-   const num = p.get('num') || String(Math.floor(Math.random() * 900000) + 100000);
-   document.getElementById('invoice-num').textContent = num;
-
-  const advance = Math.floor(parseInt(cleanPrice || '0') / 2);
-  const advanceFormatted = advance > 0 ? advance.toLocaleString('ru-RU') + ' ₽' : '—';
-  const advanceEl = document.getElementById('advance-amount');
-  if (advanceEl) advanceEl.textContent = advanceFormatted;
-})();
-</script>
+<script src="/invoice.js"></script>
 </body>
 </html>

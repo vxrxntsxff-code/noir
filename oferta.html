@@ -4,14 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Публичная оферта — NOIR · Цифровая студия</title>
+<meta name="description" content="Публичная оферта на оказание услуг по разработке цифровых систем. Условия, порядок оплаты, права и обязаности сторон.">
+<link rel="canonical" href="https://www.noiros.ru/oferta">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Публичная оферта — NOIR">
+<meta property="og:description" content="Публичная оферта на оказание услуг по разработке цифровых систем. Условия и порядок оплаты.">
+<meta property="og:url" content="https://www.noiros.ru/oferta">
+<meta property="og:site_name" content="NOIR OS">
+<meta property="og:image" content="https://www.noiros.ru/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Публичная оферта — NOIR">
+<meta name="twitter:description" content="Публичная оферта на оказание услуг по разработке цифровых систем.">
+<meta name="twitter:image" content="https://www.noiros.ru/logo.png">
+<meta name="robots" content="index, follow">
 <link rel="stylesheet" href="legal.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
 </head>
 <body>
 
 <div class="doc-toolbar">
-  <a class="doc-btn" href="index.html">← На сайт</a>
-  <button class="doc-btn doc-btn-primary" onclick="window.print()">Скачать PDF / распечатать</button>
+  <a class="doc-btn" href="/">← На сайт</a>
+  <button class="doc-btn doc-btn-primary" id="printBtn">Скачать PDF / распечатать</button>
 </div>
 <p class="doc-note">Заполните поля в квадратных скобках своими данными перед публикацией. Документ принимается клиентом автоматически при оформлении заявки или оплате.</p>
 
@@ -22,7 +36,7 @@
     <div class="doc-brand-meta">Цифровая студия<br>г. Кемерово</div>
   </div>
 
-  <div class="doc-title">Публичная оферта</div>
+  <h1 class="doc-title">Публичная оферта</h1>
   <div class="doc-subtitle">на оказание услуг по разработке цифровых продуктов</div>
   <div class="doc-place">г. Кемерово &nbsp;·&nbsp; редакция от <span class="fill">01.08.2026</span></div>
 
@@ -130,21 +144,6 @@
 
 </div></div>
 
-<script>
-/* Страховка от «белой страницы» в Safari при переходе по ссылке.
-   Форсит перерисовку, когда документ пришёл из навигации / кэша. */
-(function () {
-  function repaint() {
-    var d = document.documentElement;
-    d.style.opacity = '0.999';
-    requestAnimationFrame(function () { d.style.opacity = ''; });
-  }
-  window.addEventListener('pageshow', repaint);
-  window.addEventListener('load', repaint);
-  /* если Safari всё же схлопнул слой — чиним по первому скроллу/движению */
-  var once = function () { repaint(); window.removeEventListener('scroll', once); };
-  window.addEventListener('scroll', once, { passive: true });
-})();
-</script>
+<script src="/safari-fix.js"></script>
 </body>
 </html>
