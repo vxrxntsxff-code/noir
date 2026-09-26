@@ -100,6 +100,7 @@ def _get_token():
         with tempfile.NamedTemporaryFile(mode='w', suffix='.pem', delete=False) as f:
             f.write(private_key)
             key_file = f.name
+        os.chmod(key_file, 0o600)  # приватный ключ — только владельцу
         try:
             proc = subprocess.run(
                 ["openssl", "dgst", "-sha256", "-sign", key_file],
@@ -298,8 +299,21 @@ def sheets_lead(name="", phone="", telegram="", email="", source="bot", city="",
     )
 
 
+def _norm_phone(s):
+    """Только цифры; 8XXXXXXXXXX → 7XXXXXXXXXX."""
+    d = "".join(c for c in str(s) if c.isdigit())
+    if len(d) == 11 and d.startswith("8"):
+        d = "7" + d[1:]
+    return d
+
+
 def sheets_find_client(query):
-    """Find client by phone or telegram. Returns dict or None."""
+    """Find client by phone or telegram. ТОЛЬКО точное совпадение.
+
+    Раньше было совпадение подстрокой (q in phone) — знание чужого
+    номера/username давало доступ к чужим данным + позволяло перебор.
+    Теперь: полный нормализованный номер или точный username.
+    """
     if not SPREADSHEET_ID:
         log.warning("sheets_find_client: GOOGLE_SHEET_ID not configured")
         return None
@@ -308,12 +322,15 @@ def sheets_find_client(query):
         log.warning("sheets_find_client: no data, result=%s", str(result)[:200])
         return None
     q = query.lower().replace("@", "").replace("+", "").strip()
+    q_digits = _norm_phone(q)
     log.info("sheets_find_client: query=%s norm=%s rows=%d", query, q, len(result["values"]))
     for i, row in enumerate(result["values"], start=2):
         # Clients: A:ФИО B:Телефон C:Telegram D:Email E:Город F:Ниша
-        phone = str(row[1]).replace("+", "").replace(" ", "").replace("-", "") if len(row) > 1 else ""
-        tg = str(row[2]).replace("@", "").lower() if len(row) > 2 else ""
-        if q in phone or q in tg:
+        phone = _norm_phone(row[1]) if len(row) > 1 else ""
+        tg = str(row[2]).replace("@", "").lower().strip() if len(row) > 2 else ""
+        phone_hit = bool(q_digits) and phone == q_digits
+        tg_hit = bool(q) and tg == q
+        if phone_hit or tg_hit:
             log.info("sheets_find_client: FOUND row=%d name=%s", i, row[0] if row else "")
             return {
                 "row": i,

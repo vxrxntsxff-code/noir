@@ -1,4 +1,4 @@
-import os, sys, json, urllib.request, urllib.parse, logging, traceback, random
+import os, sys, json, urllib.request, urllib.parse, logging, traceback, random, hmac, html, hashlib
 from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler
 
@@ -49,6 +49,24 @@ UPSTASH_TOK = os.environ.get("UPSTASH_REDIS_REST_TOKEN", "")
 PAYMENT_LINK  = os.environ.get("PAYMENT_LINK", "")
 PAYMENT_QR    = os.environ.get("PAYMENT_QR_IMG", PAYMENT_LINK)
 
+# ── Webhook / integration secrets ──────────────────────
+# Telegram: задаётся в setWebhook как secret_token, TG сверяет заголовок
+# X-Telegram-Bot-Api-Secret-Token на каждый апдейт.
+TG_SECRET_TOKEN = os.environ.get("TG_SECRET_TOKEN", "")
+if not TG_SECRET_TOKEN:
+    log.warning("TG_SECRET_TOKEN not set — Telegram webhook signature check DISABLED")
+# Google Sheets webhook: клиент шлёт заголовок X-Webhook-Secret с этим значением.
+SHEETS_WEBHOOK_SECRET = os.environ.get("SHEETS_WEBHOOK_SECRET", "")
+if not SHEETS_WEBHOOK_SECRET:
+    log.warning("SHEETS_WEBHOOK_SECRET not set — Sheets webhook secret check DISABLED")
+# T-Bank (Т-Пей): пароль терминала для проверки подписи Token в колбэках.
+TINKOFF_PASSWORD = os.environ.get("TINKOFF_PASSWORD", "")
+if not TINKOFF_PASSWORD:
+    log.warning("TINKOFF_PASSWORD not set — T-Bank callbacks will NOT be accepted")
+
+# Токены кабинета живут сутки (раньше — 30 дней)
+DASH_TTL = 86400
+
 PRICES     = {"start": "29 000", "business": "59 000", "premium": "112 000"}
 PRICES_NUM = {"start": "29000", "business": "59000", "premium": "112000"}
 LABELS     = {"start": "Старт", "business": "Бизнес", "premium": "Премиум"}
@@ -70,6 +88,75 @@ SERVICES = {
 
 def now_kem():
     return datetime.now(timezone(timedelta(hours=7)))
+
+
+def _tg_secret_ok(headers):
+    """Проверить подпись Telegram-вебхука.
+
+    Если TG_SECRET_TOKEN задан — сверяем заголовок
+    X-Telegram-Bot-Api-Secret-Token и при несовпадении отклоняем.
+    Без секрета — пропускаем (с предупреждением в логе при старте).
+    """
+    if not TG_SECRET_TOKEN:
+        return True
+    try:
+        got = headers.get("X-Telegram-Bot-Api-Secret-Token", "") or ""
+        return hmac.compare_digest(got, TG_SECRET_TOKEN)
+    except Exception:
+        return False
+
+
+def _tbank_valid(body):
+    """Проверить подпись колбэка Т-Пей.
+
+    Token = SHA-256 hex от конкатенации значений всех полей,
+    отсортированных по ключу (кроме Token/Receipt/DATA), + пароль терминала.
+    Без TINKOFF_PASSWORD — всегда False (колбэки не принимаем).
+    """
+    if not TINKOFF_PASSWORD:
+        return False
+    token = body.get("Token", "")
+    if not token:
+        return False
+    parts = []
+    for k in sorted(body.keys()):
+        if k in ("Token", "Receipt", "DATA"):
+            continue
+        v = body[k]
+        if v is None:
+            parts.append("")
+        elif isinstance(v, bool):
+            parts.append(str(v).lower())
+        else:
+            parts.append(str(v))
+    digest = hashlib.sha256(("".join(parts) + TINKOFF_PASSWORD).encode("utf-8")).hexdigest()
+    try:
+        return hmac.compare_digest(digest, str(token))
+    except Exception:
+        return False
+
+
+def _rate_limit(key, limit, window_sec):
+    """Простой fixed-window rate limit на Upstash. True = разрешено."""
+    if not UPSTASH_URL or not UPSTASH_TOK:
+        return True
+    try:
+        n = _redis("INCR", f"rl:{key}")
+        if n is None:
+            return True
+        n = int(n)
+        if n == 1:
+            _redis("EXPIRE", f"rl:{key}", window_sec)
+        return n <= limit
+    except Exception:
+        return True
+
+
+def _client_ip(headers):
+    try:
+        return (headers.get("X-Forwarded-For", "") or "").split(",")[0].strip() or "unknown"
+    except Exception:
+        return "unknown"
 
 
 # ── Texts ────────────────────────────────────────────────
@@ -394,11 +481,16 @@ def kb_after_demo():
 def kb_lead(user_data):
     buttons = []
     tg = user_data.get("Telegram") or user_data.get("telegram") or user_data.get("telegram") or ""
-    if tg and not tg.isdigit():
+    tg_clean = tg.lstrip("@").strip()
+    # Валидируем username, иначе злоумышленник подсунет произвольный URL
+    if (tg_clean and not tg_clean.isdigit() and 5 <= len(tg_clean) <= 32
+            and all(c.isalnum() or c == "_" for c in tg_clean)):
         buttons.append([{"text": "Написать в TG",
-                         "url": f"https://t.me/{tg.lstrip('@')}"}])
+                         "url": f"https://t.me/{tg_clean}"}])
     elif user_data.get("phone"):
-        buttons.append([{"text": "Позвонить", "url": f"tel:{user_data['phone']}"}])
+        safe_phone = "".join(c for c in str(user_data["phone"]) if c.isdigit() or c == "+")
+        if safe_phone:
+            buttons.append([{"text": "Позвонить", "url": f"tel:{safe_phone}"}])
     return buttons
 
 
@@ -444,7 +536,8 @@ def user_mention(chat_id, st):
         chat = result.get("result", {})
         first_name = chat.get("first_name", "")
         if first_name:
-            return f'<a href="tg://user?id={chat_id}">{first_name}</a>'
+            # Экранируем: имя уходит в сообщение с parse_mode=HTML
+            return f'<a href="tg://user?id={chat_id}">{html.escape(str(first_name))}</a>'
     return f"ID {chat_id}"
 
 
@@ -506,23 +599,27 @@ def short_proposal_url(params):
     return f"{SITE_URL}/proposal?c={code}"
 
 
-def payment_url(order_id, amount=None, name=None):
+def payment_url(order_id, amount=None, name=None, token=None):
     """Generate payment page URL with optional params."""
     qs = urllib.parse.urlencode({
         "order": order_id,
         "amount": amount or "",
         "name": name or "",
+        "token": token or "",
     })
     return f"{SITE_URL}/payment?{qs}"
 
 
 def create_order_id(data):
-    """Generate a unique order ID from client data."""
+    """Generate a unique order ID and access token from client data."""
     import random as _r
+    import secrets as _s
     date_str = now_kem().strftime("%d.%m.%Y")
     rand = _r.randint(100, 999)
     name_part = (data.get("name") or "client").replace(" ", "").lower()[:4]
-    return f"NOIR-{date_str}-{name_part}-{rand}"
+    order_id = f"NOIR-{date_str}-{name_part}-{rand}"
+    token = _s.token_urlsafe(16)
+    return order_id, token
 
 
 # ── Admin ────────────────────────────────────────────────
@@ -1695,11 +1792,11 @@ def handle_callback(chat_id, data):
         ]
         calc_order_id = None
         if PAYMENT_LINK:
-            calc_order_id = create_order_id({"name": f"{chat_id}"})
-            pay_url = payment_url(calc_order_id, total, "NOIR OS")
+            calc_order_id, calc_token = create_order_id({"name": f"{chat_id}"})
+            pay_url = payment_url(calc_order_id, total, "NOIR OS", token=calc_token)
             _redis("SET", f"noir:order:{calc_order_id}",
                    json.dumps({"client": str(chat_id), "price": str(total), "package": pkg_name or "Индивидуально",
-                                "status": "pending", "order_id": calc_order_id}),
+                                "status": "pending", "order_id": calc_order_id, "token": calc_token}),
                    "EX", "604800")
             result_kb = [
                 [{"text": "Оплатить онлайн", "url": pay_url}],
@@ -1724,11 +1821,11 @@ def handle_callback(chat_id, data):
         pay_url = ""
         pay_hint = ""
         if PAYMENT_LINK and calc_price and not calc_order_id:
-            calc_order_id = create_order_id({"name": f"{chat_id}"})
-            pay_url = payment_url(calc_order_id, calc_price, "NOIR OS")
+            calc_order_id, calc_token = create_order_id({"name": f"{chat_id}"})
+            pay_url = payment_url(calc_order_id, calc_price, "NOIR OS", token=calc_token)
             _redis("SET", f"noir:order:{calc_order_id}",
                    json.dumps({"client": str(chat_id), "price": calc_price, "package": d.get("package", "Индивидуально"),
-                                "status": "pending", "order_id": calc_order_id}),
+                                "status": "pending", "order_id": calc_order_id, "token": calc_token}),
                    "EX", "604800")
             pay_hint = f"\nОплатить можно здесь: {pay_url}"
         elif PAYMENT_LINK and calc_order_id and not pay_url:
@@ -1760,8 +1857,8 @@ def handle_callback(chat_id, data):
             if redis_cn:
                 client_name_dash = redis_cn
         dash_data = {"chat_id": chat_id, "username": username, "client_name": client_name_dash}
-        _redis("SET", f"noir:dash:{token}", json.dumps(dash_data), "EX", 2592000)
-        _redis("SET", f"noir:token_by_chat:{chat_id}", token, "EX", "2592000")
+        _redis("SET", f"noir:dash:{token}", json.dumps(dash_data), "EX", DASH_TTL)
+        _redis("SET", f"noir:token_by_chat:{chat_id}", token, "EX", DASH_TTL)
         url = f"{SITE_URL}/dashboard?token={token}"
         send(chat_id, T["dashboard_link"].format(url=url), reply_markup=kb_main())
         return
@@ -2012,19 +2109,20 @@ def _finish_qualification(chat_id, data):
         "support": support_months,
     })
 
+    esc = html.escape
     lead = (
         f"{T['done_lead'].format(level=service if service else LABELS.get(level, 'Бизнес'))}\n\n"
-        f"ФИО: {name}\n"
-        f"Телефон: {phone}\n"
-        f"Telegram: {telegram or '—'}\n"
-        f"Email: {email or '—'}\n"
-        f"Боль: {data.get('pain', '—')}\n"
-        f"Ниша: {niche}\n"
-        f"Город: {city}\n"
-        f"Цель: {goal}\n"
-        f"Сайт: {site}\n"
-        f"Услуга: {task_for_contract}\n\n"
-        f"Цена: {svc_price if service else PRICES.get(level, '29 000')} ₽\n"
+        f"ФИО: {esc(str(name))}\n"
+        f"Телефон: {esc(str(phone))}\n"
+        f"Telegram: {esc(str(telegram)) if telegram else '—'}\n"
+        f"Email: {esc(str(email)) if email else '—'}\n"
+        f"Боль: {esc(str(data.get('pain', '—')))}\n"
+        f"Ниша: {esc(str(niche))}\n"
+        f"Город: {esc(str(city))}\n"
+        f"Цель: {esc(str(goal))}\n"
+        f"Сайт: {esc(str(site))}\n"
+        f"Услуга: {esc(str(task_for_contract))}\n\n"
+        f"Цена: {esc(str(svc_price if service else PRICES.get(level, '29 000')))} ₽\n"
         f"{date_str} · {time_str} МСК"
     )
     lead_kb = [[{"text": "Договор клиента", "url": url}]]
@@ -2074,7 +2172,7 @@ def _finish_qualification(chat_id, data):
     _redis("SET", f"noir:invoice_qs:{name}", invoice_qs, "EX", "2592000")
 
     # Create order for payment — save with chat_id as key for pay:confirm fallback
-    order_id = create_order_id(data)
+    order_id, order_token = create_order_id(data)
     price_num = int(PRICES_NUM.get(level, "29000"))
     advance = price_num // 2
 
@@ -2089,6 +2187,7 @@ def _finish_qualification(chat_id, data):
                "task": task_for_contract,
                "status": "pending",
                "order_id": order_id,
+               "token": order_token,
            }), "EX", "604800")
 
     # Link order to chat_id for pay:confirm
@@ -2124,7 +2223,7 @@ def _finish_qualification(chat_id, data):
             try:
                 td = json.loads(token_data)
                 td["client_name"] = name
-                _redis("SET", f"noir:dash:{existing_token}", json.dumps(td, ensure_ascii=False), "EX", "2592000")
+                _redis("SET", f"noir:dash:{existing_token}", json.dumps(td, ensure_ascii=False), "EX", DASH_TTL)
             except Exception:
                 pass
 
@@ -2185,23 +2284,29 @@ def _finish_qualification(chat_id, data):
 
 
 # ── Form from website ────────────────────────────────────
-def handle_form(payload):
+def handle_form(payload, ip="unknown"):
     name    = payload.get("name", "---")
     phone   = payload.get("phone") or payload.get("contact") or "---"
     message = payload.get("message") or payload.get("task") or "---"
     source  = payload.get("source", "")
 
+    # Антиспам: не больше 10 заявок в час с одного IP
+    if not _rate_limit(f"form:{ip}", 10, 3600):
+        log.warning("form rate-limited ip=%s", ip)
+        return {"ok": False, "error": "too many requests"}
+
     dt = now_kem()
     date_str = dt.strftime("%d.%m.%Y")
 
+    esc = html.escape
     lead = (
         f"{T['site_form_lead']}\n\n"
-        f"ФИО: {name}\n"
-        f"Телефон: {phone}\n"
-        f"Сообщение: {message}"
+        f"ФИО: {esc(str(name))}\n"
+        f"Телефон: {esc(str(phone))}\n"
+        f"Сообщение: {esc(str(message))}"
     )
     if source:
-        lead += f"\nИсточник: {source}"
+        lead += f"\nИсточник: {esc(str(source))}"
     lead += f"\n{date_str}"
     send_lead(lead)
     log.info("form_lead source=%s", source)
@@ -2213,16 +2318,17 @@ def handle_form(payload):
 
     result = {"ok": True}
     if PAYMENT_LINK:
-        order_id = create_order_id({"name": name})
+        order_id, order_token = create_order_id({"name": name})
         _redis("SET", f"noir:order:{order_id}",
                json.dumps({
                    "client": name,
                    "price": "",
                    "status": "pending",
                    "order_id": order_id,
+                   "token": order_token,
                }),
                "EX", "604800")
-        result["payment_url"] = payment_url(order_id, name=name)
+        result["payment_url"] = payment_url(order_id, name=name, token=order_token)
         result["order_id"] = order_id
     return result
 
@@ -2236,6 +2342,13 @@ class handler(BaseHTTPRequestHandler):
         self.wfile.write(body.encode() if isinstance(body, str) else body)
 
     def do_GET(self):
+        try:
+            self._do_GET()
+        except Exception as e:
+            log.error("do_GET error: %s", e)
+            self._send(500, json.dumps({"error": "internal error"}))
+
+    def _do_GET(self):
         path = self.path.split("?")[0]
         params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         if path == "/api/health" or path == "/health":
@@ -2261,14 +2374,26 @@ class handler(BaseHTTPRequestHandler):
             return
         if path == "/api/payment_status" or path == "/payment_status":
             order = params.get("order", [""])[0]
+            token = params.get("token", [""])[0]
             raw = _redis("GET", f"noir:order:{order}") if order else None
             if raw:
                 data = json.loads(raw)
+                # Verify access token to prevent IDOR (timing-safe compare)
+                expected_token = data.get("token", "")
+                try:
+                    _tok_ok = bool(token) and bool(expected_token) and hmac.compare_digest(str(token), str(expected_token))
+                except Exception:
+                    _tok_ok = False
+                if not _tok_ok:
+                    self._send(403, json.dumps({"error": "forbidden"}))
+                    return
                 # Check if there's also a payment confirmation status
                 pay_raw = _redis("GET", f"noir:pay:{order}") if order else None
                 if pay_raw:
                     pay_data = json.loads(pay_raw)
                     data.update(pay_data)
+                # Remove internal token from response
+                data.pop("token", None)
                 status = data
             else:
                 status = {"status": "unknown"}
@@ -2312,11 +2437,18 @@ class handler(BaseHTTPRequestHandler):
         self._send(200, json.dumps({"status": "ok", "bot": "NOIR"}))
 
     def do_POST(self):
+        try:
+            self._do_POST()
+        except Exception as e:
+            log.error("do_POST error: %s", e)
+            self._send(500, json.dumps({"error": "internal error"}))
+
+    def _do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         if length > 1048576:
             self._send(413, json.dumps({"error": "too large"}))
             return
-        
+
         raw = self.rfile.read(length) if length else b"{}"
 
         raw_str = ""
@@ -2330,11 +2462,11 @@ class handler(BaseHTTPRequestHandler):
                 body = _restore_json(raw_str)
             except Exception as e2:
                 log.error("restore_json fail: %s", e2)
-                self._send(500, json.dumps({"error": str(e)[:200]}))
+                self._send(400, json.dumps({"error": "bad request"}))
                 return
 
         if body.get("_form"):
-            result = handle_form(body["_form"])
+            result = handle_form(body["_form"], _client_ip(self.headers))
             self._send(200, json.dumps(result))
             return
 
@@ -2343,8 +2475,17 @@ class handler(BaseHTTPRequestHandler):
             self._send(200, json.dumps({"tg_ok": me.get("ok", False), "tg_result": me}))
             return
 
-        # Google Sheets webhook
+        # Google Sheets webhook — только с секретом
         if body.get("sheet"):
+            if SHEETS_WEBHOOK_SECRET:
+                _got = self.headers.get("X-Webhook-Secret", "") or ""
+                try:
+                    _ok = hmac.compare_digest(_got, SHEETS_WEBHOOK_SECRET)
+                except Exception:
+                    _ok = False
+                if not _ok:
+                    self._send(403, json.dumps({"error": "forbidden"}))
+                    return
             sheet = body.get("sheet", "")
             row = body.get("row", 0)
             col = body.get("col", 0)
@@ -2357,33 +2498,40 @@ class handler(BaseHTTPRequestHandler):
         if body.get("action") == "payment_confirm":
             order_id = body.get("order_id", "")
             if order_id:
+                # Доверяем ТОЛЬКО order_id. Сумму и статус берём из серверного
+                # заказа — цену из тела запроса игнорируем (иначе любой может
+                # подделать «подтверждение оплаты» на любую сумму).
                 client_data = {
                     "name": body.get("name", ""),
                     "phone": body.get("phone", ""),
                     "telegram": body.get("telegram", ""),
                     "email": body.get("email", ""),
-                    "price": body.get("price", ""),
                     "status": "pending",
+                    "claimed_by_client": True,
                     "order_id": order_id,
                 }
                 _redis("SET", f"noir:pay:{order_id}",
                        json.dumps(client_data),
                        "EX", "604800")
+                server_price = ""
                 existing = _redis("GET", f"noir:order:{order_id}")
                 if existing:
                     order = json.loads(existing)
-                    order.update({"paid": client_data["price"], "status": "pending"})
+                    server_price = order.get("price", "")
+                    # Статус — pending, сумму НЕ перезаписываем ценой клиента
+                    order.update({"status": "pending"})
                     _redis("SET", f"noir:order:{order_id}",
                            json.dumps(order), "EX", "604800")
                 if OWNER_ID:
+                    esc = html.escape
                     msg = (
-                        "✅ Клиент подтвердил оплату\n\n"
-                        f"Заказ: {order_id}\n"
-                        f"ФИО: {client_data['name']}\n"
-                        f"Телефон: {client_data['phone']}\n"
-                        f"Telegram: {client_data['telegram']}\n"
-                        f"Email: {client_data['email']}\n"
-                        f"Сумма: {client_data['price']}"
+                        "⚠️ Клиент ЗАЯВИЛ об оплате (не подтверждено)\n\n"
+                        f"Заказ: {esc(str(order_id))}\n"
+                        f"ФИО: {esc(str(client_data['name']))}\n"
+                        f"Телефон: {esc(str(client_data['phone']))}\n"
+                        f"Telegram: {esc(str(client_data['telegram']))}\n"
+                        f"Email: {esc(str(client_data['email']))}\n"
+                        f"Сумма по заказу: {esc(str(server_price)) if server_price else '—'}"
                     )
                     tg("sendMessage", {"chat_id": OWNER_ID, "text": msg})
                 self._send(200, json.dumps({"ok": True}))
@@ -2391,8 +2539,12 @@ class handler(BaseHTTPRequestHandler):
                 self._send(400, json.dumps({"error": "missing order_id"}))
             return
 
-        # T-Bank payment callback
+        # T-Bank payment callback — только с валидной подписью Token
         if body.get("TerminalKey") or body.get("PaymentId"):
+            if not _tbank_valid(body):
+                log.warning("tbank callback rejected: bad signature order=%s", body.get("OrderId", ""))
+                self._send(403, json.dumps({"error": "forbidden"}))
+                return
             order_id = body.get("OrderId", "")
             status = body.get("Status", "")
             if order_id:
@@ -2406,106 +2558,16 @@ class handler(BaseHTTPRequestHandler):
             self._send(200, json.dumps({"ok": True}))
             return
 
-        if body.get("action") == "dashboard_login":
-            login = body.get("login", "").strip()
-            if not login:
-                self._send(200, json.dumps({"ok": False}))
-                return
-            import secrets
-            token = secrets.token_urlsafe(16)
-            client_data = None
-            projects = []
-            if sheets_find_client:
-                client_data = sheets_find_client(login)
-                if client_data and sheets_get_projects:
-                    projects = sheets_get_projects(client_data["name"])
-            if client_data:
-                proj = projects[0] if projects else {}
-                client_name = client_data["name"]
-                project_name = proj.get("name", "Проект")
-                package = proj.get("package", "")
-                stage = proj.get("stage", "brief")
-                status = proj.get("status", "awaiting")
-                progress = proj.get("progress", 0)
-                price = proj.get("price", "")
-                paid = proj.get("paid", "0").replace(" ", "").replace("\xa0", "")
-                try:
-                    price_num = int(price.replace(" ", "").replace("\xa0", ""))
-                except (ValueError, AttributeError):
-                    price_num = 0
-                try:
-                    paid_num = int(paid)
-                except (ValueError, AttributeError):
-                    paid_num = 0
-                remaining_num = max(0, price_num - paid_num)
-                if status == "paid":
-                    paid_str, remaining_str = f"{price_num} ₽", "0 ₽"
-                else:
-                    paid_str = f"{paid_num} ₽" if paid_num > 0 else "0 ₽"
-                    remaining_str = f"{remaining_num} ₽" if remaining_num > 0 else f"{price_num} ₽"
+        # dashboard_login обслуживается api/topdent.py (см. vercel.json).
+        # Дублирующая реализация здесь удалена, чтобы не было двух
+        # расходящихся версий логики входа.
 
-                # Get contract data from Redis
-                contract_link = "/dogovor.html"
-                contract_raw = _redis("GET", f"noir:contract_data:{client_name}")
-                if contract_raw:
-                    try:
-                        cdata = json.loads(contract_raw)
-                        contract_link = contract_url(cdata)
-                    except Exception:
-                        pass
-
-                # Get proposal URL
-                pkg_map = {"Старт": "start", "Бизнес": "business", "Премиум": "premium"}
-                pkg_en = pkg_map.get(package, package.lower()) if package else "start"
-                proposal_url = short_proposal_url({
-                    "name": client_name,
-                    "package": pkg_en,
-                    "price": str(price_num) if price_num else "29000",
-                })
-
-                data = {
-                    "stage": stage,
-                    "progress": progress,
-                    "project_name": project_name,
-                    "package": package,
-                    "price": price,
-                    "paid": paid_num,
-                    "remaining": remaining_num,
-                }
-                dashboard_data = {
-                    "client_name": client_name,
-                    "project_name": project_name,
-                    "package": package,
-                    "stage": stage,
-                    "progress": progress,
-                    "price": f"{price_num} ₽" if price_num else "—",
-                    "paid": paid_str,
-                    "remaining": remaining_str,
-                    "docs": [
-                        {"name": "Договор", "url": contract_link},
-                        {"name": "Коммерческое предложение", "url": proposal_url},
-                    ],
-                    "payments": [],
-                    "updates": [],
-                }
-            else:
-                log.warning("DASHBOARD no client_data for login=%s", login)
-                dashboard_data = {
-                    "client_name": login,
-                    "project_name": "Проект",
-                    "package": "",
-                    "stage": "brief",
-                    "progress": 0,
-                    "price": "—",
-                    "paid": "0 ₽",
-                    "remaining": "—",
-                    "docs": [],
-                    "payments": [],
-                    "updates": [],
-                }
-            _redis("SET", f"noir:dash:{token}",
-                   json.dumps(dashboard_data), "EX", "2592000")
-            self._send(200, json.dumps({"ok": True, "token": token, **dashboard_data}))
+        # Telegram-обновления — только с валидным secret_token.
+        # Без проверки любой может слать поддельные апдейты с чужим chat_id
+        # и получить доступ к админке бота.
+        if not _tg_secret_ok(self.headers):
+            log.warning("telegram webhook rejected: bad secret")
+            self._send(403, json.dumps({"error": "forbidden"}))
             return
 
         try:
@@ -2548,7 +2610,7 @@ class handler(BaseHTTPRequestHandler):
             self._send(200, "ok")
         except Exception as e:
             log.error("telegram_handler error: %s\n%s", e, traceback.format_exc())
-            self._send(500, json.dumps({"error": str(e)[:500]}))
+            self._send(500, json.dumps({"error": "internal error"}))
 
 
 def _handle_sheets_webhook(sheet, row, col, value):

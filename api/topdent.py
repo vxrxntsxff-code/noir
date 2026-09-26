@@ -1,5 +1,5 @@
 # NOIR TopDent Dashboard API v3.7 - token persistence fix
-import os, sys, json, urllib.request, urllib.parse, logging, traceback, random
+import os, sys, json, urllib.request, urllib.parse, logging, traceback, random, hmac
 from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler
 
@@ -20,6 +20,10 @@ if not log.handlers:
 
 BOT_TOKEN = os.environ.get("TOPDENT_TOKEN", "")
 OWNER_ID  = int(os.environ.get("OWNER_ID", "0") or "0")
+# Секрет Telegram-вебхука (secret_token в setWebhook). Без него проверка отключена.
+TG_SECRET_TOKEN = os.environ.get("TOPDENT_TG_SECRET", os.environ.get("TG_SECRET_TOKEN", ""))
+if not TG_SECRET_TOKEN:
+    log.warning("TG_SECRET_TOKEN not set — TopDent webhook signature check DISABLED")
 _raw_tg = os.environ.get("OWNER_TG", "").strip()
 OWNER_TG  = int(_raw_tg) if _raw_tg and _raw_tg.lstrip("-").isdigit() else OWNER_ID
 CLINIC_PHONE = "+7 (913) 307-77-57"
@@ -58,7 +62,7 @@ def state_del(chat_id):
 def _sheets_token():
     """Get Google Sheets access token for TopDent spreadsheet."""
     _sa_json = os.environ.get("TOPDENT_GOOGLE_SA_JSON") or os.environ.get("GOOGLE_SA_JSON", "")
-    _sheet_id = os.environ.get("TOPDENT_SHEET_ID", "15pUGJTy5HQDhXGhXxy5N3_S3Jm0U4TFRcj3pNKP75wE")
+    _sheet_id = os.environ.get("TOPDENT_SHEET_ID", "")
     if not _sa_json or not _sheet_id:
         return None
     try:
@@ -125,6 +129,44 @@ def kb_reply(rows, placeholder=""):
 
 def now_kem():
     return datetime.now(KEM)
+
+
+def _tg_secret_ok(headers):
+    """Проверить подпись Telegram-вебхука (X-Telegram-Bot-Api-Secret-Token)."""
+    if not TG_SECRET_TOKEN:
+        return True
+    try:
+        got = headers.get("X-Telegram-Bot-Api-Secret-Token", "") or ""
+        return hmac.compare_digest(got, TG_SECRET_TOKEN)
+    except Exception:
+        return False
+
+
+def _rate_limit(key, limit, window_sec):
+    """Простой fixed-window rate limit на Upstash. True = разрешено."""
+    if not UPSTASH_URL or not UPSTASH_TOK:
+        return True
+    try:
+        n = _redis("INCR", f"rl:{key}")
+        if n is None:
+            return True
+        n = int(n)
+        if n == 1:
+            _redis("EXPIRE", f"rl:{key}", window_sec)
+        return n <= limit
+    except Exception:
+        return True
+
+
+def _client_ip(headers):
+    try:
+        return (headers.get("X-Forwarded-For", "") or "").split(",")[0].strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+# Токены кабинета живут сутки (раньше — 30 дней)
+DASH_TTL = 86400
 
 
 def _redis(*args):
@@ -525,8 +567,9 @@ def handle_callback(chat_id, data, msg_id=0):
                 _now = now_kem()
                 _td_row = [_now.strftime("%d.%m.%Y"), "'" + _now.strftime("%H:%M"), appt.get('name',''), appt.get('phone',''), appt.get('spec',''), appt.get('doctor',''), appt.get('date',''), "'" + appt.get('time',''), "Новый"]
                 _td_token = _sheets_token()
-                if _td_token:
-                    _td_url = f"https://sheets.googleapis.com/v4/spreadsheets/{os.environ.get('TOPDENT_SHEET_ID','15pUGJTy5HQDhXGhXxy5N3_S3Jm0U4TFRcj3pNKP75wE')}/values/{urllib.parse.quote('Лист1')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS"
+                _td_sheet = os.environ.get('TOPDENT_SHEET_ID', '')
+                if _td_token and _td_sheet:
+                    _td_url = f"https://sheets.googleapis.com/v4/spreadsheets/{_td_sheet}/values/{urllib.parse.quote('Лист1')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS"
                     _td_data = json.dumps({"values": [_td_row]}).encode()
                     _td_req = urllib.request.Request(_td_url, data=_td_data, method="POST")
                     _td_req.add_header("Authorization", f"Bearer {_td_token}")
@@ -715,6 +758,13 @@ class handler(BaseHTTPRequestHandler):
         self.wfile.write(body.encode() if isinstance(body, str) else body)
 
     def do_GET(self):
+        try:
+            self._do_GET()
+        except Exception as e:
+            log.error("do_GET error: %s", e)
+            self._send(500, json.dumps({"error": "internal error"}))
+
+    def _do_GET(self):
         path = self.path.split("?")[0]
         params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
 
@@ -723,7 +773,12 @@ class handler(BaseHTTPRequestHandler):
             raw = _redis("GET", f"noir:dash:{token}") if token else None
             if raw:
                 cached = json.loads(raw)
-                # Always rebuild data fresh from Sheets
+                # Always rebuild data fresh from Sheets.
+                # data/cdata/proj инициализируем заранее — иначе NameError,
+                # когда токен валиден, но проектов/документов в кэше нет.
+                data = dict(cached)
+                cdata = {}
+                proj = {}
                 try:
                     from sheets import sheets_find_client, sheets_get_projects, sheets_get_events, sheets_get_payments
                     client_name = cached.get("client_name", "")
@@ -852,7 +907,7 @@ class handler(BaseHTTPRequestHandler):
                                 {"name": "Счёт на оплату", "url": invoice_url},
                             ]
                         _redis("SET", f"noir:dash:{token}",
-                               json.dumps(data), "EX", 2592000)
+                               json.dumps(data), "EX", DASH_TTL)
                 except Exception as e:
                     log.error("dashboard enrich failed: %s", e)
                 self._send(200, json.dumps({"ok": True, **data}))
@@ -877,6 +932,13 @@ class handler(BaseHTTPRequestHandler):
         }))
 
     def do_POST(self):
+        try:
+            self._do_POST()
+        except Exception as e:
+            log.error("do_POST error: %s", e)
+            self._send(500, json.dumps({"error": "internal error"}))
+
+    def _do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         if length > 1048576:
             self._send(413, json.dumps({"error": "Payload too large"}))
@@ -894,25 +956,12 @@ class handler(BaseHTTPRequestHandler):
                     self._send(200, json.dumps({"ok": False}))
                     return
 
-                # Admin always gets access
-                if login.replace("@", "").lower() == "vxrxntsxff":
-                    token = secrets.token_urlsafe(16)
-                    dashboard_data = {
-                        "client_name": "NOIR Admin",
-                        "project_name": "NOIR OS",
-                        "package": "Админ",
-                        "stage": "launch",
-                        "progress": 100,
-                        "price": "—",
-                        "paid": "—",
-                        "remaining": "—",
-                        "docs": [],
-                        "payments": [],
-                        "updates": [{"text": "Админ-доступ", "date": "Сейчас"}],
-                    }
-                    _redis("SET", f"noir:dash:{token}",
-                           json.dumps(dashboard_data), "EX", 2592000)
-                    self._send(200, json.dumps({"ok": True, "token": token, **dashboard_data}))
+                # Бэкдор «админ всегда проходит» удалён: вход только
+                # по совпадению с клиентом в Sheets + rate limit ниже.
+                # Админ смотрит данные через владельца бота / Sheets напрямую.
+                if not _rate_limit(f"login:{_client_ip(self.headers)}:{login[:32]}", 10, 3600):
+                    log.warning("dashboard_login rate-limited login=%s", login)
+                    self._send(200, json.dumps({"ok": False, "error": "too many requests"}))
                     return
 
                 try:
@@ -1042,13 +1091,19 @@ class handler(BaseHTTPRequestHandler):
 
                 token = secrets.token_urlsafe(16)
                 _redis("SET", f"noir:dash:{token}",
-                       json.dumps(dashboard_data), "EX", 2592000)
+                       json.dumps(dashboard_data), "EX", DASH_TTL)
                 self._send(200, json.dumps({"ok": True, "token": token, **dashboard_data}))
                 return
 
             msg = body.get("message") or body.get("callback_query")
             if not msg:
                 self._send(200, json.dumps({"ok": True, "handler": "topdent_orig"}))
+                return
+
+            # Telegram-обновления — только с валидным secret_token
+            if not _tg_secret_ok(self.headers):
+                log.warning("topdent webhook rejected: bad secret")
+                self._send(403, json.dumps({"error": "forbidden"}))
                 return
 
             if "callback_query" in body:

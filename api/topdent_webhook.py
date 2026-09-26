@@ -1,14 +1,31 @@
 # TopDent Lightweight Webhook - writes to Google Shelf on any message
-import os, sys, json, urllib.request, urllib.parse, logging, base64, time
+import os, sys, json, urllib.request, urllib.parse, logging, base64, time, hmac
 from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+log = logging.getLogger("topdent_webhook")
+
 BOT_TOKEN = os.environ.get("TOPDENT_TOKEN") or os.environ.get("TOPDENT_BOT_TOKEN", "")
 KEM = timezone(timedelta(hours=7))
-SPREADSHEET_ID = os.environ.get("TOPDENT_SHEET_ID", "15pUGJTy5HQDhXGhXxy5N3_S3Jm0U4TFRcj3pNKP75wE")
+# Без ID в env — не пишем (раньше был захардкожен ID таблицы в коде)
+SPREADSHEET_ID = os.environ.get("TOPDENT_SHEET_ID", "")
 SA_JSON = os.environ.get("TOPDENT_GOOGLE_SA_JSON") or os.environ.get("GOOGLE_SA_JSON", "")
+# Секрет Telegram-вебхука (secret_token в setWebhook)
+TG_SECRET_TOKEN = os.environ.get("TOPDENT_TG_SECRET", os.environ.get("TG_SECRET_TOKEN", ""))
+if not TG_SECRET_TOKEN:
+    log.warning("TG_SECRET_TOKEN not set — TopDent webhook signature check DISABLED")
+
+
+def _tg_secret_ok(headers):
+    if not TG_SECRET_TOKEN:
+        return True
+    try:
+        got = headers.get("X-Telegram-Bot-Api-Secret-Token", "") or ""
+        return hmac.compare_digest(got, TG_SECRET_TOKEN)
+    except Exception:
+        return False
 
 def tg(method, data=None):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
@@ -55,6 +72,8 @@ def get_sheets_token():
     return None
 
 def write_to_sheet(text, chat_id):
+    if not SPREADSHEET_ID:
+        return False
     token = get_sheets_token()
     if not token:
         return False
@@ -101,6 +120,12 @@ class handler(BaseHTTPRequestHandler):
         if length > 1048576:
             self._send(413, json.dumps({"error": "too large"}))
             return
+        # Только Telegram с валидным secret_token — иначе любой пишет
+        # мусор в таблицу и рассылает сообщения за наш счёт
+        if not _tg_secret_ok(self.headers):
+            log.warning("webhook rejected: bad secret")
+            self._send(403, json.dumps({"error": "forbidden"}))
+            return
         raw = self.rfile.read(length) if length else b"{}"
         try:
             body = json.loads(raw)
@@ -122,4 +147,5 @@ class handler(BaseHTTPRequestHandler):
                     handle(chat_id, text, "message")
             self._send(200, "ok")
         except Exception as e:
-            self._send(500, json.dumps({"error": str(e)[:200]}))
+            log.error("webhook error: %s", e)
+            self._send(500, json.dumps({"error": "internal error"}))

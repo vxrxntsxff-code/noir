@@ -23,10 +23,6 @@
       "destination": "/api/app.py"
     },
     {
-      "source": "/api/app.py",
-      "destination": "/api/app.py"
-    },
-    {
       "source": "/api/sheets_webhook",
       "destination": "/api/app.py"
     },
@@ -59,6 +55,10 @@
       "destination": "/api/topdent_webhook.py"
     },
     {
+      "source": "/api/contract",
+      "destination": "/api/app.py"
+    },
+    {
       "source": "/api/dashboard",
       "destination": "/api/topdent.py"
     },
@@ -73,10 +73,6 @@
     {
       "source": "/dashboard",
       "destination": "/dashboard.html"
-    },
-    {
-      "source": "/proposal",
-      "destination": "/proposal.html"
     },
     {
       "source": "/invoice",
@@ -140,6 +136,11 @@
       "permanent": true
     },
     {
+      "source": "/dogovor.html",
+      "destination": "/dogovor",
+      "permanent": true
+    },
+    {
       "source": "/tech.html",
       "destination": "/tech",
       "permanent": true
@@ -187,6 +188,28 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), payment=(self)"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self'; frame-ancestors 'self'"
+        }
+      ]
+    },
+    {
+      "source": "/dashboard",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/api/payment_status",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, no-cache, must-revalidate"
         }
       ]
     },
